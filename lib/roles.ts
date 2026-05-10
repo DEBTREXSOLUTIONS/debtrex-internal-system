@@ -1,5 +1,6 @@
-// Shared role constants — safe to import from both client and server.
-// This file must NEVER import server-only modules (next/headers, supabase, etc.)
+// Shared role constants and permission helpers.
+// SAFE to import from both client and server.
+// Never import server-only modules here.
 
 export const ROLES = [
   { value: 'ceo', label: 'CEO' },
@@ -33,4 +34,26 @@ export function canDeleteUsers(role: string): boolean {
 }
 export function isLeadership(role: string): boolean {
   return ['ceo', 'owner', 'co-owner'].includes(role);
+}
+
+// ─── NEW PERMISSION HELPERS ───
+
+// Only top leadership can see EVERYONE'S performance
+export function canViewAllPerformance(role: string): boolean {
+  return ['ceo', 'owner', 'co-owner'].includes(role);
+}
+
+// Only top leadership can ASSIGN agents to managers
+export function canAssignAgentsToManagers(role: string): boolean {
+  return ['ceo', 'owner', 'co-owner'].includes(role);
+}
+
+// Managers see ONLY their assigned agents' performance
+export function canViewTeamPerformance(role: string): boolean {
+  return ['ceo', 'owner', 'co-owner', 'manager'].includes(role);
+}
+
+// Calculators are open to everyone except viewers
+export function canUseCalculators(role: string): boolean {
+  return ['ceo', 'owner', 'co-owner', 'manager', 'employee', 'accountant'].includes(role);
 }

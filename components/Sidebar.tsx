@@ -1,7 +1,10 @@
 "use client";
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, CheckSquare, Calendar, FolderOpen, DollarSign, Users, Settings, LogOut, Menu, X } from 'lucide-react';
+import {
+  LayoutDashboard, CheckSquare, Calendar, FolderOpen, DollarSign,
+  Users, Settings, LogOut, Menu, X, Trophy, Calculator, UserCheck
+} from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 interface User {
@@ -17,29 +20,26 @@ export default function Sidebar({ user }: { user: User }) {
   const [loggingOut, setLoggingOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Close mobile menu when route changes
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
 
-  // Lock body scroll when mobile menu is open
   useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    if (mobileOpen) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = '';
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
   const isLeadership = ['ceo', 'owner', 'co-owner'].includes(user.role);
+  const isManager = user.role === 'manager';
   const canEditBudget = ['ceo', 'owner', 'co-owner', 'accountant'].includes(user.role);
+  const canUseCalculators = ['ceo', 'owner', 'co-owner', 'manager', 'employee', 'accountant'].includes(user.role);
 
   const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard, show: true },
     { href: '/tasks', label: 'Tasks', icon: CheckSquare, show: true },
     { href: '/calendar', label: 'Calendar', icon: Calendar, show: true },
     { href: '/files', label: 'Files', icon: FolderOpen, show: true },
+    { href: '/calculators', label: 'Calculators', icon: Calculator, show: canUseCalculators },
+    { href: '/performance', label: 'Performance', icon: Trophy, show: isLeadership || isManager },
     { href: '/budget', label: 'Budget', icon: DollarSign, show: canEditBudget },
     { href: '/team', label: 'Team', icon: Users, show: isLeadership },
   ];
@@ -54,7 +54,6 @@ export default function Sidebar({ user }: { user: User }) {
 
   const sidebarContent = (
     <>
-      {/* Brand */}
       <div className="p-5 border-b border-white/10 flex items-center justify-between">
         <Link href="/" className="block">
           <div className="font-condensed text-2xl font-black text-white tracking-tight">
@@ -64,7 +63,6 @@ export default function Sidebar({ user }: { user: User }) {
             Internal System
           </div>
         </Link>
-        {/* Close button - mobile only */}
         <button
           onClick={() => setMobileOpen(false)}
           className="lg:hidden text-white/60 hover:text-white p-1"
@@ -74,7 +72,6 @@ export default function Sidebar({ user }: { user: User }) {
         </button>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navItems.filter(i => i.show).map(item => {
           const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
@@ -94,9 +91,23 @@ export default function Sidebar({ user }: { user: User }) {
             </Link>
           );
         })}
+
+        {/* Sub-link for leadership: Manager Assignments under Performance */}
+        {isLeadership && pathname.startsWith('/performance') && (
+          <Link
+            href="/performance/assignments"
+            className={`flex items-center gap-3 px-3 py-2.5 ml-3 rounded-md text-xs font-medium transition-colors border-l-2 ${
+              pathname === '/performance/assignments'
+                ? 'border-brand-red text-white bg-white/5'
+                : 'border-white/10 text-white/50 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <UserCheck size={13} />
+            Manager Assignments
+          </Link>
+        )}
       </nav>
 
-      {/* Settings */}
       <div className="p-3 border-t border-white/10">
         <Link
           href="/settings"
@@ -106,7 +117,6 @@ export default function Sidebar({ user }: { user: User }) {
         </Link>
       </div>
 
-      {/* User */}
       <div className="p-3 border-t border-white/10 bg-black/20">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-9 h-9 rounded-full bg-brand-red text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
@@ -131,7 +141,6 @@ export default function Sidebar({ user }: { user: User }) {
 
   return (
     <>
-      {/* Mobile hamburger button - shows top-left on mobile only */}
       <button
         onClick={() => setMobileOpen(true)}
         className="lg:hidden fixed top-3 left-3 z-30 p-2 bg-brand-ink text-white rounded-md shadow-lg"
@@ -140,7 +149,6 @@ export default function Sidebar({ user }: { user: User }) {
         <Menu size={20} />
       </button>
 
-      {/* Backdrop overlay - mobile only */}
       {mobileOpen && (
         <div
           onClick={() => setMobileOpen(false)}
@@ -149,7 +157,6 @@ export default function Sidebar({ user }: { user: User }) {
         />
       )}
 
-      {/* Sidebar — desktop: always visible, mobile: slide-in drawer */}
       <aside
         className={`
           bg-brand-ink min-h-screen flex flex-col flex-shrink-0
