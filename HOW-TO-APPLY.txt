@@ -1,0 +1,54 @@
+DEBTREX — Budget Allocations Feature
+=====================================
+
+WHAT THIS ADDS
+==============
+A complete UI for setting monthly budget allocations.
+
+  Path: /budget/allocations
+
+You can:
+  - Pick any month (Previous/Next arrows)
+  - Add categories (Marketing, Software, Salaries, Rent, etc.)
+  - Set the allocated amount for each
+  - See real-time spent vs allocated for each category
+  - Copy last month's budget to this month with one click
+  - Edit and save each row individually
+  - Delete a row to remove that category's budget for the month
+
+After you set allocations here, the main Budget Dashboard automatically
+shows progress bars per category and triggers the "over budget" warnings.
+
+A new "Set Monthly Budget" button on the main Budget Dashboard takes
+you to this page.
+
+FILES IN THIS PATCH
+====================
+NEW:
+  app/budget/allocations/page.tsx
+  app/budget/allocations/BudgetAllocations.tsx
+  app/api/budgets/route.ts
+  app/api/budgets/[id]/route.ts
+  app/api/budgets/copy-previous/route.ts
+
+UPDATED:
+  app/budget/BudgetDashboard.tsx   (adds "Set Monthly Budget" button)
+
+HOW TO APPLY
+============
+1. Drop these files into your project, preserving the folder structure
+2. Stop dev server (Ctrl+C), then:  npm run dev
+3. Hard-refresh Chrome (Ctrl+Shift+R)
+4. Click Budget in sidebar -> Click "Set Monthly Budget" button
+
+NO new dependencies needed. No database changes needed -- the budgets
+table from the original schema already supports this.
+
+USING IT (FIRST TIME)
+======================
+1. Go to /budget
+2. Click "Set Monthly Budget"
+3. Click "Add Category" -> pick Marketing -> enter 5000 -> Save
+4. Click "Add Category" -> pick Software -> enter 1500 -> Save
+5. Repeat for each category you want to track
+6. Go back to /budget -- you'll now see your allocations vs spent
