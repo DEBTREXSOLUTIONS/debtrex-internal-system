@@ -1,130 +1,150 @@
-DEBTREX — MULTI-AGENT TWILIO NUMBERS
-=====================================
+DEBTREX — BROWSER-BASED CALLING (TWILIO VOICE SDK)
+====================================================
 
-WHAT THIS FIXES
-===============
+WHAT CHANGES
+============
 
-Your original question: "shouldn't each agent have their own number?"
+OLD: Click Call Now → your personal phone rings → you pick up →
+     Twilio bridges to lead → talk on your phone.
+     
+NEW: Click Call Now → browser asks for mic permission → full-screen
+     dialer opens → lead's phone rings → talk through your computer
+     mic/speakers. No personal phone needed.
 
-Answer: With this patch, YES. Each agent on your Twilio account
-can be assigned their own Twilio phone number, used as the caller
-ID when THEY make outbound calls. Leads see different numbers
-depending on which agent called.
-
-If an agent has NO assigned number, they use the company default
-(TWILIO_PHONE_NUMBER env var).
-
-ALSO INCLUDED:
-- "Call Now" button now always shows (when you have permission)
-  with a clear tooltip explaining if it's disabled
-- Yellow banner appears explaining exactly what's missing
-- New /api/twilio/diagnostics endpoint for debugging config
+The lead still sees your Twilio number as caller ID. Everything else
+(recording, call logs, status tracking) works the same.
 
 
-HOW IT WORKS NOW
-================
+READ THE GUIDE FIRST
+====================
 
-Agent makes a call:
-  1. Agent clicks "Call Now" on a contact
-  2. Server looks up the agent's assigned Twilio number
-     (or falls back to TWILIO_PHONE_NUMBER if none assigned)
-  3. Twilio rings the agent's PERSONAL phone first
-     (from Settings → Profile)
-  4. Agent picks up
-  5. Twilio dials the lead and bridges them
-  6. Lead sees the agent's assigned Twilio number as caller ID
-  7. Call recorded, logged, etc.
+  DEBTREX-Browser-Calling-Setup-Guide.docx
 
-The agent's PERSONAL phone is never exposed to the lead.
+It walks through the 15-minute Twilio setup (API Key + TwiML App).
+You MUST complete that setup before this patch works.
 
 
-STEPS TO APPLY
-==============
+WHAT YOU NEED FROM TWILIO (3 new things)
+=========================================
 
-STEP 1 — RUN THE DATABASE MIGRATION
+  TWILIO_API_KEY        (starts with SK...)
+  TWILIO_API_SECRET     (long random string)
+  TWILIO_TWIML_APP_SID  (starts with AP...)
 
-  Open Supabase → SQL Editor → New query
-  Paste contents of database/migration-004.sql
-  Click Run
+Steps to create them are in Sections 2 and 3 of the setup guide.
+Takes about 15 minutes total in the Twilio Console.
 
-  This adds 4 columns to profiles table:
-    - twilio_phone_number    (the Twilio number assigned to this agent)
-    - twilio_phone_label     (cosmetic label like "NYC line")
-    - twilio_phone_assigned_at
-    - twilio_phone_assigned_by
 
-STEP 2 — DROP IN THE FILES (10 files)
+HOW TO APPLY THE CODE
+======================
 
-  database/migration-004.sql                          [NEW]
-  lib/twilio.ts                                       [REPLACE]
-  components/Sidebar.tsx                              [REPLACE]
-  app/pipeline/ContactDetail.tsx                      [REPLACE]
-  app/twilio-numbers/page.tsx                         [NEW]
-  app/twilio-numbers/TwilioNumbersManager.tsx         [NEW]
-  app/api/twilio/call/route.ts                        [REPLACE]
-  app/api/twilio/twiml/dial/route.ts                  [REPLACE]
-  app/api/twilio/diagnostics/route.ts                 [NEW]
-  app/api/users/[id]/twilio-number/route.ts           [NEW]
+STEP 1 — UPDATE PACKAGE.JSON AND INSTALL DEPENDENCIES
 
-STEP 3 — RESTART AND ASSIGN NUMBERS
+  Replace your package.json with the one in this patch.
+  Then run:
+    npm install
+  
+  This adds two new packages:
+    - twilio (server SDK, for token generation)
+    - @twilio/voice-sdk (browser SDK, for in-browser calling)
 
-  npm run dev
-  Sign in as CEO
-  Sidebar → Twilio Numbers (new section)
+STEP 2 — DROP IN THE FILES (9 files)
 
-  You'll see:
-    - List of all numbers on your Twilio account (auto-loaded)
-    - List of all agents with their current assignments
-    - "Edit" button next to each agent
-      → Pick a Twilio number from the dropdown
-      → Give it a label like "NYC line" (optional)
-      → Save
+  package.json                                       [REPLACE]
+  middleware.ts                                      [REPLACE]
+  .env.example                                       [REPLACE]
+  lib/twilio-voice.ts                                [NEW]
+  components/BrowserDialer.tsx                       [NEW]
+  app/pipeline/ContactDetail.tsx                     [REPLACE]
+  app/api/twilio/voice-token/route.ts                [NEW]
+  app/api/twilio/voice-twiml/route.ts                [NEW]
+  app/api/twilio/log-browser-call/route.ts           [NEW]
 
-STEP 4 — REQUIRED PER AGENT
+STEP 3 — ADD ENV VARS
 
-  Each agent must ALSO have their PERSONAL phone in
-  Settings → Profile. This is the phone Twilio rings when they
-  click "Call Now". Without it, they can't make calls.
+  Local (.env.local):
+    TWILIO_API_KEY=SK...
+    TWILIO_API_SECRET=...
+    TWILIO_TWIML_APP_SID=AP...
 
-STEP 5 — PUSH TO PRODUCTION
+  Vercel (Settings → Environment Variables):
+    Add all 3 — check ALL THREE environment boxes (Production, Preview, Development)
+    Save each
+    REDEPLOY (Deployments → ⋯ → Redeploy)
+
+STEP 4 — CONFIGURE TWIML APP IN TWILIO CONSOLE
+
+  Console → Voice → Manage → TwiML Apps → your DEBTREX app
+  Set Request URL to:
+    https://debtrex-internal-system.vercel.app/api/twilio/voice-twiml
+  Save
+
+STEP 5 — TEST
+
+  Sign in to DEBTREX
+  Open any contact in /pipeline/sales
+  Click Call Now
+  When browser asks for mic permission, click Allow
+  Full-screen dialer opens
+  Lead's phone rings within 2-3 seconds
+  Talk through your computer
+  Click Hang Up when done
+
+STEP 6 — PUSH TO PRODUCTION
 
   git add .
-  git commit -m "Add per-agent Twilio numbers"
+  git commit -m "Add Twilio Voice SDK browser calling"
   git push
 
 
-HOW TO BUY MORE TWILIO NUMBERS
-==============================
+THE OLD CODE STILL WORKS
+========================
 
-If you don't have enough numbers for all your agents:
+The old phone-bridge endpoints (/api/twilio/call, /api/twilio/twiml/dial)
+are still in the codebase. They're not used by the Call Now button
+anymore, but if you want to switch back, you can revert ContactDetail.tsx.
 
-  1. Go to console.twilio.com → Phone Numbers → Buy a number
-  2. Pick area codes matching your call regions (better answer rates)
-  3. Buy them
-  4. Return to /twilio-numbers in your app
-  5. The new numbers appear automatically
-  6. Assign them to agents
+If you don't want them at all, you can delete:
+  app/api/twilio/call/
+  app/api/twilio/twiml/
 
-Cost: ~$1.15/month per local US number.
+But leaving them doesn't hurt.
 
 
-TROUBLESHOOTING
-===============
+WHAT AGENTS NEED ON THEIR END
+=============================
 
-"Call Now button still hidden"
-  - Check yellow banner at top of contact page — it tells you exactly what's missing
-  - Visit /api/twilio/diagnostics in your browser (as CEO/Owner) for full config status
+- A modern Chrome / Edge / Firefox browser
+- A working microphone (built-in or USB)
+- Microphone permission granted to the DEBTREX site (one-time)
+- That's it. No personal phone. No app to install.
 
-"Number is already assigned to another agent"
-  - Each Twilio number can only be assigned to ONE agent at a time
-  - Unassign it from the current agent first
 
-"Agent's call ID shows the wrong number"
-  - Make sure you assigned a number on the /twilio-numbers page
-  - Save changes — refresh the contact page
-  - First call after assignment uses the new caller ID
+COSTS
+=====
 
-"Twilio Numbers page shows '0 numbers on account'"
-  - Twilio env vars (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN) might be wrong
-  - Restart dev server after changing env vars
-  - Visit /api/twilio/diagnostics to verify
+Browser calling costs the SAME as phone bridging:
+  ~$0.014 per minute outbound (US)
+  ~$0.0025 per minute recording
+  
+The Voice SDK itself is free. Only call minutes cost money.
+
+
+TROUBLESHOOTING (also in the guide)
+====================================
+
+"Voice SDK not configured" → env vars missing on Vercel, redeploy
+"Initializing forever" → mic permission denied; check lock icon
+"Ringing but lead never rings" → TwiML App Request URL wrong
+"Call connects but no audio" → wrong mic selected; check OS settings
+"Account not allowed to call X" → Twilio code 21216, can't call your own numbers
+
+
+WHY MULTIPLE TWILIO ACCOUNTS WEREN'T NEEDED
+============================================
+
+You only have ONE Twilio account. Each agent gets their own
+"identity" inside that account, which is their user ID in DEBTREX.
+Twilio doesn't see them as separate users — but the system uses
+the identity to look up which Twilio number to use as their caller
+ID. So one Twilio account, many agents, different caller IDs.

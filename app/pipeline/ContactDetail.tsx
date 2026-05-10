@@ -7,6 +7,7 @@ import {
   Calendar, Clock, Edit3, Trash2, Save, X, AlertCircle, CheckCircle,
   Pin, MessageSquare, FileText, User, PhoneOff, History, ExternalLink
 } from 'lucide-react';
+import BrowserDialer from '@/components/BrowserDialer';
 
 const MANAGEMENT_STATUSES = [
   { value: 'new', label: 'New', color: 'gray' },
@@ -224,19 +225,22 @@ export default function ContactDetail({
 
         {/* Action buttons */}
         <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-100">
-          {/* Call Now — shows reason when disabled */}
-          {permissions.call && (
+          {/* Browser-based Call Now button */}
+          {permissions.call && contact.phone && (
+            <BrowserDialer
+              contactId={contact.id}
+              contactName={contact.full_name}
+              contactPhone={contact.phone}
+              onCallEnded={() => router.refresh()}
+            />
+          )}
+          {permissions.call && !contact.phone && (
             <button
-              onClick={startCall}
-              disabled={callingNow || !contact.phone || !twilioConfigured}
+              disabled
               className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-              title={
-                !contact.phone ? 'Add a phone number to this contact first' :
-                !twilioConfigured ? 'Twilio not configured — see DEBTREX-Twilio-Setup-Guide.docx' :
-                'Call this contact through Twilio'
-              }
+              title="Add a phone number to this contact first"
             >
-              <PhoneCall size={14} /> {callingNow ? 'Calling...' : 'Call Now'}
+              <PhoneCall size={14} /> Call Now
             </button>
           )}
           {permissions.log_call && (
