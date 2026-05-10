@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { cache } from 'react';
 import { supabaseAdmin } from './supabase';
 
 // Re-export shared role helpers/constants so existing server imports keep working
@@ -83,7 +84,9 @@ export function clearSessionCookieOnResponse(response: NextResponse): NextRespon
   return response;
 }
 
-export async function getCurrentUser(): Promise<User | null> {
+// Wrapped in React cache() so multiple calls within the same request
+// share the result. Speeds up page renders significantly.
+export const getCurrentUser = cache(async function getCurrentUserUncached(): Promise<User | null> {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
@@ -102,4 +105,4 @@ export async function getCurrentUser(): Promise<User | null> {
   } catch {
     return null;
   }
-}
+});

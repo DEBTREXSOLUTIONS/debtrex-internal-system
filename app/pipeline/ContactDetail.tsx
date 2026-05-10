@@ -42,15 +42,17 @@ const CALL_OUTCOMES = [
 ];
 
 export default function ContactDetail({
-  contact: initialContact, type, callLogs, notes, users, currentUser, permissions, twilioConfigured,
+  contact: initialContact, type, callLogs, notes, users, collaborators: initialCollabs, currentUser, permissions, twilioConfigured,
 }: any) {
   const router = useRouter();
   const [contact, setContact] = useState(initialContact);
+  const [collaborators, setCollaborators] = useState(initialCollabs || []);
+  const [showCollabModal, setShowCollabModal] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ ...initialContact });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [activeTab, setActiveTab] = useState<'calls' | 'notes' | 'info'>('calls');
+  const [activeTab, setActiveTab] = useState<'calls' | 'notes' | 'info' | 'team'>('calls');
   const [callingNow, setCallingNow] = useState(false);
   const [showLogCall, setShowLogCall] = useState(false);
 
@@ -377,6 +379,9 @@ export default function ContactDetail({
         <Tab active={activeTab === 'notes'} onClick={() => setActiveTab('notes')} icon={MessageSquare}>
           Notes {notes.length > 0 && `(${notes.length})`}
         </Tab>
+        <Tab active={activeTab === 'team'} onClick={() => setActiveTab('team')} icon={User}>
+          Team {collaborators.length > 0 && `(${collaborators.length})`}
+        </Tab>
         <Tab active={activeTab === 'info'} onClick={() => setActiveTab('info')} icon={FileText}>
           Info
         </Tab>
@@ -395,8 +400,33 @@ export default function ContactDetail({
       {activeTab === 'notes' && (
         <NotesPanel contactId={contact.id} notes={notes} currentUser={currentUser} />
       )}
+      {activeTab === 'team' && (
+        <TeamPanel
+          contact={contact}
+          collaborators={collaborators}
+          users={users}
+          permissions={permissions}
+          onAdd={() => setShowCollabModal(true)}
+          onRemoved={() => router.refresh()}
+        />
+      )}
       {activeTab === 'info' && (
         <InfoPanel contact={contact} type={type} fmt={fmt} />
+      )}
+
+      {/* Collaborators modal */}
+      {showCollabModal && (
+        <AddCollaboratorsModal
+          contactId={contact.id}
+          users={users}
+          existingCollabIds={new Set([
+            contact.assigned_to,
+            contact.created_by,
+            ...collaborators.map((c: any) => c.user?.id),
+          ].filter(Boolean))}
+          onClose={() => setShowCollabModal(false)}
+          onAdded={() => { setShowCollabModal(false); router.refresh(); }}
+        />
       )}
 
       {/* Log Call modal */}
@@ -488,7 +518,7 @@ function CallLogPanel({ callLogs, permissions, twilioConfigured, onLogCall }: an
             </div>
             {c.notes && <p className="text-sm text-gray-700 whitespace-pre-wrap">{c.notes}</p>}
             {c.twilio_recording_url && (
-              <audio controls className="mt-2 w-full max-w-md" src={c.twilio_recording_url}>
+              <audio controls className="mt-2 w-full max-w-md" src={`/api/twilio/recordings/${c.id}`}>
                 Your browser does not support audio playback.
               </audio>
             )}
@@ -752,6 +782,237 @@ function LogCallModal({ contactId, onClose, onLogged }: any) {
             <button type="button" onClick={onClose} className="btn-outline">Cancel</button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+function TeamPanel({ contact, collaborators, users, permissions, onAdd, onRemoved }: any) {
+  const router = useRouter();
+  const owner = users.find((u: any) => u.id === contact.assigned_to);
+  const creator = users.find((u: any) => u.id === contact.created_by);
+
+  async function removeCollaborator(collabId: string, name: string) {
+    if (!confirm(`Remove ${name} from this contact's team?`)) return;
+    await fetch(`/api/pipeline/collaborators/${collabId}`, { method: 'DELETE' });
+    onRemoved?.();
+  }
+
+  return (
+    <>
+      <div className="card p-4 sm:p-6 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h3 className="font-condensed text-lg font-black uppercase">Team on This Contact</h3>
+          <p className="text-xs text-gray-500 mt-1">
+            Everyone here can view, edit, and call this contact.
+          </p>
+        </div>
+        {permissions.assign && (
+          <button onClick={onAdd} className="btn-primary self-start sm:self-auto">
+            <Plus size={14} /> Add Team Member
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        {/* Owner / Assigned */}
+        {owner && (
+          <TeamMemberRow
+            user={owner}
+            badge="Owner"
+            badgeColor="badge-red"
+            note="Primary contact owner"
+            removable={false}
+          />
+        )}
+        {/* Creator (if different from owner) */}
+        {creator && creator.id !== contact.assigned_to && (
+          <TeamMemberRow
+            user={creator}
+            badge="Created by"
+            badgeColor="badge-blue"
+            note="Originally added this contact"
+            removable={false}
+          />
+        )}
+        {/* Collaborators */}
+        {collaborators.map((c: any) => (
+          <TeamMemberRow
+            key={c.id}
+            user={c.user}
+            badge={c.collaboration_role === 'observer' ? 'Observer' : 'Collaborator'}
+            badgeColor={c.collaboration_role === 'observer' ? 'badge-gray' : 'badge-green'}
+            removable={permissions.assign}
+            onRemove={() => removeCollaborator(c.id, c.user?.full_name)}
+          />
+        ))}
+        {collaborators.length === 0 && !creator && !owner && (
+          <div className="card p-8 text-center">
+            <User size={28} className="mx-auto text-gray-300 mb-3" />
+            <p className="text-sm text-gray-500">No team members yet.</p>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function TeamMemberRow({ user, badge, badgeColor, note, removable, onRemove }: any) {
+  if (!user) return null;
+  const initials = (user.full_name || '?').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+  return (
+    <div className="card p-3 sm:p-4 flex items-center gap-3">
+      <div className="w-10 h-10 rounded-full bg-brand-red text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+        {initials}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-semibold truncate">{user.full_name}</span>
+          <span className={`badge ${badgeColor}`}>{badge}</span>
+        </div>
+        <div className="text-xs text-gray-500 truncate">
+          {user.email} · {user.role}
+          {note && ` · ${note}`}
+        </div>
+      </div>
+      {removable && (
+        <button
+          onClick={onRemove}
+          className="p-2 hover:bg-red-50 text-brand-red rounded transition-colors flex-shrink-0"
+          title="Remove"
+        >
+          <Trash2 size={14} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function AddCollaboratorsModal({ contactId, users, existingCollabIds, onClose, onAdded }: any) {
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [role, setRole] = useState<'collaborator' | 'observer'>('collaborator');
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+
+  const available = users.filter((u: any) =>
+    !existingCollabIds.has(u.id) &&
+    (search === '' ||
+      u.full_name.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase()) ||
+      u.role.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  function toggle(id: string) {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (selectedIds.length === 0) { setErr('Select at least one team member'); return; }
+    setLoading(true); setErr('');
+    try {
+      const res = await fetch(`/api/pipeline/${contactId}/collaborators`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_ids: selectedIds, collaboration_role: role }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error);
+      onAdded();
+    } catch (e: any) { setErr(e.message); }
+    finally { setLoading(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] flex flex-col">
+        <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
+          <h3 className="font-condensed text-xl font-black uppercase">Add Team Members</h3>
+          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
+        </div>
+
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+          {err && (
+            <div className="mb-3 p-2 bg-brand-red-pale text-brand-red text-sm rounded flex items-center gap-2">
+              <AlertCircle size={14} /> {err}
+            </div>
+          )}
+
+          <div className="mb-3">
+            <label className="label">Access Level</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setRole('collaborator')}
+                className={`px-3 py-2 text-sm font-bold uppercase tracking-wider rounded border-2 ${
+                  role === 'collaborator' ? 'border-brand-red bg-brand-red-pale text-brand-red' : 'border-gray-200 text-gray-600'
+                }`}
+              >
+                Collaborator
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('observer')}
+                className={`px-3 py-2 text-sm font-bold uppercase tracking-wider rounded border-2 ${
+                  role === 'observer' ? 'border-brand-red bg-brand-red-pale text-brand-red' : 'border-gray-200 text-gray-600'
+                }`}
+              >
+                Observer
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              {role === 'collaborator' ? 'Can view, edit, call, and add notes' : 'Read-only access'}
+            </p>
+          </div>
+
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by name, email, role..."
+            className="input mb-3"
+          />
+
+          <div className="border border-gray-200 rounded-md max-h-72 overflow-y-auto">
+            {available.length === 0 ? (
+              <p className="p-4 text-center text-sm text-gray-500">
+                {search ? 'No matches' : 'No more team members to add'}
+              </p>
+            ) : (
+              available.map((u: any) => {
+                const checked = selectedIds.includes(u.id);
+                return (
+                  <label
+                    key={u.id}
+                    className={`flex items-center gap-3 p-2.5 border-b border-gray-100 last:border-0 cursor-pointer transition-colors ${
+                      checked ? 'bg-brand-red-pale' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggle(u.id)}
+                      className="w-4 h-4 accent-brand-red flex-shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold truncate">{u.full_name}</div>
+                      <div className="text-xs text-gray-500 truncate">{u.email} · {u.role}</div>
+                    </div>
+                  </label>
+                );
+              })
+            )}
+          </div>
+          <p className="text-xs text-gray-500 mt-2">{selectedIds.length} selected</p>
+        </div>
+
+        <div className="p-4 sm:p-6 border-t border-gray-100 flex gap-2 flex-shrink-0">
+          <button onClick={submit} disabled={loading || selectedIds.length === 0} className="btn-primary flex-1 disabled:opacity-50">
+            {loading ? 'Adding...' : `Add ${selectedIds.length} member${selectedIds.length === 1 ? '' : 's'}`}
+          </button>
+          <button onClick={onClose} className="btn-outline">Cancel</button>
+        </div>
       </div>
     </div>
   );

@@ -161,7 +161,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
 // In-memory cache to avoid hitting DB on every check
 let permissionCache: Map<string, Map<string, boolean>> | null = null;
 let cacheLoadedAt = 0;
-const CACHE_TTL_MS = 60_000; // 1 minute
+const CACHE_TTL_MS = 300_000; // 5 minutes
 
 async function loadPermissions(): Promise<Map<string, Map<string, boolean>>> {
   if (permissionCache && Date.now() - cacheLoadedAt < CACHE_TTL_MS) {

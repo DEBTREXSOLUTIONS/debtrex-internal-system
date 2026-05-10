@@ -59,18 +59,32 @@ export default async function ContactDetailBase({ type, id }: Props) {
     .eq('is_active', true)
     .order('full_name');
 
+  // Collaborators on this contact
+  const { data: collaborators } = await supabaseAdmin
+    .from('pipeline_collaborators')
+    .select('id, collaboration_role, user:profiles(id, full_name, email, role)')
+    .eq('contact_id', id);
+
+  const [pEditAny, pDelete, pAssign, pCall, pLogCall] = await Promise.all([
+    hasPermission(user.role, 'pipeline.edit_any'),
+    hasPermission(user.role, 'pipeline.delete'),
+    hasPermission(user.role, 'pipeline.assign_to_anyone'),
+    hasPermission(user.role, 'call.make'),
+    hasPermission(user.role, 'call.log'),
+  ]);
+
   const permissions = {
-    edit_any: await hasPermission(user.role, 'pipeline.edit_any'),
-    delete: await hasPermission(user.role, 'pipeline.delete'),
-    assign: await hasPermission(user.role, 'pipeline.assign_to_anyone'),
-    call: await hasPermission(user.role, 'call.make'),
-    log_call: await hasPermission(user.role, 'call.log'),
+    edit_any: pEditAny, delete: pDelete, assign: pAssign,
+    call: pCall, log_call: pLogCall,
   };
 
   // Can this user edit?
+  // Either: has edit_any permission OR is owner/assigned OR is a collaborator
+  const isCollaborator = (collaborators || []).some((c: any) => c.user?.id === user.id);
   const canEdit = permissions.edit_any
     || contact.created_by === user.id
-    || contact.assigned_to === user.id;
+    || contact.assigned_to === user.id
+    || isCollaborator;
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -84,6 +98,7 @@ export default async function ContactDetailBase({ type, id }: Props) {
             callLogs={callLogs || []}
             notes={notes || []}
             users={users || []}
+            collaborators={collaborators || []}
             currentUser={user}
             permissions={{ ...permissions, edit: canEdit }}
             twilioConfigured={isTwilioConfigured()}

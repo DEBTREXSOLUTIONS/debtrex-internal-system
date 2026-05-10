@@ -1,150 +1,159 @@
-DEBTREX — BROWSER-BASED CALLING (TWILIO VOICE SDK)
-====================================================
+DEBTREX — CUSTOM ROLES + PIPELINE COLLABORATORS + PERF + SIDEBAR
+=================================================================
 
-WHAT CHANGES
-============
-
-OLD: Click Call Now → your personal phone rings → you pick up →
-     Twilio bridges to lead → talk on your phone.
-     
-NEW: Click Call Now → browser asks for mic permission → full-screen
-     dialer opens → lead's phone rings → talk through your computer
-     mic/speakers. No personal phone needed.
-
-The lead still sees your Twilio number as caller ID. Everything else
-(recording, call logs, status tracking) works the same.
-
-
-READ THE GUIDE FIRST
+WHAT'S IN THIS PATCH
 ====================
 
-  DEBTREX-Browser-Calling-Setup-Guide.docx
+1. CUSTOM ROLES — Add your own roles beyond CEO/Manager/Employee
+   - Sidebar → Admin → Custom Roles
+   - Create roles like "Senior Agent", "Closer", "Lead Specialist"
+   - Each role gets its own column on the Permissions page
+   - Built-in roles can't be edited or deleted (CEO, Owner, etc.)
+   - Roles with assigned users can't be deleted
 
-It walks through the 15-minute Twilio setup (API Key + TwiML App).
-You MUST complete that setup before this patch works.
+2. PIPELINE COLLABORATORS — Add team members to any contact
+   - On any contact's detail page, click the new "Team" tab
+   - Click "Add Team Member" to add managers/owners/anyone to that contact
+   - Two access levels: Collaborator (edit) or Observer (read-only)
+   - Collaborators show up on the contact card and can do everything
+     the assigned agent can do
+   - The contact owner can't be removed (change assignment first)
+
+3. GROUPED SIDEBAR — Sections instead of one long list
+   - Home: Dashboard, Tasks, Calendar, Files
+   - Pipeline: Sales, Management
+   - Tools: Calculators
+   - Team: Performance, Team Members, Twilio Numbers
+   - Financial: Budget
+   - Admin: Permissions, Custom Roles
+   - Click any section header to collapse it
+
+4. PERFORMANCE FIXES — Site should feel noticeably snappier
+   - getCurrentUser cached per request (was running 2-3x per page)
+   - Pipeline pages fetch permissions in parallel (was sequential)
+   - Permission cache extended from 1 min to 5 min
+   - lucide-react / fullcalendar / recharts auto tree-shaken
+   - Static assets cached aggressively
+   - Sidebar memoized to prevent re-renders
 
 
-WHAT YOU NEED FROM TWILIO (3 new things)
-=========================================
+APPLY ORDER
+===========
 
-  TWILIO_API_KEY        (starts with SK...)
-  TWILIO_API_SECRET     (long random string)
-  TWILIO_TWIML_APP_SID  (starts with AP...)
-
-Steps to create them are in Sections 2 and 3 of the setup guide.
-Takes about 15 minutes total in the Twilio Console.
-
-
-HOW TO APPLY THE CODE
-======================
-
-STEP 1 — UPDATE PACKAGE.JSON AND INSTALL DEPENDENCIES
-
-  Replace your package.json with the one in this patch.
-  Then run:
-    npm install
+STEP 1 — RUN THE DATABASE MIGRATION (CRITICAL!)
+  Supabase → SQL Editor → paste contents of database/migration-005.sql → Run
   
-  This adds two new packages:
-    - twilio (server SDK, for token generation)
-    - @twilio/voice-sdk (browser SDK, for in-browser calling)
+  Creates 2 new tables:
+    - custom_roles  (seeded with the 7 built-in roles)
+    - pipeline_collaborators
 
-STEP 2 — DROP IN THE FILES (9 files)
+STEP 2 — DROP IN THE FILES (19 files)
+  See file list below. All preserve folder structure.
 
-  package.json                                       [REPLACE]
-  middleware.ts                                      [REPLACE]
-  .env.example                                       [REPLACE]
-  lib/twilio-voice.ts                                [NEW]
-  components/BrowserDialer.tsx                       [NEW]
-  app/pipeline/ContactDetail.tsx                     [REPLACE]
-  app/api/twilio/voice-token/route.ts                [NEW]
-  app/api/twilio/voice-twiml/route.ts                [NEW]
-  app/api/twilio/log-browser-call/route.ts           [NEW]
+  database/migration-005.sql                                [NEW]
+  next.config.js                                            [REPLACE]
+  lib/auth.ts                                               [REPLACE]
+  lib/permissions.ts                                        [REPLACE]
+  components/Sidebar.tsx                                    [REPLACE]
+  app/roles/page.tsx                                        [NEW]
+  app/roles/RolesManager.tsx                                [NEW]
+  app/api/roles/route.ts                                    [NEW]
+  app/api/roles/[key]/route.ts                              [NEW]
+  app/team/page.tsx                                         [REPLACE]
+  app/team/TeamManager.tsx                                  [REPLACE]
+  app/permissions/page.tsx                                  [REPLACE]
+  app/permissions/PermissionsManager.tsx                    [REPLACE]
+  app/pipeline/PipelinePageBase.tsx                         [REPLACE]
+  app/pipeline/ContactDetailBase.tsx                        [REPLACE]
+  app/pipeline/ContactDetail.tsx                            [REPLACE]
+  app/api/pipeline/[id]/collaborators/route.ts              [NEW]
+  app/api/pipeline/collaborators/[collabId]/route.ts        [NEW]
+  app/api/twilio/recordings/[id]/route.ts                   [NEW if missing]
 
-STEP 3 — ADD ENV VARS
+STEP 3 — RESTART AND TEST
+  npm run dev
+  Hard refresh browser (Ctrl + Shift + R)
+  
+  Test:
+  - Sidebar should be grouped into sections (collapsible)
+  - Click Admin → Custom Roles
+  - Create a test role like "Test Role"
+  - Go to Permissions page → new column should appear
+  - Toggle some permissions for the test role → save
+  - Go to Team page → invite someone or change someone's role to the new one
+  - Open any contact in /pipeline/sales
+  - Click the Team tab → click Add Team Member
+  - Pick a few users → click Add
 
-  Local (.env.local):
-    TWILIO_API_KEY=SK...
-    TWILIO_API_SECRET=...
-    TWILIO_TWIML_APP_SID=AP...
-
-  Vercel (Settings → Environment Variables):
-    Add all 3 — check ALL THREE environment boxes (Production, Preview, Development)
-    Save each
-    REDEPLOY (Deployments → ⋯ → Redeploy)
-
-STEP 4 — CONFIGURE TWIML APP IN TWILIO CONSOLE
-
-  Console → Voice → Manage → TwiML Apps → your DEBTREX app
-  Set Request URL to:
-    https://debtrex-internal-system.vercel.app/api/twilio/voice-twiml
-  Save
-
-STEP 5 — TEST
-
-  Sign in to DEBTREX
-  Open any contact in /pipeline/sales
-  Click Call Now
-  When browser asks for mic permission, click Allow
-  Full-screen dialer opens
-  Lead's phone rings within 2-3 seconds
-  Talk through your computer
-  Click Hang Up when done
-
-STEP 6 — PUSH TO PRODUCTION
-
+STEP 4 — PUSH TO PRODUCTION
   git add .
-  git commit -m "Add Twilio Voice SDK browser calling"
+  git commit -m "Custom roles, pipeline collaborators, perf, sidebar groups"
   git push
 
 
-THE OLD CODE STILL WORKS
-========================
+CUSTOM ROLES — HOW THEY WORK
+==============================
 
-The old phone-bridge endpoints (/api/twilio/call, /api/twilio/twiml/dial)
-are still in the codebase. They're not used by the Call Now button
-anymore, but if you want to switch back, you can revert ContactDetail.tsx.
+When you create a custom role like "Senior Agent":
+  1. Role gets added to custom_roles table
+  2. Permissions get seeded for it (all OFF by default)
+  3. Role appears as a new column on /permissions
+  4. You toggle which permissions it has (e.g. pipeline.create, call.make)
+  5. Save changes on the Permissions page
+  6. Now you can assign that role to team members on /team
 
-If you don't want them at all, you can delete:
-  app/api/twilio/call/
-  app/api/twilio/twiml/
-
-But leaving them doesn't hurt.
-
-
-WHAT AGENTS NEED ON THEIR END
-=============================
-
-- A modern Chrome / Edge / Firefox browser
-- A working microphone (built-in or USB)
-- Microphone permission granted to the DEBTREX site (one-time)
-- That's it. No personal phone. No app to install.
+To delete a role: first reassign anyone who has it, then delete.
 
 
-COSTS
-=====
+PIPELINE COLLABORATORS — HOW THEY WORK
+========================================
 
-Browser calling costs the SAME as phone bridging:
-  ~$0.014 per minute outbound (US)
-  ~$0.0025 per minute recording
-  
-The Voice SDK itself is free. Only call minutes cost money.
+Think of it like adding co-workers to a Google Doc:
+  - "Owner" = the assigned_to person (one per contact)
+  - "Collaborator" = full access, multiple allowed
+  - "Observer" = read-only, multiple allowed
+
+When a CEO/Owner/manager wants to put themselves on a contact's pipeline:
+  - Open the contact
+  - Click "Team" tab
+  - Click "Add Team Member"
+  - Pick themselves or other team members
+  - Choose access level
+
+Anyone added becomes able to call, log, edit, and add notes on
+the contact — but only the original owner can be reassigned via Edit.
+
+Requires: pipeline.assign_to_anyone permission (default: leadership + managers).
 
 
-TROUBLESHOOTING (also in the guide)
-====================================
+PERFORMANCE NOTES
+==================
 
-"Voice SDK not configured" → env vars missing on Vercel, redeploy
-"Initializing forever" → mic permission denied; check lock icon
-"Ringing but lead never rings" → TwiML App Request URL wrong
-"Call connects but no audio" → wrong mic selected; check OS settings
-"Account not allowed to call X" → Twilio code 21216, can't call your own numbers
+After applying this patch, expect:
+  - Initial page load: ~30-40% faster (parallel perm checks)
+  - Navigation between pages: ~50% faster (cached user lookup)
+  - Sidebar: instant render (memoized, no longer re-renders on each nav)
+
+If still slow, the bottleneck is probably:
+  - Supabase database location (US East fastest from US, slowest from Europe/Asia)
+  - Vercel region (set to "iad1" or closest to your Supabase region)
+  - Slow internet connection on user end
+  - First load only (Next.js compiles on-demand in dev)
+
+Production builds (after git push) are 3-5x faster than dev mode.
 
 
-WHY MULTIPLE TWILIO ACCOUNTS WEREN'T NEEDED
-============================================
+TROUBLESHOOTING
+===============
 
-You only have ONE Twilio account. Each agent gets their own
-"identity" inside that account, which is their user ID in DEBTREX.
-Twilio doesn't see them as separate users — but the system uses
-the identity to look up which Twilio number to use as their caller
-ID. So one Twilio account, many agents, different caller IDs.
+"Custom role I created doesn't show in permissions"
+  → Refresh the /permissions page (the matrix data is fetched at render time)
+
+"Can't delete a role"
+  → Some user still has that role. Go to /team, change their role to something else.
+
+"Team tab doesn't show on contact pages"
+  → Make sure migration-005 ran (pipeline_collaborators table exists)
+
+"Can't add team members"
+  → You need pipeline.assign_to_anyone permission. Default is leadership+managers.

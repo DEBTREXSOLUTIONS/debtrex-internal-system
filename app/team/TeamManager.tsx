@@ -2,9 +2,17 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, X, AlertCircle, UserPlus, Power, PowerOff, Shield } from 'lucide-react';
-import { ROLES } from '@/lib/roles';
 
-export default function TeamManager({ members, currentUser }: any) {
+export default function TeamManager({ members, currentUser, roles = [] }: any) {
+  const ROLES = roles.length > 0 ? roles : [
+    { value: 'ceo', label: 'CEO' },
+    { value: 'owner', label: 'Owner' },
+    { value: 'co-owner', label: 'Co-Owner' },
+    { value: 'manager', label: 'Manager' },
+    { value: 'employee', label: 'Employee' },
+    { value: 'accountant', label: 'Accountant' },
+    { value: 'viewer', label: 'Viewer' },
+  ];
   const router = useRouter();
   const [showInvite, setShowInvite] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);

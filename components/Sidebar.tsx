@@ -4,9 +4,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, CheckSquare, Calendar, FolderOpen, DollarSign,
   Users, Settings, LogOut, Menu, X, Trophy, Calculator, UserCheck,
-  Building2, Phone, Shield
+  Building2, Phone, Shield, ChevronDown, ChevronRight
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 
 interface User {
   id: string;
@@ -15,16 +15,28 @@ interface User {
   role: string;
 }
 
-// Permission map passed from server
 interface SidebarPermissions {
   [key: string]: boolean;
 }
 
-export default function Sidebar({ user, permissions = {} }: { user: User; permissions?: SidebarPermissions }) {
+interface NavItem {
+  href: string;
+  label: string;
+  icon: any;
+  show: boolean;
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+function Sidebar({ user, permissions = {} }: { user: User; permissions?: SidebarPermissions }) {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
@@ -34,7 +46,6 @@ export default function Sidebar({ user, permissions = {} }: { user: User; permis
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
-  // Use permission map if provided, otherwise fall back to role-based defaults
   const can = (key: string, fallback: boolean) =>
     Object.keys(permissions).length > 0 ? !!permissions[key] : fallback;
 
@@ -42,20 +53,61 @@ export default function Sidebar({ user, permissions = {} }: { user: User; permis
   const isManager = user.role === 'manager';
   const canEditBudget = ['ceo', 'owner', 'co-owner', 'accountant'].includes(user.role);
 
-  const navItems = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard, show: can('section.dashboard', true) },
-    { href: '/tasks', label: 'Tasks', icon: CheckSquare, show: can('section.tasks', true) },
-    { href: '/calendar', label: 'Calendar', icon: Calendar, show: can('section.calendar', true) },
-    { href: '/files', label: 'Files', icon: FolderOpen, show: can('section.files', true) },
-    { href: '/calculators', label: 'Calculators', icon: Calculator, show: can('section.calculators', user.role !== 'viewer') },
-    { href: '/pipeline/management', label: 'Management', icon: Building2, show: can('section.pipeline_management', isLeadership) },
-    { href: '/pipeline/sales', label: 'Sales', icon: Phone, show: can('section.pipeline_sales', user.role !== 'viewer' && user.role !== 'accountant') },
-    { href: '/performance', label: 'Performance', icon: Trophy, show: can('section.performance', isLeadership || isManager) },
-    { href: '/budget', label: 'Budget', icon: DollarSign, show: can('section.budget', canEditBudget) },
-    { href: '/team', label: 'Team', icon: Users, show: can('section.team', isLeadership) },
-    { href: '/twilio-numbers', label: 'Twilio Numbers', icon: Phone, show: isLeadership },
-    { href: '/permissions', label: 'Permissions', icon: Shield, show: can('permissions.manage', isLeadership) },
+  // ─── Grouped Navigation ───
+  const groups: NavGroup[] = [
+    {
+      label: 'Home',
+      items: [
+        { href: '/', label: 'Dashboard', icon: LayoutDashboard, show: can('section.dashboard', true) },
+        { href: '/tasks', label: 'Tasks', icon: CheckSquare, show: can('section.tasks', true) },
+        { href: '/calendar', label: 'Calendar', icon: Calendar, show: can('section.calendar', true) },
+        { href: '/files', label: 'Files', icon: FolderOpen, show: can('section.files', true) },
+      ],
+    },
+    {
+      label: 'Pipeline',
+      items: [
+        { href: '/pipeline/sales', label: 'Sales', icon: Phone, show: can('section.pipeline_sales', user.role !== 'viewer' && user.role !== 'accountant') },
+        { href: '/pipeline/management', label: 'Management', icon: Building2, show: can('section.pipeline_management', isLeadership) },
+      ],
+    },
+    {
+      label: 'Tools',
+      items: [
+        { href: '/calculators', label: 'Calculators', icon: Calculator, show: can('section.calculators', user.role !== 'viewer') },
+      ],
+    },
+    {
+      label: 'Team',
+      items: [
+        { href: '/performance', label: 'Performance', icon: Trophy, show: can('section.performance', isLeadership || isManager) },
+        { href: '/team', label: 'Team Members', icon: Users, show: can('section.team', isLeadership) },
+        { href: '/twilio-numbers', label: 'Twilio Numbers', icon: Phone, show: isLeadership },
+      ],
+    },
+    {
+      label: 'Financial',
+      items: [
+        { href: '/budget', label: 'Budget', icon: DollarSign, show: can('section.budget', canEditBudget) },
+      ],
+    },
+    {
+      label: 'Admin',
+      items: [
+        { href: '/permissions', label: 'Permissions', icon: Shield, show: can('permissions.manage', isLeadership) },
+        { href: '/roles', label: 'Custom Roles', icon: UserCheck, show: isLeadership },
+      ],
+    },
   ];
+
+  // Filter out groups with no visible items
+  const visibleGroups = groups
+    .map(g => ({ ...g, items: g.items.filter(i => i.show) }))
+    .filter(g => g.items.length > 0);
+
+  function toggleGroup(label: string) {
+    setCollapsed(prev => ({ ...prev, [label]: !prev[label] }));
+  }
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -67,12 +119,12 @@ export default function Sidebar({ user, permissions = {} }: { user: User; permis
 
   const sidebarContent = (
     <>
-      <div className="p-5 border-b border-white/10 flex items-center justify-between">
-        <Link href="/" className="block">
-          <div className="font-condensed text-2xl font-black text-white tracking-tight">
+      <div className="p-4 border-b border-white/10 flex items-center justify-between flex-shrink-0">
+        <Link href="/" prefetch={false} className="block">
+          <div className="font-condensed text-2xl font-black text-white tracking-tight leading-none">
             DEBT<span className="text-brand-red">REX</span>
           </div>
-          <div className="text-[10px] font-bold tracking-[0.25em] uppercase text-white/40">
+          <div className="text-[9px] font-bold tracking-[0.25em] uppercase text-white/40 mt-1">
             Internal System
           </div>
         </Link>
@@ -81,50 +133,79 @@ export default function Sidebar({ user, permissions = {} }: { user: User; permis
         </button>
       </div>
 
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {navItems.filter(i => i.show).map(item => {
-          const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-          const Icon = item.icon;
+      {/* Grouped nav */}
+      <nav className="flex-1 py-2 overflow-y-auto">
+        {visibleGroups.map(group => {
+          const isCollapsed = !!collapsed[group.label];
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium transition-colors ${
-                active ? 'bg-brand-red text-white shadow-red' : 'text-white/60 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Icon size={17} />
-              {item.label}
-            </Link>
+            <div key={group.label} className="mb-1">
+              <button
+                onClick={() => toggleGroup(group.label)}
+                className="w-full px-4 py-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.15em] text-white/40 hover:text-white/70 transition-colors"
+              >
+                {group.label}
+                {isCollapsed
+                  ? <ChevronRight size={12} className="opacity-60" />
+                  : <ChevronDown size={12} className="opacity-60" />}
+              </button>
+              {!isCollapsed && (
+                <div className="px-2 space-y-0.5">
+                  {group.items.map(item => {
+                    const active = pathname === item.href ||
+                      (item.href !== '/' && pathname.startsWith(item.href));
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        prefetch={false}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                          active
+                            ? 'bg-brand-red text-white shadow-red'
+                            : 'text-white/70 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <Icon size={16} className="flex-shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           );
         })}
 
-        {/* Sub-link for leadership: Manager Assignments under Performance */}
+        {/* Sub-link under Performance */}
         {can('performance.assign_managers', isLeadership) && pathname.startsWith('/performance') && (
-          <Link
-            href="/performance/assignments"
-            className={`flex items-center gap-3 px-3 py-2.5 ml-3 rounded-md text-xs font-medium transition-colors border-l-2 ${
-              pathname === '/performance/assignments'
-                ? 'border-brand-red text-white bg-white/5'
-                : 'border-white/10 text-white/50 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <UserCheck size={13} />
-            Manager Assignments
-          </Link>
+          <div className="px-2 mt-1">
+            <Link
+              href="/performance/assignments"
+              prefetch={false}
+              className={`flex items-center gap-2 px-3 py-2 ml-6 rounded-md text-xs font-medium transition-colors border-l-2 ${
+                pathname === '/performance/assignments'
+                  ? 'border-brand-red text-white bg-white/5'
+                  : 'border-white/10 text-white/50 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <UserCheck size={12} />
+              Manager Assignments
+            </Link>
+          </div>
         )}
       </nav>
 
-      <div className="p-3 border-t border-white/10">
+      <div className="border-t border-white/10 flex-shrink-0">
         <Link
           href="/settings"
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+          prefetch={false}
+          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-colors"
         >
-          <Settings size={16} /> Settings
+          <Settings size={15} /> Settings
         </Link>
       </div>
 
-      <div className="p-3 border-t border-white/10 bg-black/20">
+      <div className="p-3 border-t border-white/10 bg-black/20 flex-shrink-0">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-9 h-9 rounded-full bg-brand-red text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
             {initials}
@@ -174,3 +255,5 @@ export default function Sidebar({ user, permissions = {} }: { user: User; permis
     </>
   );
 }
+
+export default memo(Sidebar);

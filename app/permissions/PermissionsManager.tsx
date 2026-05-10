@@ -3,17 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, AlertCircle, CheckCircle, Shield, Lock, AlertTriangle } from 'lucide-react';
 
-const ROLE_DISPLAY = [
-  { value: 'ceo', label: 'CEO' },
-  { value: 'owner', label: 'Owner' },
-  { value: 'co-owner', label: 'Co-Owner' },
-  { value: 'manager', label: 'Manager' },
-  { value: 'employee', label: 'Employee' },
-  { value: 'accountant', label: 'Accountant' },
-  { value: 'viewer', label: 'Viewer' },
-];
-
-export default function PermissionsManager({ matrix: initialMatrix, groups, labels }: any) {
+export default function PermissionsManager({ matrix: initialMatrix, groups, labels, roles }: any) {
   const router = useRouter();
   const [matrix, setMatrix] = useState<any>(initialMatrix);
   const [dirty, setDirty] = useState(false);
@@ -140,7 +130,7 @@ export default function PermissionsManager({ matrix: initialMatrix, groups, labe
                     <th className="px-3 sm:px-4 py-2 text-left text-xs font-bold uppercase tracking-wider text-gray-600 sticky left-0 bg-gray-50/50">
                       Permission
                     </th>
-                    {ROLE_DISPLAY.map(r => (
+                    {roles.map(r => (
                       <th key={r.value} className="px-2 py-2 text-center text-xs font-bold uppercase tracking-wider text-gray-600">
                         {r.label}
                       </th>
@@ -153,7 +143,7 @@ export default function PermissionsManager({ matrix: initialMatrix, groups, labe
                     <td className="px-3 sm:px-4 py-2 sticky left-0 bg-gray-50">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Quick set:</span>
                     </td>
-                    {ROLE_DISPLAY.map(r => {
+                    {roles.map(r => {
                       const allOn = group.keys.every((k: string) => matrix[r.value]?.[k]);
                       const allOff = group.keys.every((k: string) => !matrix[r.value]?.[k]);
                       return (
@@ -187,7 +177,7 @@ export default function PermissionsManager({ matrix: initialMatrix, groups, labe
                         <div className="text-sm font-medium">{labels[key] || key}</div>
                         <div className="text-[10px] text-gray-400 font-mono">{key}</div>
                       </td>
-                      {ROLE_DISPLAY.map(r => {
+                      {roles.map(r => {
                         const enabled = !!matrix[r.value]?.[key];
                         const isLocked = (r.value === 'ceo' || r.value === 'owner') && key === 'permissions.manage';
                         return (

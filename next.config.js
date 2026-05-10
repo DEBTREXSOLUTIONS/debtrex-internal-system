@@ -2,14 +2,28 @@
 const nextConfig = {
   reactStrictMode: true,
   // Allow production builds to complete even with type errors.
-  // The dev server still shows them so you can fix them over time.
-  // Real runtime safety is provided by zod validation in API routes.
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Same for ESLint warnings
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  // Reduce client bundle size by tree-shaking these heavy imports
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@fullcalendar/core', 'date-fns', 'recharts'],
+  },
+  // Compress responses
+  compress: true,
+  // Cache static assets aggressively
+  async headers() {
+    return [
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+    ];
   },
   images: {
     remotePatterns: [

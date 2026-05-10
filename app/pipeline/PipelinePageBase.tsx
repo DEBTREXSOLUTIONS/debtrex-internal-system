@@ -39,15 +39,20 @@ export default async function PipelinePageBase({ type }: Props) {
 
   const { data: contacts } = await query;
 
-  // Permissions object for the client component
+  // Permissions object for the client component (parallel fetch for speed)
+  const [pCreate, pEditAny, pDelete, pAssign, pExport, pCall, pLogCall] = await Promise.all([
+    hasPermission(user.role, 'pipeline.create'),
+    hasPermission(user.role, 'pipeline.edit_any'),
+    hasPermission(user.role, 'pipeline.delete'),
+    hasPermission(user.role, 'pipeline.assign_to_anyone'),
+    hasPermission(user.role, 'pipeline.export'),
+    hasPermission(user.role, 'call.make'),
+    hasPermission(user.role, 'call.log'),
+  ]);
+
   const permissions = {
-    create: await hasPermission(user.role, 'pipeline.create'),
-    edit_any: await hasPermission(user.role, 'pipeline.edit_any'),
-    delete: await hasPermission(user.role, 'pipeline.delete'),
-    assign: await hasPermission(user.role, 'pipeline.assign_to_anyone'),
-    export: await hasPermission(user.role, 'pipeline.export'),
-    call: await hasPermission(user.role, 'call.make'),
-    log_call: await hasPermission(user.role, 'call.log'),
+    create: pCreate, edit_any: pEditAny, delete: pDelete,
+    assign: pAssign, export: pExport, call: pCall, log_call: pLogCall,
   };
 
   const title = type === 'management' ? 'Pipeline · Management' : 'Pipeline · Sales';
