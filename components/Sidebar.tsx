@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, CheckSquare, Calendar, FolderOpen, DollarSign,
-  Users, Settings, LogOut, Menu, X, Trophy, Calculator, UserCheck
+  Users, Settings, LogOut, Menu, X, Trophy, Calculator, UserCheck,
+  Building2, Phone, Shield
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -14,7 +15,12 @@ interface User {
   role: string;
 }
 
-export default function Sidebar({ user }: { user: User }) {
+// Permission map passed from server
+interface SidebarPermissions {
+  [key: string]: boolean;
+}
+
+export default function Sidebar({ user, permissions = {} }: { user: User; permissions?: SidebarPermissions }) {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -28,20 +34,26 @@ export default function Sidebar({ user }: { user: User }) {
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
+  // Use permission map if provided, otherwise fall back to role-based defaults
+  const can = (key: string, fallback: boolean) =>
+    Object.keys(permissions).length > 0 ? !!permissions[key] : fallback;
+
   const isLeadership = ['ceo', 'owner', 'co-owner'].includes(user.role);
   const isManager = user.role === 'manager';
   const canEditBudget = ['ceo', 'owner', 'co-owner', 'accountant'].includes(user.role);
-  const canUseCalculators = ['ceo', 'owner', 'co-owner', 'manager', 'employee', 'accountant'].includes(user.role);
 
   const navItems = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard, show: true },
-    { href: '/tasks', label: 'Tasks', icon: CheckSquare, show: true },
-    { href: '/calendar', label: 'Calendar', icon: Calendar, show: true },
-    { href: '/files', label: 'Files', icon: FolderOpen, show: true },
-    { href: '/calculators', label: 'Calculators', icon: Calculator, show: canUseCalculators },
-    { href: '/performance', label: 'Performance', icon: Trophy, show: isLeadership || isManager },
-    { href: '/budget', label: 'Budget', icon: DollarSign, show: canEditBudget },
-    { href: '/team', label: 'Team', icon: Users, show: isLeadership },
+    { href: '/', label: 'Dashboard', icon: LayoutDashboard, show: can('section.dashboard', true) },
+    { href: '/tasks', label: 'Tasks', icon: CheckSquare, show: can('section.tasks', true) },
+    { href: '/calendar', label: 'Calendar', icon: Calendar, show: can('section.calendar', true) },
+    { href: '/files', label: 'Files', icon: FolderOpen, show: can('section.files', true) },
+    { href: '/calculators', label: 'Calculators', icon: Calculator, show: can('section.calculators', user.role !== 'viewer') },
+    { href: '/pipeline/management', label: 'Management', icon: Building2, show: can('section.pipeline_management', isLeadership) },
+    { href: '/pipeline/sales', label: 'Sales', icon: Phone, show: can('section.pipeline_sales', user.role !== 'viewer' && user.role !== 'accountant') },
+    { href: '/performance', label: 'Performance', icon: Trophy, show: can('section.performance', isLeadership || isManager) },
+    { href: '/budget', label: 'Budget', icon: DollarSign, show: can('section.budget', canEditBudget) },
+    { href: '/team', label: 'Team', icon: Users, show: can('section.team', isLeadership) },
+    { href: '/permissions', label: 'Permissions', icon: Shield, show: can('permissions.manage', isLeadership) },
   ];
 
   async function handleLogout() {
@@ -63,11 +75,7 @@ export default function Sidebar({ user }: { user: User }) {
             Internal System
           </div>
         </Link>
-        <button
-          onClick={() => setMobileOpen(false)}
-          className="lg:hidden text-white/60 hover:text-white p-1"
-          aria-label="Close menu"
-        >
+        <button onClick={() => setMobileOpen(false)} className="lg:hidden text-white/60 hover:text-white p-1">
           <X size={22} />
         </button>
       </div>
@@ -81,9 +89,7 @@ export default function Sidebar({ user }: { user: User }) {
               key={item.href}
               href={item.href}
               className={`flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium transition-colors ${
-                active
-                  ? 'bg-brand-red text-white shadow-red'
-                  : 'text-white/60 hover:text-white hover:bg-white/5'
+                active ? 'bg-brand-red text-white shadow-red' : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
               <Icon size={17} />
@@ -93,7 +99,7 @@ export default function Sidebar({ user }: { user: User }) {
         })}
 
         {/* Sub-link for leadership: Manager Assignments under Performance */}
-        {isLeadership && pathname.startsWith('/performance') && (
+        {can('performance.assign_managers', isLeadership) && pathname.startsWith('/performance') && (
           <Link
             href="/performance/assignments"
             className={`flex items-center gap-3 px-3 py-2.5 ml-3 rounded-md text-xs font-medium transition-colors border-l-2 ${
@@ -150,11 +156,7 @@ export default function Sidebar({ user }: { user: User }) {
       </button>
 
       {mobileOpen && (
-        <div
-          onClick={() => setMobileOpen(false)}
-          className="lg:hidden fixed inset-0 bg-black/60 z-40 fade-in"
-          aria-hidden="true"
-        />
+        <div onClick={() => setMobileOpen(false)} className="lg:hidden fixed inset-0 bg-black/60 z-40 fade-in" />
       )}
 
       <aside

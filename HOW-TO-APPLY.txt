@@ -1,125 +1,175 @@
-DEBTREX FEATURES UPDATE — Performance + Calculators
-======================================================
+DEBTREX FEATURES UPDATE — Pipeline + Permissions + Twilio
+=============================================================
 
 WHAT'S NEW
 ==========
 
-1. PERFORMANCE TRACKING (/performance)
-   - CEO/Owner/Co-Owner: see EVERYONE's performance — task counts, hours,
-     overdue tasks, on-time completion rate, last activity
-   - Managers: see ONLY their assigned agents' performance
-   - Sortable table with KPI summary at the top
-   - Search bar to find specific people
-   - Top-3 trophy icons when sorted by completed tasks
+1. PIPELINE — MANAGEMENT (B2B)
+   - /pipeline/management
+   - Companies to call to make deals with, sign contracts with
+   - Track: company name, industry, deal value, contact person, status
+   - Statuses: New → Contacted → Meeting → Negotiating → Contract Sent
+     → Closed Won / Closed Lost
 
-2. MANAGER ASSIGNMENTS (/performance/assignments)
-   - VISIBLE ONLY to CEO/Owner/Co-Owner
-   - Pick a manager, select multiple agents, click "Assign agents"
-   - Many-to-many: one agent can report to multiple managers if needed
-   - Shows unassigned employees as a warning at the top
-   - Easy remove with one click
+2. PIPELINE — SALES (B2C)
+   - /pipeline/sales
+   - Leads to pitch the debt relief program
+   - Track: lead name, estimated debt, monthly income, status
+   - Statuses: New Lead → Contacted → Qualified → Proposal Sent
+     → Enrolled / Not Interested / Unreachable
 
-3. CLIENT CALCULATORS (/calculators)
-   Three tabs:
-   a) DTI RATIO — Debt-to-Income calculator with color-coded categories
-      (Excellent/Good/Concerning/High Risk/Critical) and reference scale
-   b) BUDGET CALCULATOR — Full client budget with line-item expenses and
-      debts. Auto-recommends a debt relief program based on debt ratio:
-        - Self-Pay if debt ratio < 20%
-        - Debt Management Plan if 20-35%
-        - Debt Consolidation if 35-50%
-        - Debt Settlement if 50%+
-      Estimates monthly payment and savings
-   c) HISTORY — All calculations you've saved, with enrollment status
-      tracking (prospect → qualified → enrolled / declined / closed)
+3. EVERY CONTACT HAS:
+   - Click-to-call button (Twilio integration — see Part 5)
+   - Manual call log (date, direction, outcome, duration, notes)
+   - Notes panel (sticky pin, multi-user, edit own notes)
+   - Status changer (one-click status moves)
+   - Edit form (full contact details, address, phone, etc)
+   - Assignment (who's working this contact)
+   - Delete
 
-   Available to: CEO, Owner, Co-Owner, Manager, Employee, Accountant
-   Hidden from: Viewer
+4. GRANULAR PERMISSIONS SYSTEM
+   - /permissions (visible only to CEO/Owner)
+   - Toggle ANY permission for ANY role:
+     * Section visibility (10 sections)
+     * Tasks: create, edit, delete, view all, assign to anyone
+     * Events: create, edit, delete, invite anyone
+     * Budget: view, edit allocations, submit/approve expenses
+     * Team: invite, change roles, deactivate, delete
+     * Performance: view all, view team, assign managers
+     * Pipeline: create, edit, delete, view all, assign, export
+     * Calls: log, make (Twilio), view all
+     * Permissions admin (locked ON for CEO/Owner)
+   - Quick "all on / all off" buttons per group + role
+   - Save bar appears when changes pending
+   - Cache invalidates on save — changes apply within 1 minute
 
-4. SIDEBAR UPDATES
-   - "Calculators" link visible to most roles
-   - "Performance" link visible to leadership and managers
-   - "Manager Assignments" sub-link appears under Performance when
-     leadership is on a Performance page
+5. TWILIO CLICK-TO-CALL
+   - On any contact's page, click "Call Now"
+   - Twilio rings the agent's phone first, bridges to the lead
+   - Auto-records the call
+   - Logs duration, outcome (connected/no-answer/voicemail/etc)
+   - Recording appears as playable audio in the call log
+   - SEE: DEBTREX-Twilio-Setup-Guide.docx for FULL SETUP
 
-DATABASE MIGRATION REQUIRED
-============================
-You MUST run database/migration-002.sql before using these features.
 
-1. Open Supabase dashboard
-2. Click "SQL Editor"
-3. Click "New query"
-4. Paste the entire contents of database/migration-002.sql
-5. Click "Run"
-6. Verify by visiting Table Editor — you should see two new tables:
-   - manager_assignments
-   - client_calculations
+HOW TO APPLY
+============
 
-HOW TO APPLY THE CODE
-======================
-Drop every file from this patch into your project, preserving folder
-structure. NEW FILES (don't replace anything except the listed three):
+STEP 1 — RUN THE DATABASE MIGRATION (CRITICAL)
 
-  database/migration-002.sql                                <- NEW
-  lib/roles.ts                                              <- REPLACE
-  lib/performance.ts                                        <- NEW
-  components/Sidebar.tsx                                    <- REPLACE
-  app/performance/page.tsx                                  <- NEW
-  app/performance/PerformanceView.tsx                       <- NEW
-  app/performance/assignments/page.tsx                      <- NEW
-  app/performance/assignments/AssignmentsManager.tsx        <- NEW
-  app/calculators/page.tsx                                  <- NEW
-  app/calculators/CalculatorsView.tsx                       <- NEW
-  app/calculators/DTICalculator.tsx                         <- NEW
-  app/calculators/BudgetCalculator.tsx                      <- NEW
-  app/api/manager-assignments/route.ts                      <- NEW
-  app/api/manager-assignments/[id]/route.ts                 <- NEW
-  app/api/calculations/route.ts                             <- NEW
-  app/api/calculations/[id]/route.ts                        <- NEW
+  1. Open Supabase → SQL Editor → New query
+  2. Copy the entire contents of database/migration-003.sql
+  3. Paste into the editor
+  4. Click "Run"
+  5. Verify: Table Editor should now show 4 new tables:
+     - pipeline_contacts
+     - call_logs
+     - contact_notes
+     - role_permissions  (auto-seeded with default permissions)
 
-Then:
-  1. Stop dev server (Ctrl+C)
-  2. npm run dev
-  3. Sign in as CEO -> click Performance -> click Manager Assignments
-     to set up who-tracks-who
-  4. Click Calculators to try DTI and Budget tools
+STEP 2 — DROP IN THE FILES (26 files)
 
-NO new dependencies.
-NO env var changes.
+Database (1):
+  database/migration-003.sql                              [NEW]
 
-PUSH TO PRODUCTION
-==================
+Libraries (2):
+  lib/permissions.ts                                      [NEW]
+  lib/twilio.ts                                           [NEW]
+
+Configuration (2 — REPLACE EXISTING):
+  middleware.ts                                           [REPLACE]
+  .env.example                                            [REPLACE]
+
+Components (1 — REPLACE):
+  components/Sidebar.tsx                                  [REPLACE]
+
+Pipeline pages (8 NEW):
+  app/pipeline/PipelinePageBase.tsx
+  app/pipeline/PipelineList.tsx
+  app/pipeline/ContactDetailBase.tsx
+  app/pipeline/ContactDetail.tsx
+  app/pipeline/management/page.tsx
+  app/pipeline/management/[id]/page.tsx
+  app/pipeline/sales/page.tsx
+  app/pipeline/sales/[id]/page.tsx
+
+Permissions admin (2 NEW):
+  app/permissions/page.tsx
+  app/permissions/PermissionsManager.tsx
+
+Pipeline API (5 NEW):
+  app/api/pipeline/route.ts
+  app/api/pipeline/[id]/route.ts
+  app/api/pipeline/[id]/calls/route.ts
+  app/api/pipeline/[id]/notes/route.ts
+  app/api/pipeline/notes/[id]/route.ts
+
+Permissions API (1 NEW):
+  app/api/permissions/route.ts
+
+Twilio API (4 NEW):
+  app/api/twilio/call/route.ts
+  app/api/twilio/twiml/dial/route.ts
+  app/api/twilio/status/route.ts
+  app/api/twilio/recording/route.ts
+
+STEP 3 — RESTART AND TEST
+
+  npm run dev
+
+  - Sign in as CEO
+  - Sidebar should show new sections: Management, Sales, Permissions
+  - Click Permissions → see the toggle matrix
+  - Click Management → click "Add Contact" → create a test company
+  - Click Sales → create a test lead
+  - Open the lead → try Edit, change Status, add a Note, Log a Call
+
+STEP 4 — TWILIO (OPTIONAL BUT POWERFUL)
+
+The pipeline works WITHOUT Twilio — agents can manually log calls.
+To enable click-to-call:
+  - Read DEBTREX-Twilio-Setup-Guide.docx
+  - Sign up at twilio.com
+  - Buy a phone number
+  - Add 3 env vars to .env.local AND Vercel:
+      TWILIO_ACCOUNT_SID
+      TWILIO_AUTH_TOKEN
+      TWILIO_PHONE_NUMBER
+  - Configure webhook URLs (covered in the guide)
+  - Each agent must add their phone number in Settings → Profile
+
+STEP 5 — PUSH TO PRODUCTION
+
   git add .
-  git commit -m "Add performance tracking and client calculators"
+  git commit -m "Add pipeline, permissions, twilio integration"
   git push
 
-Vercel auto-deploys. Total: 16 files. Read-friendly and easy to edit.
+  Vercel auto-deploys.
 
-QUICK TOUR (After Setup)
-========================
 
-CEO/Owner/Co-Owner workflow:
-1. Sign in
-2. Sidebar -> Performance -> see everyone
-3. Click "Manager Assignments" sub-link
-4. Pick a manager (e.g. Sarah) -> select agents (e.g. Mike, Jane)
-   -> click "Assign agents"
-5. Sarah now sees Mike and Jane only on her Performance page
+NOTES
+=====
 
-Agent (Employee) workflow:
-1. Sign in
-2. Sidebar -> Calculators
-3. Tab: DTI Ratio
-   - Enter monthly income: $5000
-   - Enter monthly debts: $2200
-   - Result: 44% (High Risk) — strong candidate for debt settlement
-4. Tab: Budget Calculator
-   - Enter income, expenses, debts line by line
-   - System recommends a program and estimates monthly payment
-5. Save with client name to keep history
+NO new dependencies — uses native fetch for Twilio API
+NO breaking changes to existing pages/data
+Default permissions seed sensibly (CEO=all, Manager=most, etc)
 
-Manager workflow:
-1. Sign in
-2. Sidebar -> Performance -> see ONLY assigned agents
-3. Sort by On-Time rate or Overdue count
-4. Use Calculators just like agents do
+The permission cache lives in-memory for 1 minute, so when you flip
+a toggle, it can take up to 1 minute to take effect for active users.
+The cache invalidates immediately for the user who made the change.
+
+TROUBLESHOOTING
+===============
+
+"Module not found 'lib/permissions'" → make sure file is at lib/permissions.ts
+                                       (lowercase, exact path)
+
+"relation 'pipeline_contacts' does not exist" → migration-003.sql wasn't run
+
+"Twilio not configured" → env vars missing or server not restarted
+
+"You have no phone number on file" → Settings → Profile → Phone
+
+Page works in dev but not Vercel → environment variables didn't sync
+                                    Vercel → Settings → Environment Variables
+                                    add TWILIO_* vars, redeploy
