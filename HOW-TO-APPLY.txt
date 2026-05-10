@@ -1,139 +1,130 @@
-DEBTREX TWILIO UPDATE — PAID ACCOUNT OPTIMIZATIONS
-=====================================================
+DEBTREX — MULTI-AGENT TWILIO NUMBERS
+=====================================
 
-WHAT CHANGED
-============
+WHAT THIS FIXES
+===============
 
-Since you have a funded Twilio account (not trial), this patch
-upgrades the integration to use paid-account features:
+Your original question: "shouldn't each agent have their own number?"
 
-1. Answering Machine Detection (AMD)
-   - Twilio detects voicemail vs human automatically
-   - Voicemails auto-marked in your call log
-   - Saves agent time, no need to manually log "left voicemail"
+Answer: With this patch, YES. Each agent on your Twilio account
+can be assigned their own Twilio phone number, used as the caller
+ID when THEY make outbound calls. Leads see different numbers
+depending on which agent called.
 
-2. Dual-channel call recording
-   - Agent and lead recorded on separate audio tracks
-   - Easier to review, transcribe, and train on
+If an agent has NO assigned number, they use the company default
+(TWILIO_PHONE_NUMBER env var).
 
-3. Better compliance built-in
-   - Recording disclosure now played to both parties
-     ("This call may be recorded for quality and training purposes")
-   - Required for two-party-consent states (CA, FL, IL, MD, MA, etc.)
-
-4. answerOnBridge="true"
-   - Billing only starts when the lead actually picks up
-   - Saves money on no-answer calls
-
-5. Optional custom caller ID
-   - New env var TWILIO_CALLER_ID lets you display a different number
-     than your purchased one (useful when you buy regional numbers
-     for better answer rates)
-
-6. New webhook for AMD results: /api/twilio/amd
-
-WHAT YOU GET TO TURN ON LATER (covered in the guide)
-=====================================================
-
-- CNAM branded caller ID ("DEBTREX SOLUTIONS" instead of just a number)
-- STIR/SHAKEN attestation (already active on paid accounts)
-- Caller ID by region (regional numbers for better answer rates)
+ALSO INCLUDED:
+- "Call Now" button now always shows (when you have permission)
+  with a clear tooltip explaining if it's disabled
+- Yellow banner appears explaining exactly what's missing
+- New /api/twilio/diagnostics endpoint for debugging config
 
 
-HOW TO APPLY
-============
-
-4 files total (3 replace, 1 new):
-
-  lib/twilio.ts                             [REPLACE]
-  middleware.ts                             [REPLACE]
-  .env.example                              [REPLACE]
-  app/api/twilio/amd/route.ts               [NEW]
-
-NEW OPTIONAL ENV VARS
-=====================
-
-Add these to .env.local AND Vercel if you want to use them:
-
-  # Optional: display a different caller ID than TWILIO_PHONE_NUMBER
-  TWILIO_CALLER_ID=
-  
-  # Optional: set to "false" to disable AMD (saves $0.0075/call)
-  # Default: enabled (recommended for paid accounts)
-  TWILIO_ENABLE_AMD=true
-
-The required vars haven't changed:
-  TWILIO_ACCOUNT_SID
-  TWILIO_AUTH_TOKEN
-  TWILIO_PHONE_NUMBER
-
-
-STEPS
-=====
-
-1. Drop the 4 files into your project (preserving folder structure)
-2. Stop dev server (Ctrl+C)
-3. npm run dev
-4. Test a call as before:
-   - Open a contact
-   - Click Call Now
-   - Pick up your phone
-   - Listen for "Connecting your call. This call may be recorded..."
-   - Talk to the lead
-   - End call
-   - Check Call Log tab — recording should appear within 1-2 min
-
-5. Push to production:
-   git add .
-   git commit -m "Upgrade Twilio for paid account features"
-   git push
-
-
-VERIFICATION
-============
-
-After the test call, check Twilio Console → Monitor → Logs → Calls
-You should see:
-  - Two call legs (one to agent, one to lead)
-  - Both with status "completed"
-  - Recording link
-  - For paid accounts: STIR/SHAKEN attestation level (A is best)
-  - Total cost shown per call
-
-
-READ THE NEW GUIDE
-==================
-
-The DEBTREX-Twilio-Setup-Guide.docx has been completely rewritten
-for paid accounts. Key sections you should read:
-
-  - Section 7: Optional Paid-Account Upgrades
-    (CNAM, regional caller IDs, AMD details)
-    
-  - Section 8: Production Hardening
-    (TCPA compliance is CRITICAL for debt relief — read carefully)
-    
-  - Section 9: Cost Management
-    (forecasting formulas, cost breakdown per call)
-
-
-COMMON QUESTIONS
+HOW IT WORKS NOW
 ================
 
-Q: Do I have to set TWILIO_CALLER_ID?
-A: No. If empty, the system uses TWILIO_PHONE_NUMBER as caller ID.
-   Only useful if you buy multiple numbers.
+Agent makes a call:
+  1. Agent clicks "Call Now" on a contact
+  2. Server looks up the agent's assigned Twilio number
+     (or falls back to TWILIO_PHONE_NUMBER if none assigned)
+  3. Twilio rings the agent's PERSONAL phone first
+     (from Settings → Profile)
+  4. Agent picks up
+  5. Twilio dials the lead and bridges them
+  6. Lead sees the agent's assigned Twilio number as caller ID
+  7. Call recorded, logged, etc.
 
-Q: Should I keep AMD enabled?
-A: Yes. The cost is $0.0075 per call and it gives you cleaner data.
-   Disable only if budget is extremely tight.
+The agent's PERSONAL phone is never exposed to the lead.
 
-Q: Do I need CNAM?
-A: Optional. Helps answer rates on landlines (~5-10% bump). Less
-   effective on mobile carriers. Costs $0.50/month/number.
 
-Q: My calls were already working — will this break anything?
-A: No. The integration is backward compatible. AMD is additive,
-   caller ID falls back to your existing number, recording just
-   gains the dual-channel improvement. Existing calls in your log
-   stay as they were.
+STEPS TO APPLY
+==============
+
+STEP 1 — RUN THE DATABASE MIGRATION
+
+  Open Supabase → SQL Editor → New query
+  Paste contents of database/migration-004.sql
+  Click Run
+
+  This adds 4 columns to profiles table:
+    - twilio_phone_number    (the Twilio number assigned to this agent)
+    - twilio_phone_label     (cosmetic label like "NYC line")
+    - twilio_phone_assigned_at
+    - twilio_phone_assigned_by
+
+STEP 2 — DROP IN THE FILES (10 files)
+
+  database/migration-004.sql                          [NEW]
+  lib/twilio.ts                                       [REPLACE]
+  components/Sidebar.tsx                              [REPLACE]
+  app/pipeline/ContactDetail.tsx                      [REPLACE]
+  app/twilio-numbers/page.tsx                         [NEW]
+  app/twilio-numbers/TwilioNumbersManager.tsx         [NEW]
+  app/api/twilio/call/route.ts                        [REPLACE]
+  app/api/twilio/twiml/dial/route.ts                  [REPLACE]
+  app/api/twilio/diagnostics/route.ts                 [NEW]
+  app/api/users/[id]/twilio-number/route.ts           [NEW]
+
+STEP 3 — RESTART AND ASSIGN NUMBERS
+
+  npm run dev
+  Sign in as CEO
+  Sidebar → Twilio Numbers (new section)
+
+  You'll see:
+    - List of all numbers on your Twilio account (auto-loaded)
+    - List of all agents with their current assignments
+    - "Edit" button next to each agent
+      → Pick a Twilio number from the dropdown
+      → Give it a label like "NYC line" (optional)
+      → Save
+
+STEP 4 — REQUIRED PER AGENT
+
+  Each agent must ALSO have their PERSONAL phone in
+  Settings → Profile. This is the phone Twilio rings when they
+  click "Call Now". Without it, they can't make calls.
+
+STEP 5 — PUSH TO PRODUCTION
+
+  git add .
+  git commit -m "Add per-agent Twilio numbers"
+  git push
+
+
+HOW TO BUY MORE TWILIO NUMBERS
+==============================
+
+If you don't have enough numbers for all your agents:
+
+  1. Go to console.twilio.com → Phone Numbers → Buy a number
+  2. Pick area codes matching your call regions (better answer rates)
+  3. Buy them
+  4. Return to /twilio-numbers in your app
+  5. The new numbers appear automatically
+  6. Assign them to agents
+
+Cost: ~$1.15/month per local US number.
+
+
+TROUBLESHOOTING
+===============
+
+"Call Now button still hidden"
+  - Check yellow banner at top of contact page — it tells you exactly what's missing
+  - Visit /api/twilio/diagnostics in your browser (as CEO/Owner) for full config status
+
+"Number is already assigned to another agent"
+  - Each Twilio number can only be assigned to ONE agent at a time
+  - Unassign it from the current agent first
+
+"Agent's call ID shows the wrong number"
+  - Make sure you assigned a number on the /twilio-numbers page
+  - Save changes — refresh the contact page
+  - First call after assignment uses the new caller ID
+
+"Twilio Numbers page shows '0 numbers on account'"
+  - Twilio env vars (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN) might be wrong
+  - Restart dev server after changing env vars
+  - Visit /api/twilio/diagnostics to verify

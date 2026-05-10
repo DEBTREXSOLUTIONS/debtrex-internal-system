@@ -53,6 +53,7 @@ export default function Sidebar({ user, permissions = {} }: { user: User; permis
     { href: '/performance', label: 'Performance', icon: Trophy, show: can('section.performance', isLeadership || isManager) },
     { href: '/budget', label: 'Budget', icon: DollarSign, show: can('section.budget', canEditBudget) },
     { href: '/team', label: 'Team', icon: Users, show: can('section.team', isLeadership) },
+    { href: '/twilio-numbers', label: 'Twilio Numbers', icon: Phone, show: isLeadership },
     { href: '/permissions', label: 'Permissions', icon: Shield, show: can('permissions.manage', isLeadership) },
   ];
 

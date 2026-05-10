@@ -165,6 +165,25 @@ export default function ContactDetail({
         </div>
       )}
 
+      {/* Twilio status banner — only shows when user has call permission but Twilio isn't ready */}
+      {permissions.call && !twilioConfigured && (
+        <div className="mb-4 flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-800 text-sm">
+          <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+          <div>
+            <div className="font-bold">Twilio click-to-call is disabled</div>
+            <div className="text-xs mt-1">
+              The TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or TWILIO_PHONE_NUMBER environment variable is missing on the server.
+              Add them to Vercel → Settings → Environment Variables, then redeploy. You can still log calls manually.
+            </div>
+          </div>
+        </div>
+      )}
+      {permissions.call && twilioConfigured && !contact.phone && (
+        <div className="mb-4 flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-800 text-sm">
+          <AlertCircle size={16} /> No phone number on this contact — click Edit to add one before calling.
+        </div>
+      )}
+
       {/* Header */}
       <div className="card p-4 sm:p-6 mb-6">
         <div className="flex items-start gap-4 mb-4">
@@ -205,11 +224,17 @@ export default function ContactDetail({
 
         {/* Action buttons */}
         <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-100">
-          {permissions.call && contact.phone && twilioConfigured && (
+          {/* Call Now — shows reason when disabled */}
+          {permissions.call && (
             <button
               onClick={startCall}
-              disabled={callingNow}
-              className="btn-primary disabled:opacity-50"
+              disabled={callingNow || !contact.phone || !twilioConfigured}
+              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              title={
+                !contact.phone ? 'Add a phone number to this contact first' :
+                !twilioConfigured ? 'Twilio not configured — see DEBTREX-Twilio-Setup-Guide.docx' :
+                'Call this contact through Twilio'
+              }
             >
               <PhoneCall size={14} /> {callingNow ? 'Calling...' : 'Call Now'}
             </button>
