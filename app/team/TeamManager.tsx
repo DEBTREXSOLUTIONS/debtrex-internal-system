@@ -38,9 +38,9 @@ export default function TeamManager({ members, currentUser }: any) {
 
   return (
     <>
-      <div className="card p-6 mb-6 flex items-center justify-between">
+      <div className="card p-4 sm:p-6 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="font-condensed text-2xl font-black uppercase">Team Members</h2>
+          <h2 className="font-condensed text-xl sm:text-2xl font-black uppercase">Team Members</h2>
           <p className="text-sm text-gray-500">{members.length} total · {members.filter((m: any) => m.is_active).length} active</p>
         </div>
         <button onClick={() => setShowInvite(true)} className="btn-primary">
@@ -51,7 +51,7 @@ export default function TeamManager({ members, currentUser }: any) {
       {/* Members table */}
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[700px]">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <Th>Name</Th><Th>Email</Th><Th>Role</Th><Th>Last Login</Th><Th>Status</Th><Th>Actions</Th>

@@ -53,11 +53,11 @@ export default async function CalendarPage() {
     .order('full_name');
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar user={user} />
-      <main className="flex-1 bg-gray-50">
+      <main className="flex-1 min-w-0">
         <TopBar user={user} title="Calendar" />
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto">
           <CalendarView
             events={calendarItems}
             users={users || []}

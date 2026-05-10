@@ -16,11 +16,11 @@ export default async function NewTaskPage() {
     .order('full_name');
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar user={user} />
-      <main className="flex-1 bg-gray-50">
+      <main className="flex-1 min-w-0">
         <TopBar user={user} title="Create New Task" />
-        <div className="p-6 max-w-2xl mx-auto">
+        <div className="p-4 sm:p-6 max-w-2xl mx-auto">
           <NewTaskForm users={users || []} currentUser={user} />
         </div>
       </main>

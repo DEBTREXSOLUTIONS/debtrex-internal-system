@@ -38,11 +38,11 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     .order('created_at', { ascending: false });
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar user={user} />
-      <main className="flex-1 bg-gray-50">
+      <main className="flex-1 min-w-0">
         <TopBar user={user} title="Task Details" />
-        <div className="p-6 max-w-5xl mx-auto">
+        <div className="p-4 sm:p-6 max-w-5xl mx-auto">
           <Link href="/tasks" className="btn-ghost mb-4">
             <ArrowLeft size={14} /> Back to Tasks
           </Link>

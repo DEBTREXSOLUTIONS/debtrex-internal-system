@@ -107,11 +107,11 @@ export default function BudgetDashboard({ user, stats, expenses, income, budgets
 
       {/* All transactions */}
       <div className="card overflow-hidden">
-        <div className="p-6 border-b border-gray-100">
+        <div className="p-4 sm:p-6 border-b border-gray-100">
           <h3 className="font-condensed text-xl font-black uppercase">All Expenses</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[700px]">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <Th>Date</Th><Th>Description</Th><Th>Category</Th><Th>Paid By</Th>

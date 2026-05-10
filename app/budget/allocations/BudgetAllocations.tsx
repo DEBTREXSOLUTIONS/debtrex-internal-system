@@ -231,7 +231,7 @@ export default function BudgetAllocations({ month, allocations: initial, spentBy
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[750px]">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <Th>Category</Th>

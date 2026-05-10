@@ -62,23 +62,25 @@ export default function CalendarView({ events, users, currentUser }: any) {
 
   return (
     <>
-      <div className="card p-6 mb-6 flex items-center justify-between">
+      <div className="card p-4 sm:p-6 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="font-condensed text-2xl font-black uppercase">Team Calendar</h2>
+          <h2 className="font-condensed text-xl sm:text-2xl font-black uppercase">Team Calendar</h2>
           <p className="text-sm text-gray-500">Click any date to add an event</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="btn-primary">
+        <button onClick={() => setShowModal(true)} className="btn-primary self-start sm:self-auto">
           <Plus size={14} /> New Event
         </button>
       </div>
 
-      <div className="card p-6">
+      <div className="card p-3 sm:p-6 overflow-x-auto">
         <style>{`
-          .fc { font-family: 'Barlow', sans-serif; }
-          .fc-button-primary { background-color: #E02020 !important; border-color: #E02020 !important; font-weight: 600 !important; text-transform: uppercase !important; font-size: 12px !important; letter-spacing: 0.05em !important; }
+          .fc { font-family: 'Barlow', sans-serif; min-width: 320px; }
+          .fc .fc-toolbar.fc-header-toolbar { flex-wrap: wrap; gap: 8px; }
+          .fc-button-primary { background-color: #E02020 !important; border-color: #E02020 !important; font-weight: 600 !important; text-transform: uppercase !important; font-size: 11px !important; letter-spacing: 0.05em !important; padding: 6px 10px !important; }
           .fc-button-primary:hover { background-color: #B81414 !important; border-color: #B81414 !important; }
           .fc-button-active { background-color: #B81414 !important; }
-          .fc-toolbar-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 900 !important; text-transform: uppercase; font-size: 1.5rem !important; }
+          .fc-toolbar-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 900 !important; text-transform: uppercase; font-size: 1.25rem !important; }
+          @media (min-width: 640px) { .fc-toolbar-title { font-size: 1.5rem !important; } }
           .fc-event { cursor: pointer; border: none !important; padding: 2px 4px; font-size: 11px !important; font-weight: 600; }
           .fc-day-today { background-color: #FFF0F0 !important; }
           .fc-col-header-cell { background: #f8f8f8; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.1em; }

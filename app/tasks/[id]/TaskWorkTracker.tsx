@@ -81,15 +81,15 @@ export default function TaskWorkTracker({ task, initialUpdates, initialNotes, cu
   return (
     <>
       {/* Task Header */}
-      <div className="card p-6 mb-6">
+      <div className="card p-4 sm:p-6 mb-6">
         <div className="flex items-start justify-between gap-4 mb-4">
-          <div className="flex-1">
-            <h1 className="font-condensed text-3xl font-black uppercase mb-2">{task.title}</h1>
+          <div className="flex-1 min-w-0">
+            <h1 className="font-condensed text-2xl sm:text-3xl font-black uppercase mb-2 break-words">{task.title}</h1>
             {task.description && (
-              <p className="text-gray-600 leading-relaxed">{task.description}</p>
+              <p className="text-gray-600 leading-relaxed text-sm sm:text-base">{task.description}</p>
             )}
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col items-end gap-2 flex-shrink-0">
             <span className={`badge ${isOverdue ? 'badge-red' : statusColors[task.status]}`}>
               {isOverdue ? '⚠ Overdue' : task.status.replace('_', ' ')}
             </span>

@@ -33,14 +33,14 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const { data: tasks } = await query;
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar user={user} />
-      <main className="flex-1 bg-gray-50">
+      <main className="flex-1 min-w-0">
         <TopBar user={user} title="Tasks" />
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto">
           {/* Header actions */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+            <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
               <FilterTab href="/tasks?filter=mine" active={filter === 'mine'}>
                 Assigned to Me
               </FilterTab>
@@ -53,7 +53,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                 </FilterTab>
               )}
             </div>
-            <Link href="/tasks/new" className="btn-primary">
+            <Link href="/tasks/new" className="btn-primary self-start sm:self-auto">
               <Plus size={14} /> New Task
             </Link>
           </div>
@@ -84,7 +84,7 @@ function FilterTab({ href, active, children }: any) {
   return (
     <Link
       href={href}
-      className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
+      className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${
         active ? 'bg-brand-red text-white' : 'text-gray-600 hover:bg-gray-100'
       }`}
     >

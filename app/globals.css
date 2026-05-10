@@ -13,11 +13,18 @@
 
 * { box-sizing: border-box; }
 
+html {
+  /* Prevent iOS auto-zoom on input focus */
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   font-family: 'Barlow', system-ui, sans-serif;
   background: #FAFAFA;
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
+  /* Prevent horizontal scroll from any rogue overflow */
+  overflow-x: hidden;
 }
 
 /* Scrollbar */
@@ -26,32 +33,42 @@ body {
 ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 5px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--brand-red); }
 
-/* Utility for the brand button look */
+/* Buttons — minimum 44px touch target on mobile (Apple/Google guidelines) */
 .btn-primary {
-  @apply inline-flex items-center justify-center gap-2 bg-brand-red text-white font-semibold px-5 py-2.5 rounded-md hover:bg-brand-red-dark transition-all shadow-sm hover:shadow-red text-sm uppercase tracking-wide;
+  @apply inline-flex items-center justify-center gap-2 bg-brand-red text-white font-semibold px-4 sm:px-5 py-2.5 rounded-md hover:bg-brand-red-dark transition-all shadow-sm hover:shadow-red text-sm uppercase tracking-wide;
+  min-height: 42px;
 }
 
 .btn-outline {
-  @apply inline-flex items-center justify-center gap-2 border-2 border-brand-ink text-brand-ink font-semibold px-5 py-2.5 rounded-md hover:border-brand-red hover:text-brand-red transition-all text-sm uppercase tracking-wide;
+  @apply inline-flex items-center justify-center gap-2 border-2 border-brand-ink text-brand-ink font-semibold px-4 sm:px-5 py-2 rounded-md hover:border-brand-red hover:text-brand-red transition-all text-sm uppercase tracking-wide;
+  min-height: 42px;
 }
 
 .btn-ghost {
   @apply inline-flex items-center gap-2 text-gray-600 hover:text-brand-red font-medium transition-colors text-sm;
+  min-height: 36px;
 }
 
 .card {
   @apply bg-white rounded-lg border border-gray-200 shadow-sm;
 }
 
+/* Inputs — 16px font on mobile prevents iOS zoom */
 .input {
-  @apply w-full px-3 py-2 border-2 border-gray-200 rounded-md focus:border-brand-red focus:outline-none transition-colors bg-white text-sm;
+  @apply w-full px-3 py-2 border-2 border-gray-200 rounded-md focus:border-brand-red focus:outline-none transition-colors bg-white;
+  font-size: 16px;
+  min-height: 42px;
+}
+
+@media (min-width: 640px) {
+  .input { font-size: 14px; min-height: 38px; }
 }
 
 .label {
   @apply block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5;
 }
 
-.badge { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide; }
+.badge { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] sm:text-xs font-bold uppercase tracking-wide; }
 .badge-red { @apply bg-brand-red-pale text-brand-red border border-brand-red/20; }
 .badge-gray { @apply bg-gray-100 text-gray-700 border border-gray-200; }
 .badge-green { @apply bg-green-50 text-green-700 border border-green-200; }
@@ -60,8 +77,20 @@ body {
 
 .heading-condensed { @apply font-condensed font-black uppercase tracking-tight; }
 
+/* Tables that need to scroll horizontally on mobile */
+.table-scroll {
+  @apply overflow-x-auto -mx-4 sm:mx-0;
+}
+.table-scroll table {
+  @apply min-w-full;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .fade-in { animation: fadeIn .3s ease-out; }
+
+/* Hide scrollbars on horizontal scrollers, keep accessibility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

@@ -1,58 +1,96 @@
-DEBTREX BUILD FIX — TypeScript Strict Null Errors
-===================================================
+DEBTREX MOBILE-FRIENDLY UPDATE
+================================
 
-THE ERROR YOU SAW
-=================
-  Type error: 'assignee' is possibly 'null'.
+WHAT CHANGED
+============
+The whole frontend now works well on phones (down to 320px wide).
 
-WHY
-===
-"npm run dev" is permissive about TypeScript errors -- it shows them
-in the terminal but lets your app run.
+KEY IMPROVEMENTS:
 
-"npm run build" (which Vercel runs to deploy) is strict. It treats
-type errors as build failures.
+1. SIDEBAR (components/Sidebar.tsx)
+   - Desktop (>=1024px): always visible on the left, exactly like before
+   - Mobile/Tablet (<1024px): hidden by default, opens as a slide-in drawer
+     when you tap the hamburger button (top-left corner)
+   - Tap outside the drawer or any nav link to close it
+   - Body scroll locks while drawer is open
 
-The original code used optional chaining like:
-    if (assignee?.notification_preferences?.task_assigned !== false)
+2. TOP BAR (components/TopBar.tsx)
+   - Page title left-padded on mobile to clear the hamburger button
+   - Search box only shows on desktop (it was overflowing on small screens)
+   - Notification bell stays visible everywhere
 
-That's safe at runtime, but TypeScript still thinks `assignee` could
-be null on the next line, so it refused to compile.
+3. GLOBAL STYLES (app/globals.css)
+   - Buttons: 42px minimum height = comfortable to tap with a thumb
+   - Inputs: 16px font on mobile (prevents iOS auto-zoom on focus)
+   - Body has overflow-x: hidden as a safety net against rogue overflow
+   - New .no-scrollbar utility for hiding scroll indicators on tab strips
 
-THE FIX
-=======
-Three changes:
+4. RESPONSIVE PAGE PADDING
+   - All pages: p-6 -> p-4 sm:p-6 (less padding on small screens, more space for content)
 
-1. app/api/tasks/route.ts -- explicit null check on `assignee`
-2. app/api/budgets/copy-previous/route.ts -- typed the lambda parameters
-3. next.config.js -- added ignoreBuildErrors: true as a safety net
+5. TABLES (Team, Budget all-expenses, Budget allocations)
+   - Wrapped in horizontal scroll containers with min-widths
+   - Users see they can swipe-scroll to see more columns
+   - Headers stack vertically on mobile so action buttons don't overlap titles
 
-Why the next.config.js change? Even after fixing the two known errors,
-there may be other small type issues that I haven't seen but that
-would still block your build. Setting ignoreBuildErrors: true tells
-Next.js: "show me the errors in the dev console, but don't refuse
-to build for production."
+6. TASK DETAIL PAGE
+   - Title shrinks from 3xl to 2xl on mobile
+   - break-words prevents long task titles from breaking the layout
 
-Your app's actual runtime safety comes from the database constraints
-and the validation in each API route -- not from TypeScript. So this
-is a reasonable trade-off for getting your build green.
+7. CALENDAR
+   - FullCalendar toolbar wraps to multiple lines on small screens
+   - Smaller buttons and title fonts
+   - Horizontal scroll if month grid is too wide
+
+8. TASKS LIST
+   - Filter tabs (Mine / Created / All) scroll horizontally if they don't fit
+   - "New Task" button stacks below tabs on mobile
+
+9. LOGIN PAGE
+   - No changes needed -- already mobile-friendly (red brand panel hidden below 1024px)
 
 HOW TO APPLY
 ============
-Replace these 3 files in your project:
+Just copy every file from this patch into your project, preserving the folder
+structure exactly. Total: 19 files.
 
-  next.config.js                                       <- REPLACE
-  app/api/tasks/route.ts                               <- REPLACE
-  app/api/budgets/copy-previous/route.ts               <- REPLACE
+  components/Sidebar.tsx                                <- REPLACE
+  components/TopBar.tsx                                 <- REPLACE
+  app/globals.css                                       <- REPLACE
+  app/page.tsx                                          <- REPLACE
+  app/login/  (no changes -- skip if you want)
+  app/tasks/page.tsx                                    <- REPLACE
+  app/tasks/new/page.tsx                                <- REPLACE
+  app/tasks/[id]/page.tsx                               <- REPLACE
+  app/tasks/[id]/TaskWorkTracker.tsx                    <- REPLACE
+  app/calendar/page.tsx                                 <- REPLACE
+  app/calendar/CalendarView.tsx                         <- REPLACE
+  app/files/page.tsx                                    <- REPLACE
+  app/notifications/page.tsx                            <- REPLACE
+  app/budget/page.tsx                                   <- REPLACE
+  app/budget/BudgetDashboard.tsx                        <- REPLACE
+  app/budget/allocations/page.tsx                       <- REPLACE
+  app/budget/allocations/BudgetAllocations.tsx         <- REPLACE
+  app/team/page.tsx                                     <- REPLACE
+  app/team/TeamManager.tsx                              <- REPLACE
+  app/settings/page.tsx                                 <- REPLACE
+
+NO new dependencies.
+NO database changes.
+NO env var changes.
 
 Then:
-  npm run build
+  1. Stop dev server (Ctrl+C if running)
+  2. npm run dev
+  3. Test in Chrome on desktop -- should look identical to before
+  4. Open Chrome DevTools (F12), click the device toolbar icon
+     (or press Ctrl+Shift+M), pick "iPhone 14" or similar
+  5. Browse around -- everything should work with thumb taps
 
-It should complete without errors. If it still fails on something
-else, paste the error and I'll fix it the same way.
+PUSH TO PRODUCTION
+==================
+  git add .
+  git commit -m "Make app mobile-friendly"
+  git push
 
-If you want STRICT type checking back later (recommended once you've
-ironed out the type errors), just remove these lines from next.config.js:
-
-  typescript: { ignoreBuildErrors: true },
-  eslint: { ignoreDuringBuilds: true },
+Vercel auto-deploys. After ~2 min your team can use the system from their phones.
