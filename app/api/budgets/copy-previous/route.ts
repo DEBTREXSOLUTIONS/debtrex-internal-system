@@ -33,10 +33,10 @@ export async function POST(request: Request) {
       .select('category')
       .eq('month', month);
 
-    const existingCategories = new Set((existing || []).map(e => e.category));
+    const existingCategories = new Set((existing || []).map((e: any) => e.category));
     const toInsert = prevAllocations
-      .filter(a => !existingCategories.has(a.category))
-      .map(a => ({
+      .filter((a: any) => !existingCategories.has(a.category))
+      .map((a: any) => ({
         month,
         category: a.category,
         allocated_amount: a.allocated_amount,

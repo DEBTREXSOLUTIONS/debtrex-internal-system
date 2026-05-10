@@ -47,7 +47,7 @@ export async function POST(request: Request) {
         .eq('id', assigned_to)
         .single();
 
-      if (assignee?.notification_preferences?.task_assigned !== false) {
+      if (assignee && assignee.notification_preferences?.task_assigned !== false) {
         await sendTaskAssignedEmail(assignee.email, assignee.full_name, data, user.full_name);
       }
 
