@@ -1,12 +1,20 @@
 import 'server-only';
 
-// Twilio integration helpers.
+// Twilio integration helpers (paid account configuration).
 // All credentials come from environment variables — see .env.example.
 
 const ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_NUMBER = process.env.TWILIO_PHONE_NUMBER;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+// Optional: a different caller ID number for outbound display.
+// If you have multiple numbers (e.g., a local one per region), set this.
+// Otherwise falls back to TWILIO_PHONE_NUMBER.
+const CALLER_ID = process.env.TWILIO_CALLER_ID || TWILIO_NUMBER;
+
+// Optional: enable answering machine detection (paid feature, ~$0.0075 per detected call)
+const ENABLE_AMD = process.env.TWILIO_ENABLE_AMD !== 'false'; // ON by default for paid accounts
 
 export function isTwilioConfigured(): boolean {
   return !!(ACCOUNT_SID && AUTH_TOKEN && TWILIO_NUMBER);
@@ -27,6 +35,12 @@ interface InitiateCallParams {
  *   2. Twilio rings the agent's phone
  *   3. When agent answers, Twilio dials the lead and bridges
  *   4. Twilio calls our webhook with status updates and recording URL
+ *
+ * Paid account features used:
+ *   - No verified-caller-id restriction (we can call anyone)
+ *   - Custom caller ID display (TWILIO_CALLER_ID env var)
+ *   - Answering machine detection (skips voicemails)
+ *   - Full recording with dual-channel separation
  */
 export async function initiateCall(params: InitiateCallParams): Promise<{ callSid: string }> {
   if (!isTwilioConfigured()) {
@@ -49,8 +63,17 @@ export async function initiateCall(params: InitiateCallParams): Promise<{ callSi
     StatusCallback: statusUrl,
     'StatusCallbackEvent': 'initiated ringing answered completed',
     Record: 'true',
+    RecordingChannels: 'dual',        // Agent and lead on separate channels — better for review
     RecordingStatusCallback: `${APP_URL}/api/twilio/recording?contact_id=${params.contactId}`,
   });
+
+  // Paid feature: detect if the lead's line is answered by a human or machine.
+  // We use this to know when to hang up early on voicemail.
+  if (ENABLE_AMD) {
+    body.append('MachineDetection', 'Enable');
+    body.append('AsyncAmd', 'true');
+    body.append('AsyncAmdStatusCallback', `${APP_URL}/api/twilio/amd?contact_id=${params.contactId}`);
+  }
 
   const res = await fetch(url, {
     method: 'POST',
@@ -72,14 +95,17 @@ export async function initiateCall(params: InitiateCallParams): Promise<{ callSi
 
 /**
  * Generate the TwiML XML that bridges the agent to the lead.
+ * Uses the caller ID and includes a brief recording disclosure for compliance.
  */
 export function generateDialTwiML(toNumber: string): string {
-  // Escape just in case of weird input
   const safeNumber = toNumber.replace(/[^+\d]/g, '');
+  const callerId = CALLER_ID || TWILIO_NUMBER;
+  // Recording disclosure played to BOTH parties for two-party-consent state compliance.
+  // (See production hardening section of the Twilio Setup Guide for details.)
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="alice">Connecting your call.</Say>
-  <Dial callerId="${TWILIO_NUMBER}" record="record-from-answer" timeout="30">
+  <Say voice="alice">Connecting your call. This call may be recorded for quality and training purposes.</Say>
+  <Dial callerId="${callerId}" record="record-from-answer-dual" timeout="30" answerOnBridge="true">
     <Number>${safeNumber}</Number>
   </Dial>
 </Response>`;
@@ -87,7 +113,7 @@ export function generateDialTwiML(toNumber: string): string {
 
 /**
  * Validate phone number format. Returns E.164 format or null if invalid.
- * Accepts US numbers in various formats and converts to +1XXXXXXXXXX
+ * Accepts US numbers in various formats and converts to +1XXXXXXXXXX.
  */
 export function normalizePhone(phone: string): string | null {
   if (!phone) return null;

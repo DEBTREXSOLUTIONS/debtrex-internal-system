@@ -11,6 +11,7 @@ const TWILIO_WEBHOOK_PREFIXES = [
   '/api/twilio/twiml',
   '/api/twilio/status',
   '/api/twilio/recording',
+  '/api/twilio/amd',
 ];
 
 export async function middleware(request: NextRequest) {

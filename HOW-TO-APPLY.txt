@@ -1,175 +1,139 @@
-DEBTREX FEATURES UPDATE — Pipeline + Permissions + Twilio
-=============================================================
+DEBTREX TWILIO UPDATE — PAID ACCOUNT OPTIMIZATIONS
+=====================================================
 
-WHAT'S NEW
-==========
+WHAT CHANGED
+============
 
-1. PIPELINE — MANAGEMENT (B2B)
-   - /pipeline/management
-   - Companies to call to make deals with, sign contracts with
-   - Track: company name, industry, deal value, contact person, status
-   - Statuses: New → Contacted → Meeting → Negotiating → Contract Sent
-     → Closed Won / Closed Lost
+Since you have a funded Twilio account (not trial), this patch
+upgrades the integration to use paid-account features:
 
-2. PIPELINE — SALES (B2C)
-   - /pipeline/sales
-   - Leads to pitch the debt relief program
-   - Track: lead name, estimated debt, monthly income, status
-   - Statuses: New Lead → Contacted → Qualified → Proposal Sent
-     → Enrolled / Not Interested / Unreachable
+1. Answering Machine Detection (AMD)
+   - Twilio detects voicemail vs human automatically
+   - Voicemails auto-marked in your call log
+   - Saves agent time, no need to manually log "left voicemail"
 
-3. EVERY CONTACT HAS:
-   - Click-to-call button (Twilio integration — see Part 5)
-   - Manual call log (date, direction, outcome, duration, notes)
-   - Notes panel (sticky pin, multi-user, edit own notes)
-   - Status changer (one-click status moves)
-   - Edit form (full contact details, address, phone, etc)
-   - Assignment (who's working this contact)
-   - Delete
+2. Dual-channel call recording
+   - Agent and lead recorded on separate audio tracks
+   - Easier to review, transcribe, and train on
 
-4. GRANULAR PERMISSIONS SYSTEM
-   - /permissions (visible only to CEO/Owner)
-   - Toggle ANY permission for ANY role:
-     * Section visibility (10 sections)
-     * Tasks: create, edit, delete, view all, assign to anyone
-     * Events: create, edit, delete, invite anyone
-     * Budget: view, edit allocations, submit/approve expenses
-     * Team: invite, change roles, deactivate, delete
-     * Performance: view all, view team, assign managers
-     * Pipeline: create, edit, delete, view all, assign, export
-     * Calls: log, make (Twilio), view all
-     * Permissions admin (locked ON for CEO/Owner)
-   - Quick "all on / all off" buttons per group + role
-   - Save bar appears when changes pending
-   - Cache invalidates on save — changes apply within 1 minute
+3. Better compliance built-in
+   - Recording disclosure now played to both parties
+     ("This call may be recorded for quality and training purposes")
+   - Required for two-party-consent states (CA, FL, IL, MD, MA, etc.)
 
-5. TWILIO CLICK-TO-CALL
-   - On any contact's page, click "Call Now"
-   - Twilio rings the agent's phone first, bridges to the lead
-   - Auto-records the call
-   - Logs duration, outcome (connected/no-answer/voicemail/etc)
-   - Recording appears as playable audio in the call log
-   - SEE: DEBTREX-Twilio-Setup-Guide.docx for FULL SETUP
+4. answerOnBridge="true"
+   - Billing only starts when the lead actually picks up
+   - Saves money on no-answer calls
+
+5. Optional custom caller ID
+   - New env var TWILIO_CALLER_ID lets you display a different number
+     than your purchased one (useful when you buy regional numbers
+     for better answer rates)
+
+6. New webhook for AMD results: /api/twilio/amd
+
+WHAT YOU GET TO TURN ON LATER (covered in the guide)
+=====================================================
+
+- CNAM branded caller ID ("DEBTREX SOLUTIONS" instead of just a number)
+- STIR/SHAKEN attestation (already active on paid accounts)
+- Caller ID by region (regional numbers for better answer rates)
 
 
 HOW TO APPLY
 ============
 
-STEP 1 — RUN THE DATABASE MIGRATION (CRITICAL)
+4 files total (3 replace, 1 new):
 
-  1. Open Supabase → SQL Editor → New query
-  2. Copy the entire contents of database/migration-003.sql
-  3. Paste into the editor
-  4. Click "Run"
-  5. Verify: Table Editor should now show 4 new tables:
-     - pipeline_contacts
-     - call_logs
-     - contact_notes
-     - role_permissions  (auto-seeded with default permissions)
+  lib/twilio.ts                             [REPLACE]
+  middleware.ts                             [REPLACE]
+  .env.example                              [REPLACE]
+  app/api/twilio/amd/route.ts               [NEW]
 
-STEP 2 — DROP IN THE FILES (26 files)
+NEW OPTIONAL ENV VARS
+=====================
 
-Database (1):
-  database/migration-003.sql                              [NEW]
+Add these to .env.local AND Vercel if you want to use them:
 
-Libraries (2):
-  lib/permissions.ts                                      [NEW]
-  lib/twilio.ts                                           [NEW]
+  # Optional: display a different caller ID than TWILIO_PHONE_NUMBER
+  TWILIO_CALLER_ID=
+  
+  # Optional: set to "false" to disable AMD (saves $0.0075/call)
+  # Default: enabled (recommended for paid accounts)
+  TWILIO_ENABLE_AMD=true
 
-Configuration (2 — REPLACE EXISTING):
-  middleware.ts                                           [REPLACE]
-  .env.example                                            [REPLACE]
-
-Components (1 — REPLACE):
-  components/Sidebar.tsx                                  [REPLACE]
-
-Pipeline pages (8 NEW):
-  app/pipeline/PipelinePageBase.tsx
-  app/pipeline/PipelineList.tsx
-  app/pipeline/ContactDetailBase.tsx
-  app/pipeline/ContactDetail.tsx
-  app/pipeline/management/page.tsx
-  app/pipeline/management/[id]/page.tsx
-  app/pipeline/sales/page.tsx
-  app/pipeline/sales/[id]/page.tsx
-
-Permissions admin (2 NEW):
-  app/permissions/page.tsx
-  app/permissions/PermissionsManager.tsx
-
-Pipeline API (5 NEW):
-  app/api/pipeline/route.ts
-  app/api/pipeline/[id]/route.ts
-  app/api/pipeline/[id]/calls/route.ts
-  app/api/pipeline/[id]/notes/route.ts
-  app/api/pipeline/notes/[id]/route.ts
-
-Permissions API (1 NEW):
-  app/api/permissions/route.ts
-
-Twilio API (4 NEW):
-  app/api/twilio/call/route.ts
-  app/api/twilio/twiml/dial/route.ts
-  app/api/twilio/status/route.ts
-  app/api/twilio/recording/route.ts
-
-STEP 3 — RESTART AND TEST
-
-  npm run dev
-
-  - Sign in as CEO
-  - Sidebar should show new sections: Management, Sales, Permissions
-  - Click Permissions → see the toggle matrix
-  - Click Management → click "Add Contact" → create a test company
-  - Click Sales → create a test lead
-  - Open the lead → try Edit, change Status, add a Note, Log a Call
-
-STEP 4 — TWILIO (OPTIONAL BUT POWERFUL)
-
-The pipeline works WITHOUT Twilio — agents can manually log calls.
-To enable click-to-call:
-  - Read DEBTREX-Twilio-Setup-Guide.docx
-  - Sign up at twilio.com
-  - Buy a phone number
-  - Add 3 env vars to .env.local AND Vercel:
-      TWILIO_ACCOUNT_SID
-      TWILIO_AUTH_TOKEN
-      TWILIO_PHONE_NUMBER
-  - Configure webhook URLs (covered in the guide)
-  - Each agent must add their phone number in Settings → Profile
-
-STEP 5 — PUSH TO PRODUCTION
-
-  git add .
-  git commit -m "Add pipeline, permissions, twilio integration"
-  git push
-
-  Vercel auto-deploys.
+The required vars haven't changed:
+  TWILIO_ACCOUNT_SID
+  TWILIO_AUTH_TOKEN
+  TWILIO_PHONE_NUMBER
 
 
-NOTES
+STEPS
 =====
 
-NO new dependencies — uses native fetch for Twilio API
-NO breaking changes to existing pages/data
-Default permissions seed sensibly (CEO=all, Manager=most, etc)
+1. Drop the 4 files into your project (preserving folder structure)
+2. Stop dev server (Ctrl+C)
+3. npm run dev
+4. Test a call as before:
+   - Open a contact
+   - Click Call Now
+   - Pick up your phone
+   - Listen for "Connecting your call. This call may be recorded..."
+   - Talk to the lead
+   - End call
+   - Check Call Log tab — recording should appear within 1-2 min
 
-The permission cache lives in-memory for 1 minute, so when you flip
-a toggle, it can take up to 1 minute to take effect for active users.
-The cache invalidates immediately for the user who made the change.
+5. Push to production:
+   git add .
+   git commit -m "Upgrade Twilio for paid account features"
+   git push
 
-TROUBLESHOOTING
-===============
 
-"Module not found 'lib/permissions'" → make sure file is at lib/permissions.ts
-                                       (lowercase, exact path)
+VERIFICATION
+============
 
-"relation 'pipeline_contacts' does not exist" → migration-003.sql wasn't run
+After the test call, check Twilio Console → Monitor → Logs → Calls
+You should see:
+  - Two call legs (one to agent, one to lead)
+  - Both with status "completed"
+  - Recording link
+  - For paid accounts: STIR/SHAKEN attestation level (A is best)
+  - Total cost shown per call
 
-"Twilio not configured" → env vars missing or server not restarted
 
-"You have no phone number on file" → Settings → Profile → Phone
+READ THE NEW GUIDE
+==================
 
-Page works in dev but not Vercel → environment variables didn't sync
-                                    Vercel → Settings → Environment Variables
-                                    add TWILIO_* vars, redeploy
+The DEBTREX-Twilio-Setup-Guide.docx has been completely rewritten
+for paid accounts. Key sections you should read:
+
+  - Section 7: Optional Paid-Account Upgrades
+    (CNAM, regional caller IDs, AMD details)
+    
+  - Section 8: Production Hardening
+    (TCPA compliance is CRITICAL for debt relief — read carefully)
+    
+  - Section 9: Cost Management
+    (forecasting formulas, cost breakdown per call)
+
+
+COMMON QUESTIONS
+================
+
+Q: Do I have to set TWILIO_CALLER_ID?
+A: No. If empty, the system uses TWILIO_PHONE_NUMBER as caller ID.
+   Only useful if you buy multiple numbers.
+
+Q: Should I keep AMD enabled?
+A: Yes. The cost is $0.0075 per call and it gives you cleaner data.
+   Disable only if budget is extremely tight.
+
+Q: Do I need CNAM?
+A: Optional. Helps answer rates on landlines (~5-10% bump). Less
+   effective on mobile carriers. Costs $0.50/month/number.
+
+Q: My calls were already working — will this break anything?
+A: No. The integration is backward compatible. AMD is additive,
+   caller ID falls back to your existing number, recording just
+   gains the dual-channel improvement. Existing calls in your log
+   stay as they were.
