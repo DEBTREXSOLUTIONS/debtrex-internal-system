@@ -13,6 +13,9 @@ const TWILIO_WEBHOOK_PREFIXES = [
   '/api/twilio/recording',
   '/api/twilio/amd',
   '/api/twilio/voice-twiml',
+  '/api/twilio/inbound',
+  '/api/twilio/inbound-fallback',
+  '/api/twilio/voicemail',
 ];
 
 export async function middleware(request: NextRequest) {

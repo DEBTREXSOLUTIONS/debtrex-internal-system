@@ -35,7 +35,7 @@ export function generateVoiceToken(agentIdentity: string): string {
 
   const voiceGrant = new VoiceGrant({
     outgoingApplicationSid: TWIML_APP_SID,
-    incomingAllow: false, // We only do outbound; flip to true to accept inbound calls
+    incomingAllow: true, // Enable inbound calls via Voice SDK
   });
 
   token.addGrant(voiceGrant);

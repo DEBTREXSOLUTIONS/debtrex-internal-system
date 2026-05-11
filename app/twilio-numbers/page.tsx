@@ -11,19 +11,21 @@ import TwilioNumbersManager from './TwilioNumbersManager';
 export default async function TwilioNumbersPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
-  // Allow if user has permission OR is built-in leadership (fallback)
   const allowed = await hasPermission(user.role, 'section.twilio_numbers') || isLeadership(user.role);
   if (!allowed) redirect('/');
 
-  // Numbers from Twilio account
   const twilioNumbers = await listTwilioNumbers();
 
-  // All active users
   const { data: users } = await supabaseAdmin
     .from('profiles')
     .select('id, full_name, email, role, phone, twilio_phone_number, twilio_phone_label')
     .eq('is_active', true)
     .order('full_name');
+
+  // Routing config per number
+  const { data: routingRows } = await supabaseAdmin
+    .from('phone_number_routing')
+    .select('*');
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -36,6 +38,8 @@ export default async function TwilioNumbersPage() {
             twilioNumbers={twilioNumbers}
             users={users || []}
             defaultNumber={process.env.TWILIO_PHONE_NUMBER || ''}
+            routing={routingRows || []}
+            appUrl={process.env.NEXT_PUBLIC_APP_URL || ''}
           />
         </div>
       </main>

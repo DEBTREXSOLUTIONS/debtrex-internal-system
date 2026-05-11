@@ -7,6 +7,7 @@ import {
   Building2, Phone, Shield, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { useState, useEffect, memo } from 'react';
+import InboundCallListener from './InboundCallListener';
 
 interface User {
   id: string;
@@ -310,6 +311,9 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
       >
         {sidebarContent}
       </aside>
+
+      {/* Global inbound call listener — receives Twilio Voice calls anywhere in the app */}
+      <InboundCallListener user={user} />
     </>
   );
 }

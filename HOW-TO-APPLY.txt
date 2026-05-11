@@ -1,85 +1,200 @@
-DEBTREX — PAGE ACCESS FIX FOR CUSTOM ROLES
-============================================
+DEBTREX — AGENT STATUS + INBOUND CALLING
+==========================================
 
-WHAT THIS FIXES
-===============
+WHAT THIS PATCH ADDS
+====================
 
-Several pages redirected custom-role users back to the dashboard
-because they used hardcoded role checks like canEditBudget() or
-canUseCalculators(). These functions check a hardcoded list of
-role names (ceo, owner, manager, etc.) — your custom "system" role
-wasn't in those lists, so every page kicked you out.
+1. AGENT STATUS — Everyone in the system gets a 5-state status they
+   can change anytime from the top bar:
+     • ONLINE      — Available for calls and tasks
+     • OTL         — On The Line (currently on a call)
+     • MEETING     — In a meeting, do not disturb
+     • BREAK       — Away for a short while
+     • OFFLINE     — Not working
+   
+   Status auto-sets to ONLINE on page load, and OFFLINE when you
+   close the browser tab.
 
-FIXED PAGES (5 files)
+2. INBOUND CALLS — Customers can call your Twilio numbers and:
+     • Get routed to a specific agent (rings their browser)
+     • Get routed to ANY available (online) agent
+     • Go straight to voicemail (recorded + saved to call_logs)
+   
+   Routing is configured per-number from the Twilio Numbers admin page.
+   When a call comes in, a full-screen incoming-call UI pops up over
+   any page the agent is on. They can answer, decline, mute, or
+   keypad-tone during the call.
+
+
+HOW IT WORKS — INBOUND CALL FLOW
+=================================
+
+1. Customer dials one of your Twilio numbers
+2. Twilio hits your /api/twilio/inbound webhook
+3. Our code looks up routing for that number:
+     - "Specific Agent" mode → check if agent's status is "online"
+       If yes → ring their browser via <Client>{agentId}</Client>
+       If no  → straight to voicemail
+     - "Available" mode → query all profiles where status='online'
+       Ring all of them — first to answer wins
+     - "Voicemail" mode → Twilio plays greeting + records
+4. Agent's browser (which is registered with Twilio via Voice SDK)
+   shows the incoming call UI
+5. Agent clicks Answer → audio flows through computer mic/speakers
+6. Call ends → logged to call_logs with recording
+
+
+PREREQUISITES (you already have these)
+=======================================
+
+- Twilio Voice SDK already set up (env vars: TWILIO_API_KEY,
+  TWILIO_API_SECRET, TWILIO_TWIML_APP_SID)
+- At least one phone number on your Twilio account
+- Voice SDK working for outbound calls
+
+
+APPLY ORDER
+===========
+
+STEP 1 — RUN THE DATABASE MIGRATION (CRITICAL)
+
+  Open Supabase → SQL Editor → New query
+  Paste contents of: database/migration-007.sql
+  Click Run
+
+  This creates:
+    - status, status_message, status_updated_at columns on profiles
+    - 3 new inbound outcomes for call_logs
+    - from_number / to_number columns on call_logs
+    - phone_number_routing table
+
+
+STEP 2 — DROP THE FILES IN (13 files)
+
+  database/migration-007.sql                                  [NEW]
+  middleware.ts                                               [REPLACE]
+  lib/twilio-voice.ts                                         [REPLACE]
+  components/TopBar.tsx                                       [REPLACE]
+  components/Sidebar.tsx                                      [REPLACE]
+  components/InboundCallListener.tsx                          [NEW]
+  app/api/me/status/route.ts                                  [NEW]
+  app/api/twilio/inbound/route.ts                             [NEW]
+  app/api/twilio/inbound-fallback/route.ts                    [NEW]
+  app/api/twilio/voicemail/route.ts                           [NEW]
+  app/api/twilio/routing/route.ts                             [NEW]
+  app/twilio-numbers/page.tsx                                 [REPLACE]
+  app/twilio-numbers/TwilioNumbersManager.tsx                 [REPLACE]
+
+
+STEP 3 — CONFIGURE TWILIO CONSOLE FOR INBOUND
+==============================================
+
+For EACH Twilio number you want to receive calls on:
+
+  1. console.twilio.com → Phone Numbers → Active Numbers
+  2. Click the number
+  3. Scroll to "Voice Configuration" section
+  4. Under "A call comes in":
+       Configure with:   Webhook, TwiML Bin, Function...
+       URL:              https://debtrex-internal-system.vercel.app/api/twilio/inbound
+       Method:           HTTP POST
+  5. Scroll down → Save Configuration
+  6. Repeat for each number
+
+
+STEP 4 — CONFIGURE INBOUND ROUTING IN DEBTREX
+
+  1. Push code to production: git add . && git commit -m "Agent status + inbound calls" && git push
+  2. Wait 2 min for Vercel
+  3. Hard refresh: Ctrl + Shift + R
+  4. Sign in as CEO
+  5. Sidebar → Twilio Numbers
+  6. Click the "Inbound Call Routing" tab
+  7. For each number, click "Configure" and choose:
+       - "Specific Agent" + select an agent (calls only ring if their
+         status is "online" — otherwise voicemail)
+       - "Any Available" — rings ALL online agents simultaneously,
+         first to answer wins
+       - "Voicemail Only" — skip ringing, go straight to VM
+     Also set ring timeout and voicemail greeting
+     Save
+
+
+STEP 5 — TEST INBOUND
 =====================
 
-  app/calculators/page.tsx                  [REPLACE]
-  app/performance/page.tsx                  [REPLACE]
-  app/performance/assignments/page.tsx      [REPLACE]
-  app/budget/page.tsx                       [REPLACE]
-  app/budget/allocations/page.tsx           [REPLACE]
-
-Each one now allows access if EITHER:
-  - The corresponding section permission is ON
-  - OR the user has a built-in role that would normally have access
-    (fallback for backward compatibility)
+  1. Sign in as a user with call.make permission
+  2. Make sure your status is "Online" (top bar)
+  3. Allow microphone permission if browser asks
+  4. From your personal cell phone, dial the Twilio number
+  5. Within 2-3 seconds, the full-screen incoming call UI appears
+  6. Click the green Answer button
+  7. You're connected through your computer mic/speakers
+  8. Click red Hang Up to end
 
 
-HOW TO APPLY
-============
+TROUBLESHOOTING
+===============
 
-1. Drop the 5 files in (preserve folder structure)
-2. git add . && git commit -m "Page access via permissions" && git push
-3. Wait for Vercel to deploy (~2 min)
-4. Hard refresh: Ctrl + Shift + R
+"Status doesn't save"
+  → Check that migration-007 ran. Visit /api/me/status — should
+    return your current status without an error.
 
+"Incoming call UI never appears"
+  → Multiple things to check:
+    1. Make sure your status is "Online" (top bar status picker)
+    2. Browser must have microphone permission for your DEBTREX site
+       Check via lock icon in address bar
+    3. The Voice SDK device registers when the page loads. If you
+       just logged in, give it 5-10 seconds before testing
+    4. Check Twilio Console → Monitor → Logs → Calls — find the
+       call. Click it. Look at "Request Inspector" for errors
+    5. Visit /api/twilio/diagnostics (signed in as CEO) to verify
+       all Voice SDK env vars are set
+    6. Open browser console (F12) — look for Twilio Device errors
 
-CHECKING WHICH PERMISSIONS YOUR ROLE HAS
-=========================================
+"Call rings but I can't hear them"
+  → Wrong microphone or speaker selected. Check Chrome settings:
+    chrome://settings/content/microphone
 
-Visit while signed in:
-  https://debtrex-internal-system.vercel.app/api/me/permissions
+"Configured routing but calls still go straight to voicemail"
+  → If routing mode is "Specific Agent", that agent's status must
+    be "online" in DEBTREX. Check top bar status picker.
+  → For "Any Available" mode, at least one agent must have status
+    "online". Check the Team page or query: 
+    select full_name, status from profiles where is_active = true;
 
-You'll see a `section_visibility` object. Each value tells you:
-  true  = page accessible
-  false = page redirects to /
-
-To turn one on:
-  - Sign in as CEO
-  - Sidebar → Admin → Permissions
-  - Find your role's column
-  - Toggle the matching permission
-  - Save All Changes
-
-
-PERMISSION TO PAGE MAPPING
-============================
-
-  section.dashboard              →  /
-  section.tasks                  →  /tasks
-  section.calendar               →  /calendar
-  section.files                  →  /files
-  section.calculators            →  /calculators
-  section.pipeline_sales         →  /pipeline/sales
-  section.pipeline_management    →  /pipeline/management
-  section.performance            →  /performance
-  performance.assign_managers    →  /performance/assignments
-  section.budget                 →  /budget
-  budget.edit_allocations        →  /budget/allocations
-  section.team                   →  /team
-  section.twilio_numbers         →  /twilio-numbers
-  section.custom_roles           →  /roles
-  permissions.manage             →  /permissions
+"Inbound webhook not getting called"
+  → Verify Twilio Console webhook URL is set correctly on the
+    Phone Numbers page. URL must be the FULL https URL with
+    /api/twilio/inbound. Method must be POST.
 
 
-ONCE THIS IS APPLIED
-======================
+STATUS BEHAVIOR
+================
 
-For your "system" role to see EVERYTHING, on the Permissions page,
-turn ON every toggle in:
-  - Section Visibility group  (all 12 toggles)
-  - Permissions Admin group   (both toggles)
-  - Any feature permissions you want (tasks, pipeline, etc.)
+- Loads from server on every page navigation (cached for speed)
+- Set to "online" automatically when you load any page
+- Set to "offline" automatically when you close the browser tab
+- Inbound routing in "Specific Agent" mode ONLY rings the assigned
+  agent if their status is "online" — otherwise voicemail
+- Inbound routing in "Any Available" mode rings ALL profiles where
+  status='online' — multiple browsers ring at once, first wins
+- Status displays in the top bar with a colored dot
+- Status changes are visible to other team members on the Team page
 
-Save All Changes. Hard refresh browser. Sign in again as a system
-user. You should now see every section and be able to click into all.
+
+EXTENDING THIS
+==============
+
+Want to broadcast status changes in real-time so others see them
+update without refreshing? You'd add Supabase Realtime subscriptions
+on the profiles table — out of scope for this patch but trivial to
+add later.
+
+Want voicemail notifications? When /api/twilio/voicemail receives
+a recording, send an email via Resend to the routed agent.
+
+Want to track which agent received a call in "Available" mode?
+Twilio's <Dial> sends a "DialCallSid" parameter when answered —
+you'd update call_logs.user_id from that webhook.
