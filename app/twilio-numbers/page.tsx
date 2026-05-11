@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
 import { isLeadership } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase';
 import { listTwilioNumbers, isTwilioConfigured } from '@/lib/twilio';
@@ -10,7 +11,9 @@ import TwilioNumbersManager from './TwilioNumbersManager';
 export default async function TwilioNumbersPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
-  if (!isLeadership(user.role)) redirect('/');
+  // Allow if user has permission OR is built-in leadership (fallback)
+  const allowed = await hasPermission(user.role, 'section.twilio_numbers') || isLeadership(user.role);
+  if (!allowed) redirect('/');
 
   // Numbers from Twilio account
   const twilioNumbers = await listTwilioNumbers();

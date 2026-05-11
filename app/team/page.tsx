@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser, canManageUsers } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
 import { supabaseAdmin } from '@/lib/supabase';
 import Sidebar from '@/components/Sidebar';
 import TopBar from '@/components/TopBar';
@@ -8,7 +9,9 @@ import TeamManager from './TeamManager';
 export default async function TeamPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
-  if (!canManageUsers(user.role)) redirect('/');
+  // Allow if section permission is on OR has manage permission OR is leadership
+  const allowed = await hasPermission(user.role, 'section.team') || canManageUsers(user.role);
+  if (!allowed) redirect('/');
 
   const { data: members } = await supabaseAdmin
     .from('profiles')

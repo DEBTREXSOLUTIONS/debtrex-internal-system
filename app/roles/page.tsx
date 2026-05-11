@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
 import { isLeadership } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase';
 import Sidebar from '@/components/Sidebar';
@@ -9,7 +10,8 @@ import RolesManager from './RolesManager';
 export default async function RolesPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
-  if (!isLeadership(user.role)) redirect('/');
+  const allowed = await hasPermission(user.role, 'roles.manage') || isLeadership(user.role);
+  if (!allowed) redirect('/');
 
   // Fetch all roles (built-in + custom)
   const { data: roles } = await supabaseAdmin

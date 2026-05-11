@@ -15,6 +15,8 @@ export const PERMISSION_KEYS = [
   'section.calculators',
   'section.pipeline_management',
   'section.pipeline_sales',
+  'section.twilio_numbers',
+  'section.custom_roles',
   // Tasks
   'task.create',
   'task.edit_any',
@@ -54,6 +56,7 @@ export const PERMISSION_KEYS = [
   'call.view_all',
   // Permissions admin
   'permissions.manage',
+  'roles.manage',
 ] as const;
 
 export type PermissionKey = typeof PERMISSION_KEYS[number];
@@ -66,6 +69,7 @@ export const PERMISSION_GROUPS: { label: string; keys: PermissionKey[] }[] = [
       'section.dashboard', 'section.tasks', 'section.calendar', 'section.files',
       'section.budget', 'section.team', 'section.performance',
       'section.calculators', 'section.pipeline_management', 'section.pipeline_sales',
+      'section.twilio_numbers', 'section.custom_roles',
     ],
   },
   {
@@ -101,7 +105,7 @@ export const PERMISSION_GROUPS: { label: string; keys: PermissionKey[] }[] = [
   },
   {
     label: 'Permissions Admin',
-    keys: ['permissions.manage'],
+    keys: ['permissions.manage', 'roles.manage'],
   },
 ];
 
@@ -117,6 +121,8 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'section.calculators': 'See Calculators section',
   'section.pipeline_management': 'See Pipeline → Management',
   'section.pipeline_sales': 'See Pipeline → Sales',
+  'section.twilio_numbers': 'See Twilio Numbers page',
+  'section.custom_roles': 'See Custom Roles page',
 
   'task.create': 'Create new tasks',
   'task.edit_any': 'Edit any task (not just own)',
@@ -156,6 +162,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'call.view_all': "View everyone's call logs",
 
   'permissions.manage': 'Manage role permissions (THIS PAGE)',
+  'roles.manage': 'Create / edit / delete custom roles',
 };
 
 // In-memory cache to avoid hitting DB on every check

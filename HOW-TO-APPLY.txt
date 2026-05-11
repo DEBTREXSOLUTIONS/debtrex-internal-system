@@ -1,159 +1,121 @@
-DEBTREX — CUSTOM ROLES + PIPELINE COLLABORATORS + PERF + SIDEBAR
-=================================================================
+DEBTREX — SIDEBAR PERMISSIONS FIX
+==================================
 
-WHAT'S IN THIS PATCH
-====================
+WHAT THIS FIXES
+===============
 
-1. CUSTOM ROLES — Add your own roles beyond CEO/Manager/Employee
-   - Sidebar → Admin → Custom Roles
-   - Create roles like "Senior Agent", "Closer", "Lead Specialist"
-   - Each role gets its own column on the Permissions page
-   - Built-in roles can't be edited or deleted (CEO, Owner, etc.)
-   - Roles with assigned users can't be deleted
+Even with all permissions ON for your custom role, several sidebar
+sections were missing. Three bugs caused this:
 
-2. PIPELINE COLLABORATORS — Add team members to any contact
-   - On any contact's detail page, click the new "Team" tab
-   - Click "Add Team Member" to add managers/owners/anyone to that contact
-   - Two access levels: Collaborator (edit) or Observer (read-only)
-   - Collaborators show up on the contact card and can do everything
-     the assigned agent can do
-   - The contact owner can't be removed (change assignment first)
+1. Sidebar had HARDCODED role checks for some items that bypassed
+   the permission system entirely (Twilio Numbers, Custom Roles)
+   
+2. Server pages had hardcoded isLeadership() checks too, so even if
+   the sidebar link showed, the page would redirect non-leadership
+   users back to home
 
-3. GROUPED SIDEBAR — Sections instead of one long list
-   - Home: Dashboard, Tasks, Calendar, Files
-   - Pipeline: Sales, Management
-   - Tools: Calculators
-   - Team: Performance, Team Members, Twilio Numbers
-   - Financial: Budget
-   - Admin: Permissions, Custom Roles
-   - Click any section header to collapse it
+3. Sidebar was never being passed any permissions, so it always
+   used role-based defaults instead of the actual permission toggles
 
-4. PERFORMANCE FIXES — Site should feel noticeably snappier
-   - getCurrentUser cached per request (was running 2-3x per page)
-   - Pipeline pages fetch permissions in parallel (was sequential)
-   - Permission cache extended from 1 min to 5 min
-   - lucide-react / fullcalendar / recharts auto tree-shaken
-   - Static assets cached aggressively
-   - Sidebar memoized to prevent re-renders
+
+THE FIX
+=======
+
+A. Sidebar now fetches your actual permissions from /api/me/permissions
+   when it loads, so it shows exactly what your role is allowed.
+
+B. New permission keys added:
+   - section.twilio_numbers   (was hardcoded isLeadership)
+   - section.custom_roles     (was hardcoded isLeadership)
+   - roles.manage             (was hardcoded isLeadership)
+
+C. Server pages now check these permissions instead of hardcoded roles.
+
+D. Migration seeds the new permissions for all existing roles.
 
 
 APPLY ORDER
 ===========
 
-STEP 1 — RUN THE DATABASE MIGRATION (CRITICAL!)
-  Supabase → SQL Editor → paste contents of database/migration-005.sql → Run
+STEP 1 — RUN MIGRATION-006.SQL IN SUPABASE
   
-  Creates 2 new tables:
-    - custom_roles  (seeded with the 7 built-in roles)
-    - pipeline_collaborators
-
-STEP 2 — DROP IN THE FILES (19 files)
-  See file list below. All preserve folder structure.
-
-  database/migration-005.sql                                [NEW]
-  next.config.js                                            [REPLACE]
-  lib/auth.ts                                               [REPLACE]
-  lib/permissions.ts                                        [REPLACE]
-  components/Sidebar.tsx                                    [REPLACE]
-  app/roles/page.tsx                                        [NEW]
-  app/roles/RolesManager.tsx                                [NEW]
-  app/api/roles/route.ts                                    [NEW]
-  app/api/roles/[key]/route.ts                              [NEW]
-  app/team/page.tsx                                         [REPLACE]
-  app/team/TeamManager.tsx                                  [REPLACE]
-  app/permissions/page.tsx                                  [REPLACE]
-  app/permissions/PermissionsManager.tsx                    [REPLACE]
-  app/pipeline/PipelinePageBase.tsx                         [REPLACE]
-  app/pipeline/ContactDetailBase.tsx                        [REPLACE]
-  app/pipeline/ContactDetail.tsx                            [REPLACE]
-  app/api/pipeline/[id]/collaborators/route.ts              [NEW]
-  app/api/pipeline/collaborators/[collabId]/route.ts        [NEW]
-  app/api/twilio/recordings/[id]/route.ts                   [NEW if missing]
-
-STEP 3 — RESTART AND TEST
-  npm run dev
-  Hard refresh browser (Ctrl + Shift + R)
+  Open Supabase → SQL Editor → New query
+  Paste contents of database/migration-006.sql
+  Click Run
   
-  Test:
-  - Sidebar should be grouped into sections (collapsible)
-  - Click Admin → Custom Roles
-  - Create a test role like "Test Role"
-  - Go to Permissions page → new column should appear
-  - Toggle some permissions for the test role → save
-  - Go to Team page → invite someone or change someone's role to the new one
-  - Open any contact in /pipeline/sales
-  - Click the Team tab → click Add Team Member
-  - Pick a few users → click Add
+  This adds the 3 new permission rows for every role in your system.
+  Built-in leadership roles get them ON. All other roles get them
+  seeded OFF (you can flip them on from /permissions).
 
-STEP 4 — PUSH TO PRODUCTION
+STEP 2 — DROP THE 7 FILES IN
+
+  database/migration-006.sql                          [NEW]
+  lib/permissions.ts                                  [REPLACE]
+  components/Sidebar.tsx                              [REPLACE]
+  app/twilio-numbers/page.tsx                         [REPLACE]
+  app/roles/page.tsx                                  [REPLACE]
+  app/team/page.tsx                                   [REPLACE]
+  app/api/me/permissions/route.ts                     [NEW]
+
+STEP 3 — TURN ON PERMS FOR YOUR "SYSTEM" ROLE
+
+  - Sign in as CEO
+  - Sidebar → Admin → Permissions
+  - Find the "system" column
+  - In the "Section Visibility" group, toggle ON:
+      * section.twilio_numbers
+      * section.custom_roles
+      * (any others you want — section.budget, section.team, etc.)
+  - In the "Permissions Admin" group, toggle ON:
+      * roles.manage
+      * permissions.manage (if you want them to admin perms too)
+  - Click Save All Changes
+
+STEP 4 — TEST
+
+  - Log out
+  - Log in as a user with the "system" role
+  - Sidebar should now show all the sections you toggled on
+  - Click into Twilio Numbers and Custom Roles to confirm access
+
+STEP 5 — PUSH TO PRODUCTION
+
   git add .
-  git commit -m "Custom roles, pipeline collaborators, perf, sidebar groups"
+  git commit -m "Fix sidebar permissions for custom roles"
   git push
 
 
-CUSTOM ROLES — HOW THEY WORK
-==============================
+HOW SIDEBAR PERMISSIONS NOW WORK
+=================================
 
-When you create a custom role like "Senior Agent":
-  1. Role gets added to custom_roles table
-  2. Permissions get seeded for it (all OFF by default)
-  3. Role appears as a new column on /permissions
-  4. You toggle which permissions it has (e.g. pipeline.create, call.make)
-  5. Save changes on the Permissions page
-  6. Now you can assign that role to team members on /team
+When any page renders, the Sidebar component:
+  1. Mounts in the browser
+  2. Calls /api/me/permissions to fetch THIS USER's permissions
+  3. Uses those to decide which links to show
 
-To delete a role: first reassign anyone who has it, then delete.
-
-
-PIPELINE COLLABORATORS — HOW THEY WORK
-========================================
-
-Think of it like adding co-workers to a Google Doc:
-  - "Owner" = the assigned_to person (one per contact)
-  - "Collaborator" = full access, multiple allowed
-  - "Observer" = read-only, multiple allowed
-
-When a CEO/Owner/manager wants to put themselves on a contact's pipeline:
-  - Open the contact
-  - Click "Team" tab
-  - Click "Add Team Member"
-  - Pick themselves or other team members
-  - Choose access level
-
-Anyone added becomes able to call, log, edit, and add notes on
-the contact — but only the original owner can be reassigned via Edit.
-
-Requires: pipeline.assign_to_anyone permission (default: leadership + managers).
+This means:
+  - Every link in the sidebar respects the Permissions page toggles
+  - Custom roles work without any code changes
+  - Changes you make on /permissions take effect after a 5-minute cache
+    (or instantly for the user who made the change)
 
 
-PERFORMANCE NOTES
-==================
+WHY YOU SAW MISSING SECTIONS BEFORE
+====================================
 
-After applying this patch, expect:
-  - Initial page load: ~30-40% faster (parallel perm checks)
-  - Navigation between pages: ~50% faster (cached user lookup)
-  - Sidebar: instant render (memoized, no longer re-renders on each nav)
+Three different code paths were involved:
 
-If still slow, the bottleneck is probably:
-  - Supabase database location (US East fastest from US, slowest from Europe/Asia)
-  - Vercel region (set to "iad1" or closest to your Supabase region)
-  - Slow internet connection on user end
-  - First load only (Next.js compiles on-demand in dev)
+  Section            How it gated access (OLD)         Now
+  ─────────────────  ───────────────────────────────  ─────────────────
+  Dashboard          can('section.dashboard', true)    Same (permission)
+  Tasks              can('section.tasks', true)        Same
+  Sales              can('section.pipeline_sales')     Same
+  Management         can('section.pipeline_management')Same
+  Performance        can('section.performance')        Same
+  Budget             can('section.budget')             Same
+  Team               can('section.team')               Same
+  Twilio Numbers     isLeadership(user.role)  ❌       can('section.twilio_numbers')
+  Custom Roles       isLeadership(user.role)  ❌       can('roles.manage')
+  Permissions        can('permissions.manage')         Same
 
-Production builds (after git push) are 3-5x faster than dev mode.
-
-
-TROUBLESHOOTING
-===============
-
-"Custom role I created doesn't show in permissions"
-  → Refresh the /permissions page (the matrix data is fetched at render time)
-
-"Can't delete a role"
-  → Some user still has that role. Go to /team, change their role to something else.
-
-"Team tab doesn't show on contact pages"
-  → Make sure migration-005 ran (pipeline_collaborators table exists)
-
-"Can't add team members"
-  → You need pipeline.assign_to_anyone permission. Default is leadership+managers.
+So Twilio Numbers and Custom Roles were never togglable. Now they are.

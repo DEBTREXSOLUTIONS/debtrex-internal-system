@@ -31,12 +31,14 @@ interface NavGroup {
   items: NavItem[];
 }
 
-function Sidebar({ user, permissions = {} }: { user: User; permissions?: SidebarPermissions }) {
+function Sidebar({ user, permissions: initialPermissions }: { user: User; permissions?: SidebarPermissions }) {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [permissions, setPermissions] = useState<SidebarPermissions>(initialPermissions || {});
+  const [permsLoaded, setPermsLoaded] = useState(!!initialPermissions);
 
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
@@ -46,8 +48,25 @@ function Sidebar({ user, permissions = {} }: { user: User; permissions?: Sidebar
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
+  // Fetch permissions if not provided
+  useEffect(() => {
+    if (initialPermissions && Object.keys(initialPermissions).length > 0) return;
+    let active = true;
+    fetch('/api/me/permissions')
+      .then(r => r.json())
+      .then(data => {
+        if (!active) return;
+        if (data.permissions) {
+          setPermissions(data.permissions);
+          setPermsLoaded(true);
+        }
+      })
+      .catch(() => { if (active) setPermsLoaded(true); });
+    return () => { active = false; };
+  }, []);
+
   const can = (key: string, fallback: boolean) =>
-    Object.keys(permissions).length > 0 ? !!permissions[key] : fallback;
+    permsLoaded ? !!permissions[key] : fallback;
 
   const isLeadership = ['ceo', 'owner', 'co-owner'].includes(user.role);
   const isManager = user.role === 'manager';
@@ -82,7 +101,7 @@ function Sidebar({ user, permissions = {} }: { user: User; permissions?: Sidebar
       items: [
         { href: '/performance', label: 'Performance', icon: Trophy, show: can('section.performance', isLeadership || isManager) },
         { href: '/team', label: 'Team Members', icon: Users, show: can('section.team', isLeadership) },
-        { href: '/twilio-numbers', label: 'Twilio Numbers', icon: Phone, show: isLeadership },
+        { href: '/twilio-numbers', label: 'Twilio Numbers', icon: Phone, show: can('section.twilio_numbers', isLeadership) },
       ],
     },
     {
@@ -95,7 +114,7 @@ function Sidebar({ user, permissions = {} }: { user: User; permissions?: Sidebar
       label: 'Admin',
       items: [
         { href: '/permissions', label: 'Permissions', icon: Shield, show: can('permissions.manage', isLeadership) },
-        { href: '/roles', label: 'Custom Roles', icon: UserCheck, show: isLeadership },
+        { href: '/roles', label: 'Custom Roles', icon: UserCheck, show: can('roles.manage', isLeadership) },
       ],
     },
   ];
