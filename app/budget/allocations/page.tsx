@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser, canEditBudget } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
 import { supabaseAdmin } from '@/lib/supabase';
 import Sidebar from '@/components/Sidebar';
 import TopBar from '@/components/TopBar';
@@ -8,7 +9,8 @@ import BudgetAllocations from './BudgetAllocations';
 export default async function AllocationsPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
-  if (!canEditBudget(user.role)) redirect('/');
+  const allowed = await hasPermission(user.role, 'budget.edit_allocations') || canEditBudget(user.role);
+  if (!allowed) redirect('/');
 
   const params = await searchParams;
   // Default to first day of current month

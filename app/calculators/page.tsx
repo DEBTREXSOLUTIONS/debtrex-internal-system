@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
 import { canUseCalculators } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase';
 import Sidebar from '@/components/Sidebar';
@@ -9,7 +10,9 @@ import CalculatorsView from './CalculatorsView';
 export default async function CalculatorsPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
-  if (!canUseCalculators(user.role)) redirect('/');
+  // Allow if section permission is on OR built-in role allows
+  const allowed = await hasPermission(user.role, 'section.calculators') || canUseCalculators(user.role);
+  if (!allowed) redirect('/');
 
   // Recent saved calculations (this user's only)
   const { data: recentCalcs } = await supabaseAdmin

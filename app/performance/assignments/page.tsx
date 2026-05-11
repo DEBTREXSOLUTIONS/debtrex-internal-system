@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
 import { canAssignAgentsToManagers } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase';
 import Sidebar from '@/components/Sidebar';
@@ -9,7 +10,8 @@ import AssignmentsManager from './AssignmentsManager';
 export default async function AssignmentsPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
-  if (!canAssignAgentsToManagers(user.role)) redirect('/');
+  const allowed = await hasPermission(user.role, 'performance.assign_managers') || canAssignAgentsToManagers(user.role);
+  if (!allowed) redirect('/');
 
   // All active users
   const { data: users } = await supabaseAdmin

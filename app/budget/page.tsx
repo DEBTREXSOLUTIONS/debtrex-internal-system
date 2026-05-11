@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser, canEditBudget } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
 import { supabaseAdmin } from '@/lib/supabase';
 import Sidebar from '@/components/Sidebar';
 import TopBar from '@/components/TopBar';
@@ -8,7 +9,8 @@ import BudgetDashboard from './BudgetDashboard';
 export default async function BudgetPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
-  if (!canEditBudget(user.role)) redirect('/');
+  const allowed = await hasPermission(user.role, 'section.budget') || canEditBudget(user.role);
+  if (!allowed) redirect('/');
 
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
