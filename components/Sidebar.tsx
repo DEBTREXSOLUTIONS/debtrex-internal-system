@@ -36,9 +36,43 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
-  const [permissions, setPermissions] = useState<SidebarPermissions>(initialPermissions || {});
-  const [permsLoaded, setPermsLoaded] = useState(!!initialPermissions);
+
+  // Initialize collapsed state from localStorage
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const saved = localStorage.getItem('sidebar_collapsed');
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
+
+  // Initialize permissions from sessionStorage cache to avoid flicker on navigation
+  const [permissions, setPermissions] = useState<SidebarPermissions>(() => {
+    if (initialPermissions && Object.keys(initialPermissions).length > 0) return initialPermissions;
+    if (typeof window === 'undefined') return {};
+    try {
+      const cached = sessionStorage.getItem(`perms_${user.id}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.savedAt < 300_000) { // 5-minute cache
+          return parsed.permissions;
+        }
+      }
+    } catch {}
+    return {};
+  });
+  const [permsLoaded, setPermsLoaded] = useState(() => {
+    if (initialPermissions && Object.keys(initialPermissions).length > 0) return true;
+    if (typeof window === 'undefined') return false;
+    try {
+      const cached = sessionStorage.getItem(`perms_${user.id}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        return Date.now() - parsed.savedAt < 300_000;
+      }
+    } catch {}
+    return false;
+  });
 
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
@@ -48,9 +82,16 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
-  // Fetch permissions if not provided
+  // Save collapsed state
   useEffect(() => {
-    if (initialPermissions && Object.keys(initialPermissions).length > 0) return;
+    try {
+      localStorage.setItem('sidebar_collapsed', JSON.stringify(collapsed));
+    } catch {}
+  }, [collapsed]);
+
+  // Fetch permissions only if not already cached
+  useEffect(() => {
+    if (permsLoaded) return; // Already have them
     let active = true;
     fetch('/api/me/permissions')
       .then(r => r.json())
@@ -59,11 +100,17 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
         if (data.permissions) {
           setPermissions(data.permissions);
           setPermsLoaded(true);
+          try {
+            sessionStorage.setItem(`perms_${user.id}`, JSON.stringify({
+              permissions: data.permissions,
+              savedAt: Date.now(),
+            }));
+          } catch {}
         }
       })
       .catch(() => { if (active) setPermsLoaded(true); });
     return () => { active = false; };
-  }, []);
+  }, [permsLoaded, user.id]);
 
   const can = (key: string, fallback: boolean) =>
     permsLoaded ? !!permissions[key] : fallback;
@@ -100,6 +147,7 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
       label: 'Team',
       items: [
         { href: '/performance', label: 'Performance', icon: Trophy, show: can('section.performance', isLeadership || isManager) },
+        { href: '/performance/assignments', label: 'Manager Assignments', icon: UserCheck, show: can('performance.assign_managers', isLeadership) },
         { href: '/team', label: 'Team Members', icon: Users, show: can('section.team', isLeadership) },
         { href: '/twilio-numbers', label: 'Twilio Numbers', icon: Phone, show: can('section.twilio_numbers', isLeadership) },
       ],
@@ -147,7 +195,7 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
             Internal System
           </div>
         </Link>
-        <button onClick={() => setMobileOpen(false)} className="lg:hidden text-white/60 hover:text-white p-1">
+        <button type="button" onClick={() => setMobileOpen(false)} className="lg:hidden text-white/60 hover:text-white p-1">
           <X size={22} />
         </button>
       </div>
@@ -158,7 +206,7 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
           const isCollapsed = !!collapsed[group.label];
           return (
             <div key={group.label} className="mb-1">
-              <button
+              <button type="button"
                 onClick={() => toggleGroup(group.label)}
                 className="w-full px-4 py-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.15em] text-white/40 hover:text-white/70 transition-colors"
               >
@@ -170,8 +218,17 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
               {!isCollapsed && (
                 <div className="px-2 space-y-0.5">
                   {group.items.map(item => {
-                    const active = pathname === item.href ||
-                      (item.href !== '/' && pathname.startsWith(item.href));
+                    // Exact match OR starts-with — but only if no MORE specific sibling matches.
+                    // e.g. /performance shouldn't be "active" when on /performance/assignments
+                    const moreSpecificMatch = group.items.some(other =>
+                      other.href !== item.href &&
+                      other.href.startsWith(item.href + '/') &&
+                      (pathname === other.href || pathname.startsWith(other.href + '/'))
+                    );
+                    const active = !moreSpecificMatch && (
+                      pathname === item.href ||
+                      (item.href !== '/' && pathname.startsWith(item.href + '/'))
+                    );
                     const Icon = item.icon;
                     return (
                       <Link
@@ -194,24 +251,6 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
             </div>
           );
         })}
-
-        {/* Sub-link under Performance */}
-        {can('performance.assign_managers', isLeadership) && pathname.startsWith('/performance') && (
-          <div className="px-2 mt-1">
-            <Link
-              href="/performance/assignments"
-              prefetch={false}
-              className={`flex items-center gap-2 px-3 py-2 ml-6 rounded-md text-xs font-medium transition-colors border-l-2 ${
-                pathname === '/performance/assignments'
-                  ? 'border-brand-red text-white bg-white/5'
-                  : 'border-white/10 text-white/50 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <UserCheck size={12} />
-              Manager Assignments
-            </Link>
-          </div>
-        )}
       </nav>
 
       <div className="border-t border-white/10 flex-shrink-0">
@@ -234,7 +273,7 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
             <div className="text-[10px] uppercase tracking-wider text-brand-red font-bold">{user.role}</div>
           </div>
         </div>
-        <button
+        <button type="button"
           onClick={handleLogout}
           disabled={loggingOut}
           className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider text-white/60 hover:text-brand-red transition-colors"
@@ -248,7 +287,7 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
 
   return (
     <>
-      <button
+      <button type="button"
         onClick={() => setMobileOpen(true)}
         className="lg:hidden fixed top-3 left-3 z-30 p-2 bg-brand-ink text-white rounded-md shadow-lg"
         aria-label="Open menu"

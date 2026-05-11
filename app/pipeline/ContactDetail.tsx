@@ -237,7 +237,7 @@ export default function ContactDetail({
             />
           )}
           {permissions.call && !contact.phone && (
-            <button
+            <button type="button"
               disabled
               className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               title="Add a phone number to this contact first"
@@ -246,25 +246,25 @@ export default function ContactDetail({
             </button>
           )}
           {permissions.log_call && (
-            <button onClick={() => setShowLogCall(true)} className="btn-outline">
+            <button type="button" onClick={() => setShowLogCall(true)} className="btn-outline">
               <Phone size={14} /> Log Call
             </button>
           )}
           {!editing && permissions.edit && (
-            <button onClick={() => { setEditing(true); setEditForm({ ...contact }); }} className="btn-outline">
+            <button type="button" onClick={() => { setEditing(true); setEditForm({ ...contact }); }} className="btn-outline">
               <Edit3 size={14} /> Edit
             </button>
           )}
           {editing && (
             <>
-              <button onClick={saveEdit} className="btn-primary">
+              <button type="button" onClick={saveEdit} className="btn-primary">
                 <Save size={14} /> Save
               </button>
-              <button onClick={() => setEditing(false)} className="btn-outline">Cancel</button>
+              <button type="button" onClick={() => setEditing(false)} className="btn-outline">Cancel</button>
             </>
           )}
           {!editing && permissions.delete && (
-            <button onClick={deleteContact} className="btn-ghost text-brand-red ml-auto">
+            <button type="button" onClick={deleteContact} className="btn-ghost text-brand-red ml-auto">
               <Trash2 size={14} /> Delete
             </button>
           )}
@@ -297,7 +297,7 @@ export default function ContactDetail({
           <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2 flex-wrap">
             <span className="text-xs uppercase tracking-wider font-bold text-gray-500">Move to:</span>
             {statuses.filter(s => s.value !== contact.status).map(s => (
-              <button
+              <button type="button"
                 key={s.value}
                 onClick={() => changeStatus(s.value)}
                 className={`badge hover:opacity-80 cursor-pointer ${colors[s.color]}`}
@@ -444,6 +444,7 @@ export default function ContactDetail({
 function Tab({ active, onClick, icon: Icon, children }: any) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={`flex items-center gap-2 px-4 py-3 text-sm font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
         active ? 'border-brand-red text-brand-red' : 'border-transparent text-gray-500 hover:text-brand-ink'
@@ -462,7 +463,7 @@ function CallLogPanel({ callLogs, permissions, twilioConfigured, onLogCall }: an
         <h3 className="font-condensed text-lg font-black uppercase mb-2">No Calls Yet</h3>
         <p className="text-sm text-gray-500 mb-4">Make your first call or log a manual one to get started.</p>
         {permissions.log_call && (
-          <button onClick={onLogCall} className="btn-outline">
+          <button type="button" onClick={onLogCall} className="btn-outline">
             <Phone size={14} /> Log a Call
           </button>
         )}
@@ -573,7 +574,7 @@ function NotesPanel({ contactId, notes, currentUser }: any) {
           placeholder="Add a note about this contact..."
           className="input mb-2"
         />
-        <button
+        <button type="button"
           onClick={postNote}
           disabled={posting || !newNote.trim()}
           className="btn-primary disabled:opacity-50"
@@ -600,7 +601,7 @@ function NotesPanel({ contactId, notes, currentUser }: any) {
                   </div>
                 </div>
                 <div className="flex flex-col gap-1 flex-shrink-0">
-                  <button
+                  <button type="button"
                     onClick={() => togglePin(n.id, n.is_pinned)}
                     className={`p-1.5 rounded transition-colors ${
                       n.is_pinned ? 'text-brand-red' : 'text-gray-400 hover:text-brand-red'
@@ -610,7 +611,7 @@ function NotesPanel({ contactId, notes, currentUser }: any) {
                     <Pin size={12} />
                   </button>
                   {n.user_id === currentUser.id && (
-                    <button
+                    <button type="button"
                       onClick={() => deleteNote(n.id)}
                       className="p-1.5 hover:bg-red-50 text-brand-red rounded"
                       title="Delete"
@@ -727,7 +728,7 @@ function LogCallModal({ contactId, onClose, onLogged }: any) {
       <div className="bg-white rounded-lg max-w-md w-full p-4 sm:p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-condensed text-xl font-black uppercase">Log Call</h3>
-          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
+          <button type="button" onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
         </div>
 
         {err && (
@@ -808,7 +809,7 @@ function TeamPanel({ contact, collaborators, users, permissions, onAdd, onRemove
           </p>
         </div>
         {permissions.assign && (
-          <button onClick={onAdd} className="btn-primary self-start sm:self-auto">
+          <button type="button" onClick={onAdd} className="btn-primary self-start sm:self-auto">
             <Plus size={14} /> Add Team Member
           </button>
         )}
@@ -876,7 +877,7 @@ function TeamMemberRow({ user, badge, badgeColor, note, removable, onRemove }: a
         </div>
       </div>
       {removable && (
-        <button
+        <button type="button"
           onClick={onRemove}
           className="p-2 hover:bg-red-50 text-brand-red rounded transition-colors flex-shrink-0"
           title="Remove"
@@ -929,7 +930,7 @@ function AddCollaboratorsModal({ contactId, users, existingCollabIds, onClose, o
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] flex flex-col">
         <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
           <h3 className="font-condensed text-xl font-black uppercase">Add Team Members</h3>
-          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
+          <button type="button" onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
         </div>
 
         <div className="p-4 sm:p-6 overflow-y-auto flex-1">
@@ -1008,10 +1009,10 @@ function AddCollaboratorsModal({ contactId, users, existingCollabIds, onClose, o
         </div>
 
         <div className="p-4 sm:p-6 border-t border-gray-100 flex gap-2 flex-shrink-0">
-          <button onClick={submit} disabled={loading || selectedIds.length === 0} className="btn-primary flex-1 disabled:opacity-50">
+          <button type="button" onClick={submit} disabled={loading || selectedIds.length === 0} className="btn-primary flex-1 disabled:opacity-50">
             {loading ? 'Adding...' : `Add ${selectedIds.length} member${selectedIds.length === 1 ? '' : 's'}`}
           </button>
-          <button onClick={onClose} className="btn-outline">Cancel</button>
+          <button type="button" onClick={onClose} className="btn-outline">Cancel</button>
         </div>
       </div>
     </div>

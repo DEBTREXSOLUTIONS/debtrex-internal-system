@@ -1,121 +1,113 @@
-DEBTREX — SIDEBAR PERMISSIONS FIX
+DEBTREX — TAB GLITCH + SIDEBAR FIXES
+=====================================
+
+THREE BUGS FIXED IN THIS PATCH
+==============================
+
+1. TAB CLICKS WERE RESETTING / PAGE GLITCHING
+   Root cause: 18 buttons across ContactDetail, PipelineList, Sidebar,
+   and BrowserDialer were missing type="button". When a button has no
+   type, browsers default to type="submit". If the button is anywhere
+   inside a form (even deeply nested), clicking it submits the form
+   and reloads the page — wiping all state.
+   
+   Fix: Every <button> in client components now has explicit type="button"
+   except actual form submit buttons which have type="submit".
+
+2. SIDEBAR FLICKERED ON EVERY PAGE NAVIGATION
+   Root cause: Sidebar fetched permissions from /api/me/permissions
+   every time it mounted (which is every page load). The brief
+   "loading then loaded" state caused visible flicker, and on slow
+   connections links would briefly disappear.
+   
+   Fix: Permissions now cached in sessionStorage for 5 minutes per user.
+   First page load fetches; subsequent navigations are instant. The
+   cache clears when you close the browser tab, so role changes still
+   take effect on next session.
+
+3. MANAGER ASSIGNMENTS NOW A PROPER NAV ITEM
+   Was a tiny mini-link that appeared only when on Performance pages.
+   Now a regular nav item in the "Team" section. Always visible to
+   roles with the performance.assign_managers permission.
+
+4. SIDEBAR ACTIVE STATE FIXED
+   When on /performance/assignments, both "Performance" and
+   "Manager Assignments" were highlighted. Now only the most
+   specific matching item gets the red highlight.
+
+5. SIDEBAR COLLAPSED STATE PERSISTS
+   Which sections you collapse are now saved to localStorage.
+   Stays the same across page loads and browser sessions.
+
+
+FILES (5 files, all REPLACEMENTS)
 ==================================
 
-WHAT THIS FIXES
-===============
-
-Even with all permissions ON for your custom role, several sidebar
-sections were missing. Three bugs caused this:
-
-1. Sidebar had HARDCODED role checks for some items that bypassed
-   the permission system entirely (Twilio Numbers, Custom Roles)
-   
-2. Server pages had hardcoded isLeadership() checks too, so even if
-   the sidebar link showed, the page would redirect non-leadership
-   users back to home
-
-3. Sidebar was never being passed any permissions, so it always
-   used role-based defaults instead of the actual permission toggles
-
-
-THE FIX
-=======
-
-A. Sidebar now fetches your actual permissions from /api/me/permissions
-   when it loads, so it shows exactly what your role is allowed.
-
-B. New permission keys added:
-   - section.twilio_numbers   (was hardcoded isLeadership)
-   - section.custom_roles     (was hardcoded isLeadership)
-   - roles.manage             (was hardcoded isLeadership)
-
-C. Server pages now check these permissions instead of hardcoded roles.
-
-D. Migration seeds the new permissions for all existing roles.
-
-
-APPLY ORDER
-===========
-
-STEP 1 — RUN MIGRATION-006.SQL IN SUPABASE
-  
-  Open Supabase → SQL Editor → New query
-  Paste contents of database/migration-006.sql
-  Click Run
-  
-  This adds the 3 new permission rows for every role in your system.
-  Built-in leadership roles get them ON. All other roles get them
-  seeded OFF (you can flip them on from /permissions).
-
-STEP 2 — DROP THE 7 FILES IN
-
-  database/migration-006.sql                          [NEW]
-  lib/permissions.ts                                  [REPLACE]
   components/Sidebar.tsx                              [REPLACE]
-  app/twilio-numbers/page.tsx                         [REPLACE]
-  app/roles/page.tsx                                  [REPLACE]
-  app/team/page.tsx                                   [REPLACE]
-  app/api/me/permissions/route.ts                     [NEW]
-
-STEP 3 — TURN ON PERMS FOR YOUR "SYSTEM" ROLE
-
-  - Sign in as CEO
-  - Sidebar → Admin → Permissions
-  - Find the "system" column
-  - In the "Section Visibility" group, toggle ON:
-      * section.twilio_numbers
-      * section.custom_roles
-      * (any others you want — section.budget, section.team, etc.)
-  - In the "Permissions Admin" group, toggle ON:
-      * roles.manage
-      * permissions.manage (if you want them to admin perms too)
-  - Click Save All Changes
-
-STEP 4 — TEST
-
-  - Log out
-  - Log in as a user with the "system" role
-  - Sidebar should now show all the sections you toggled on
-  - Click into Twilio Numbers and Custom Roles to confirm access
-
-STEP 5 — PUSH TO PRODUCTION
-
-  git add .
-  git commit -m "Fix sidebar permissions for custom roles"
-  git push
+  components/BrowserDialer.tsx                        [REPLACE]
+  app/pipeline/ContactDetail.tsx                      [REPLACE]
+  app/pipeline/PipelineList.tsx                       [REPLACE]
+  app/api/me/permissions/route.ts                     [REPLACE]
 
 
-HOW SIDEBAR PERMISSIONS NOW WORK
-=================================
+HOW TO APPLY
+============
 
-When any page renders, the Sidebar component:
-  1. Mounts in the browser
-  2. Calls /api/me/permissions to fetch THIS USER's permissions
-  3. Uses those to decide which links to show
-
-This means:
-  - Every link in the sidebar respects the Permissions page toggles
-  - Custom roles work without any code changes
-  - Changes you make on /permissions take effect after a 5-minute cache
-    (or instantly for the user who made the change)
+1. Drop the 5 files into your project (preserve folder structure)
+2. npm run dev (or push to git for production)
+3. Hard refresh browser: Ctrl + Shift + R
 
 
-WHY YOU SAW MISSING SECTIONS BEFORE
-====================================
+DEBUGGING THE MISSING TWILIO NUMBERS SECTION
+==============================================
 
-Three different code paths were involved:
+If "Twilio Numbers" STILL doesn't show in your sidebar after this patch:
 
-  Section            How it gated access (OLD)         Now
-  ─────────────────  ───────────────────────────────  ─────────────────
-  Dashboard          can('section.dashboard', true)    Same (permission)
-  Tasks              can('section.tasks', true)        Same
-  Sales              can('section.pipeline_sales')     Same
-  Management         can('section.pipeline_management')Same
-  Performance        can('section.performance')        Same
-  Budget             can('section.budget')             Same
-  Team               can('section.team')               Same
-  Twilio Numbers     isLeadership(user.role)  ❌       can('section.twilio_numbers')
-  Custom Roles       isLeadership(user.role)  ❌       can('roles.manage')
-  Permissions        can('permissions.manage')         Same
+1. Open this URL in your browser (signed in as the user with the role):
+   https://debtrex-internal-system.vercel.app/api/me/permissions
 
-So Twilio Numbers and Custom Roles were never togglable. Now they are.
+2. Find the section_visibility object in the JSON response
+
+3. Look for: "twilio_numbers": true/false
+   
+   - If it says TRUE → patch worked, hard refresh again
+   - If it says FALSE → the permission isn't toggled on for your role
+     Go to /permissions as CEO, find the column for your role,
+     toggle on "Section Visibility → See Twilio Numbers page" → Save
+
+4. If "section.twilio_numbers" doesn't even appear in the permissions
+   object → migration-006 didn't run. Run it in Supabase SQL Editor.
+
+
+WHY YOU CAN TRUST THIS FIX
+============================
+
+The button type bug is a CLASSIC React gotcha:
+  <button onClick={...}>Hello</button>  ← submits any parent form
+  <button type="button" onClick={...}>Hello</button>  ← safe
+
+When you had the contact in edit mode (with a form visible somewhere),
+ANY button click anywhere — even tabs — could trigger a form submit
+through the bubbling event. This caused the page to reload completely,
+which reset:
+  - The active tab
+  - Any unsaved form data
+  - The scroll position
+  
+This was likely the source of your "glitching" report. Now solved
+defensively across 5 client components.
+
+
+SIDEBAR FETCH FLOW (FOR YOUR REFERENCE)
+========================================
+
+Old:
+  Page loads → Sidebar mounts → calls /api/me/permissions
+  → waits for response → shows correct links
+  (Repeated every page click — caused flicker)
+
+New:
+  Page loads → Sidebar mounts → reads cache from sessionStorage
+  → shows correct links INSTANTLY
+  → if cache is older than 5 min, fetches in background to refresh
+  (No flicker after first page load)

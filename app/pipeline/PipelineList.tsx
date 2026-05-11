@@ -76,7 +76,7 @@ export default function PipelineList({ type, contacts, currentUser, permissions 
           </p>
         </div>
         {permissions.create && (
-          <button onClick={() => setShowAdd(true)} className="btn-primary self-start sm:self-auto">
+          <button type="button" onClick={() => setShowAdd(true)} className="btn-primary self-start sm:self-auto">
             <Plus size={14} /> Add Contact
           </button>
         )}
@@ -131,7 +131,7 @@ export default function PipelineList({ type, contacts, currentUser, permissions 
               : 'Try a different search or filter.'}
           </p>
           {permissions.create && contacts.length === 0 && (
-            <button onClick={() => setShowAdd(true)} className="btn-primary">
+            <button type="button" onClick={() => setShowAdd(true)} className="btn-primary">
               <Plus size={14} /> Add Contact
             </button>
           )}
@@ -166,7 +166,7 @@ function StatusPill({ label, active, onClick, color }: any) {
     red: 'bg-brand-red-pale text-brand-red',
   };
   return (
-    <button
+    <button type="button"
       onClick={onClick}
       className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md whitespace-nowrap flex-shrink-0 transition-colors ${
         active ? 'bg-brand-red text-white' : colors[color] || 'bg-gray-100 text-gray-700'
@@ -308,7 +308,7 @@ function AddContactModal({ type, statuses, onClose, onCreated }: any) {
           <h3 className="font-condensed text-xl sm:text-2xl font-black uppercase">
             New {type === 'management' ? 'Company' : 'Lead'}
           </h3>
-          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
+          <button type="button" onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
         </div>
 
         <form onSubmit={submit} className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-3">
@@ -406,10 +406,10 @@ function AddContactModal({ type, statuses, onClose, onCreated }: any) {
         </form>
 
         <div className="p-4 sm:p-6 border-t border-gray-100 flex gap-2 flex-shrink-0">
-          <button onClick={submit} disabled={loading} className="btn-primary flex-1 disabled:opacity-50">
+          <button type="button" onClick={submit} disabled={loading} className="btn-primary flex-1 disabled:opacity-50">
             {loading ? 'Creating...' : 'Create Contact'}
           </button>
-          <button onClick={onClose} className="btn-outline">Cancel</button>
+          <button type="button" onClick={onClose} className="btn-outline">Cancel</button>
         </div>
       </div>
     </div>

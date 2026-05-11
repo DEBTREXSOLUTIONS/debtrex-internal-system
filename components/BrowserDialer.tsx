@@ -162,7 +162,7 @@ export default function BrowserDialer({ contactId, contactName, contactPhone, on
   // Don't render anything for idle state - parent shows "Call Now" button
   if (state === 'idle') {
     return (
-      <button
+      <button type="button"
         onClick={startCall}
         disabled={!contactPhone}
         className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
@@ -224,7 +224,7 @@ export default function BrowserDialer({ contactId, contactName, contactPhone, on
           <div className="px-6 py-4 border-b border-gray-100">
             <div className="grid grid-cols-3 gap-2">
               {['1','2','3','4','5','6','7','8','9','*','0','#'].map(d => (
-                <button
+                <button type="button"
                   key={d}
                   onClick={() => sendDigit(d)}
                   className="aspect-square text-xl font-bold border-2 border-gray-200 rounded-md hover:bg-gray-100 active:bg-gray-200 transition-colors"
@@ -240,7 +240,7 @@ export default function BrowserDialer({ contactId, contactName, contactPhone, on
         <div className="p-6 flex items-center justify-center gap-3">
           {state === 'in-call' && (
             <>
-              <button
+              <button type="button"
                 onClick={toggleMute}
                 className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
                   muted ? 'bg-brand-red text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -249,7 +249,7 @@ export default function BrowserDialer({ contactId, contactName, contactPhone, on
               >
                 {muted ? <MicOff size={20} /> : <Mic size={20} />}
               </button>
-              <button
+              <button type="button"
                 onClick={() => setShowKeypad(!showKeypad)}
                 className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
                   showKeypad ? 'bg-brand-ink text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -262,7 +262,7 @@ export default function BrowserDialer({ contactId, contactName, contactPhone, on
           )}
 
           {(state === 'in-call' || state === 'connecting' || state === 'initializing') && (
-            <button
+            <button type="button"
               onClick={hangup}
               className="w-16 h-16 rounded-full bg-brand-red text-white flex items-center justify-center hover:bg-brand-red-dark transition-colors"
               title="Hang up"
@@ -272,7 +272,7 @@ export default function BrowserDialer({ contactId, contactName, contactPhone, on
           )}
 
           {(state === 'ended' || state === 'error') && (
-            <button
+            <button type="button"
               onClick={() => { setState('idle'); setError(''); setDuration(0); setMuted(false); setShowKeypad(false); }}
               className="btn-primary"
             >
