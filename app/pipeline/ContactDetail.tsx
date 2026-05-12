@@ -5,7 +5,8 @@ import Link from 'next/link';
 import {
   ArrowLeft, Phone, PhoneCall, Mail, Building2, MapPin, DollarSign,
   Calendar, Clock, Edit3, Trash2, Save, X, AlertCircle, CheckCircle,
-  Pin, MessageSquare, FileText, User, PhoneOff, History, ExternalLink
+  Pin, MessageSquare, FileText, User, PhoneOff, History, ExternalLink,
+  Plus
 } from 'lucide-react';
 import BrowserDialer from '@/components/BrowserDialer';
 
