@@ -60,8 +60,18 @@ export default function TopBar({ user, title }: { user: User; title?: string }) 
       navigator.sendBeacon?.('/api/me/status', JSON.stringify({ status: 'offline' }));
     };
     window.addEventListener('beforeunload', beforeUnload);
+
+    // Listen for status changes broadcast by the CallWidget (when a call
+    // starts → 'otl', when it ends → previous status).
+    const onStatusChange = (e: Event) => {
+      const next = (e as CustomEvent<string>).detail;
+      if (typeof next === 'string') setStatus(next);
+    };
+    window.addEventListener('debtrex:status', onStatusChange as EventListener);
+
     return () => {
       window.removeEventListener('beforeunload', beforeUnload);
+      window.removeEventListener('debtrex:status', onStatusChange as EventListener);
     };
   }, []);
 
