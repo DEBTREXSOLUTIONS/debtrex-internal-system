@@ -4,7 +4,10 @@
       "Bash(pip install *)",
       "Bash(mkdir -p \"C:\\\\Users\\\\Polix\\\\OneDrive\\\\Desktop\\\\debtrex-system\\\\app\\\\api\\\\task-requests\\\\[id]\")",
       "Bash(npx tsc *)",
-      "Bash(python \"C:\\\\Users\\\\Polix\\\\OneDrive\\\\Desktop\\\\debtrex-system\\\\docs\\\\_build_pdf.py\")"
+      "Bash(python \"C:\\\\Users\\\\Polix\\\\OneDrive\\\\Desktop\\\\debtrex-system\\\\docs\\\\_build_pdf.py\")",
+      "PowerShell(git add \"app/api/users/invite/route.ts\")",
+      "PowerShell(git commit -m \"Use granular team.invite permission for user invite endpoint\")",
+      "PowerShell(git push)"
     ]
   }
 }

@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, CheckSquare, Calendar, FolderOpen, DollarSign,
   Users, Settings, LogOut, Menu, X, Trophy, Calculator, UserCheck,
-  Building2, Phone, Shield, ChevronDown, ChevronRight
+  Building2, Phone, Shield, ChevronDown, ChevronRight, FileText
 } from 'lucide-react';
 import { useState, useEffect, memo } from 'react';
 import CallWidget from './CallWidget';
@@ -142,6 +142,7 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
       label: 'Tools',
       items: [
         { href: '/calculators', label: 'Calculators', icon: Calculator, show: can('section.calculators', user.role !== 'viewer') },
+        { href: '/scripts', label: 'Scripts', icon: FileText, show: can('section.scripts', user.role !== 'viewer' && user.role !== 'accountant') },
       ],
     },
     {

@@ -25,9 +25,11 @@ export default async function TeamPage() {
 
   const roles = (rolesData || []).map(r => ({ value: r.role_key, label: r.label }));
 
+  const canDelete = await hasPermission(user.role, 'team.delete');
+
   return (
             <div className="p-4 sm:p-6 max-w-6xl mx-auto">
-          <TeamManager members={members || []} currentUser={user} roles={roles} />
+          <TeamManager members={members || []} currentUser={user} roles={roles} canDelete={canDelete} />
         </div>
   );
 }

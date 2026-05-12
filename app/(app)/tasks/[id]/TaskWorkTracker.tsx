@@ -1,9 +1,9 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Clock, Calendar, User, Flag, Send, MessageSquare, FileText, CheckCircle } from 'lucide-react';
+import { Clock, Calendar, User, Flag, Send, MessageSquare, FileText, CheckCircle, Trash2 } from 'lucide-react';
 
-export default function TaskWorkTracker({ task, initialUpdates, initialNotes, currentUser }: any) {
+export default function TaskWorkTracker({ task, initialUpdates, initialNotes, currentUser, canDelete = false }: any) {
   const router = useRouter();
   const [updateText, setUpdateText] = useState('');
   const [hoursWorked, setHoursWorked] = useState('');
@@ -78,6 +78,17 @@ export default function TaskWorkTracker({ task, initialUpdates, initialNotes, cu
     }
   }
 
+  async function deleteTask() {
+    if (!confirm(`Permanently delete this task? This cannot be undone.`)) return;
+    const res = await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || 'Failed to delete task');
+      return;
+    }
+    router.push('/tasks');
+  }
+
   return (
     <>
       {/* Task Header */}
@@ -116,21 +127,26 @@ export default function TaskWorkTracker({ task, initialUpdates, initialNotes, cu
         </div>
 
         {/* Status Actions */}
-        {canUpdate && task.status !== 'completed' && (
+        {(canUpdate || canDelete) && (
           <div className="flex gap-2 mt-5 pt-5 border-t border-gray-100">
-            {task.status === 'not_started' && (
+            {canUpdate && task.status !== 'completed' && task.status === 'not_started' && (
               <button onClick={() => changeStatus('in_progress')} disabled={statusUpdating} className="btn-outline text-xs">
                 Start Working
               </button>
             )}
-            {task.status === 'in_progress' && (
+            {canUpdate && task.status === 'in_progress' && (
               <button onClick={() => changeStatus('submitted')} disabled={statusUpdating} className="btn-outline text-xs">
                 Mark as Submitted
               </button>
             )}
-            {(task.status === 'submitted' || task.status === 'in_progress') && (isCreator || ['ceo', 'owner', 'co-owner', 'manager'].includes(currentUser.role)) && (
+            {canUpdate && (task.status === 'submitted' || task.status === 'in_progress') && (isCreator || ['ceo', 'owner', 'co-owner', 'manager'].includes(currentUser.role)) && (
               <button onClick={() => changeStatus('completed')} disabled={statusUpdating} className="btn-primary text-xs">
                 <CheckCircle size={12} /> Mark Complete
+              </button>
+            )}
+            {canDelete && (
+              <button onClick={deleteTask} className="btn-outline text-xs ml-auto text-gray-500 hover:text-red-700">
+                <Trash2 size={12} /> Delete Task
               </button>
             )}
           </div>

@@ -1,9 +1,9 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, X, AlertCircle, UserPlus, Power, PowerOff, Shield } from 'lucide-react';
+import { Plus, X, AlertCircle, UserPlus, Power, PowerOff, Shield, Trash2 } from 'lucide-react';
 
-export default function TeamManager({ members, currentUser, roles = [] }: any) {
+export default function TeamManager({ members, currentUser, roles = [], canDelete = false }: any) {
   const ROLES = roles.length > 0 ? roles : [
     { value: 'ceo', label: 'CEO' },
     { value: 'owner', label: 'Owner' },
@@ -35,11 +35,28 @@ export default function TeamManager({ members, currentUser, roles = [] }: any) {
   async function toggleActive(userId: string, isActive: boolean) {
     setUpdating(userId);
     try {
-      await fetch(`/api/users/${userId}`, {
+      const res = await fetch(`/api/users/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_active: !isActive }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Failed to update user');
+      }
+      router.refresh();
+    } finally { setUpdating(null); }
+  }
+
+  async function deleteUser(userId: string, name: string) {
+    if (!confirm(`Permanently delete ${name}? This cannot be undone. Their tasks, calls, and history will remain but be detached from this account.`)) return;
+    setUpdating(userId);
+    try {
+      const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Failed to delete user');
+      }
       router.refresh();
     } finally { setUpdating(null); }
   }
@@ -105,14 +122,26 @@ export default function TeamManager({ members, currentUser, roles = [] }: any) {
                     </td>
                     <td className="px-4 py-3">
                       {!isMe && (
-                        <button
-                          onClick={() => toggleActive(m.id, m.is_active)}
-                          disabled={updating === m.id}
-                          className="text-xs font-bold uppercase tracking-wider text-gray-600 hover:text-brand-red disabled:opacity-50 flex items-center gap-1"
-                        >
-                          {m.is_active ? <PowerOff size={12} /> : <Power size={12} />}
-                          {m.is_active ? 'Deactivate' : 'Activate'}
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => toggleActive(m.id, m.is_active)}
+                            disabled={updating === m.id}
+                            className="text-xs font-bold uppercase tracking-wider text-gray-600 hover:text-brand-red disabled:opacity-50 flex items-center gap-1"
+                          >
+                            {m.is_active ? <PowerOff size={12} /> : <Power size={12} />}
+                            {m.is_active ? 'Deactivate' : 'Activate'}
+                          </button>
+                          {canDelete && (
+                            <button
+                              onClick={() => deleteUser(m.id, m.full_name)}
+                              disabled={updating === m.id}
+                              className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-red-700 disabled:opacity-50 flex items-center gap-1"
+                              title="Permanently delete this account"
+                            >
+                              <Trash2 size={12} /> Delete
+                            </button>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>

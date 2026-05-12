@@ -17,6 +17,7 @@ export const PERMISSION_KEYS = [
   'section.pipeline_sales',
   'section.twilio_numbers',
   'section.custom_roles',
+  'section.scripts',
   // Tasks
   'task.create',
   'task.edit_any',
@@ -56,6 +57,9 @@ export const PERMISSION_KEYS = [
   'call.log',
   'call.make',
   'call.view_all',
+  // Scripts
+  'scripts.manage',
+  'scripts.manage_tags',
   // Permissions admin
   'permissions.manage',
   'roles.manage',
@@ -71,7 +75,7 @@ export const PERMISSION_GROUPS: { label: string; keys: PermissionKey[] }[] = [
       'section.dashboard', 'section.tasks', 'section.calendar', 'section.files',
       'section.budget', 'section.team', 'section.performance',
       'section.calculators', 'section.pipeline_management', 'section.pipeline_sales',
-      'section.twilio_numbers', 'section.custom_roles',
+      'section.twilio_numbers', 'section.custom_roles', 'section.scripts',
     ],
   },
   {
@@ -106,6 +110,10 @@ export const PERMISSION_GROUPS: { label: string; keys: PermissionKey[] }[] = [
     keys: ['call.log', 'call.make', 'call.view_all'],
   },
   {
+    label: 'Scripts',
+    keys: ['scripts.manage', 'scripts.manage_tags'],
+  },
+  {
     label: 'Permissions Admin',
     keys: ['permissions.manage', 'roles.manage'],
   },
@@ -125,6 +133,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'section.pipeline_sales': 'See Pipeline → Sales',
   'section.twilio_numbers': 'See Twilio Numbers page',
   'section.custom_roles': 'See Custom Roles page',
+  'section.scripts': 'See Scripts section',
 
   'task.create': 'Create new tasks',
   'task.edit_any': 'Edit any task (not just own)',
@@ -164,6 +173,9 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'call.log': 'Log calls manually',
   'call.make': 'Make calls (Twilio)',
   'call.view_all': "View everyone's call logs",
+
+  'scripts.manage': 'Create / edit / delete script sections + scripts',
+  'scripts.manage_tags': 'Create / edit / delete script tags',
 
   'permissions.manage': 'Manage role permissions (THIS PAGE)',
   'roles.manage': 'Create / edit / delete custom roles',

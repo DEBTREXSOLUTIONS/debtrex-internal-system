@@ -1,5 +1,6 @@
 import { redirect, notFound } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
 import { supabaseAdmin } from '@/lib/supabase';
 import TaskWorkTracker from './TaskWorkTracker';
 import Link from 'next/link';
@@ -39,6 +40,8 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
 
   if (!task) notFound();
 
+  const canDelete = await hasPermission(user.role, 'task.delete');
+
   return (
             <div className="p-4 sm:p-6 max-w-5xl mx-auto">
           <Link href="/tasks" className="btn-ghost mb-4">
@@ -50,6 +53,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
             initialUpdates={updates || []}
             initialNotes={notes || []}
             currentUser={user}
+            canDelete={canDelete}
           />
         </div>
   );

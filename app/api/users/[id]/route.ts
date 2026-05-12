@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser, canManageUsers, canDeleteUsers } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export async function PATCH(
@@ -8,19 +9,38 @@ export async function PATCH(
 ) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!canManageUsers(user.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { id } = await params;
   const body = await request.json();
 
-  // Prevent demoting CEO/Owner unless you are CEO/Owner
-  if (body.role && ['ceo', 'owner'].includes(body.role) && !canDeleteUsers(user.role)) {
-    return NextResponse.json({ error: 'Only CEO or Owner can promote to that level' }, { status: 403 });
+  // Role changes require team.change_roles; deactivate requires team.deactivate.
+  if (body.role !== undefined) {
+    if (!(await hasPermission(user.role, 'team.change_roles'))) {
+      return NextResponse.json({ error: 'Forbidden — you need permission to change roles' }, { status: 403 });
+    }
+    // Promotion to CEO/Owner still locked to existing CEO/Owner only (hard rule)
+    if (['ceo', 'owner'].includes(body.role) && !['ceo', 'owner'].includes(user.role)) {
+      return NextResponse.json({ error: 'Only CEO or Owner can promote to that level' }, { status: 403 });
+    }
   }
 
-  // Don't allow modifying yourself's role
-  if (id === user.id && body.role) {
-    return NextResponse.json({ error: 'Cannot change your own role' }, { status: 400 });
+  if (body.is_active !== undefined) {
+    if (!(await hasPermission(user.role, 'team.deactivate'))) {
+      return NextResponse.json({ error: 'Forbidden — you need permission to deactivate users' }, { status: 403 });
+    }
+  }
+
+  if ((body.full_name !== undefined || body.phone !== undefined) && body.role === undefined && body.is_active === undefined) {
+    // Editing basic profile fields → require any team management permission
+    const canAny = (await hasPermission(user.role, 'team.change_roles')) || (await hasPermission(user.role, 'team.deactivate'));
+    if (!canAny) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+  }
+
+  // Don't allow modifying your own role / active status
+  if (id === user.id && (body.role !== undefined || body.is_active !== undefined)) {
+    return NextResponse.json({ error: 'Cannot change your own role or active status' }, { status: 400 });
   }
 
   const updates: any = {};
@@ -47,4 +67,52 @@ export async function PATCH(
   });
 
   return NextResponse.json(data);
+}
+
+// ─── Permanent delete ───
+// Hard-deletes the profile row. Foreign keys with `on delete set null` (assigned_to,
+// created_by on tasks, etc.) will keep their referenced records but break the link.
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!(await hasPermission(user.role, 'team.delete'))) {
+    return NextResponse.json({ error: 'Forbidden — you need permission to permanently delete users' }, { status: 403 });
+  }
+
+  const { id } = await params;
+  if (id === user.id) {
+    return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 });
+  }
+
+  // Block deleting CEO/Owner accounts unless you are CEO/Owner
+  const { data: target } = await supabaseAdmin
+    .from('profiles')
+    .select('id, role, email, full_name')
+    .eq('id', id)
+    .single();
+
+  if (!target) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  if (['ceo', 'owner'].includes(target.role) && !['ceo', 'owner'].includes(user.role)) {
+    return NextResponse.json({ error: 'Only CEO or Owner can delete that account' }, { status: 403 });
+  }
+
+  const { error } = await supabaseAdmin
+    .from('profiles')
+    .delete()
+    .eq('id', id);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  await supabaseAdmin.from('audit_log').insert({
+    user_id: user.id,
+    action: 'user_deleted',
+    resource_type: 'user',
+    resource_id: id,
+    details: { email: target.email, full_name: target.full_name, role: target.role },
+  });
+
+  return NextResponse.json({ success: true });
 }
