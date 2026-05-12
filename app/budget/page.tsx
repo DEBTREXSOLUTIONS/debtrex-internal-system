@@ -16,24 +16,27 @@ export default async function BudgetPage() {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-  // Fetch all expenses
-  const { data: expenses } = await supabaseAdmin
-    .from('expenses')
-    .select('*, paid_by_profile:profiles!expenses_paid_by_fkey(full_name)')
-    .order('expense_date', { ascending: false })
-    .limit(100);
+  // Parallel fetch — expenses, income, monthly budget allocations
+  const [expensesRes, incomeRes, budgetsRes] = await Promise.all([
+    supabaseAdmin
+      .from('expenses')
+      .select('*, paid_by_profile:profiles!expenses_paid_by_fkey(full_name)')
+      .order('expense_date', { ascending: false })
+      .limit(100),
+    supabaseAdmin
+      .from('income')
+      .select('*')
+      .order('received_date', { ascending: false })
+      .limit(200),
+    supabaseAdmin
+      .from('budgets')
+      .select('*')
+      .eq('month', monthStart.toISOString().split('T')[0]),
+  ]);
 
-  // Fetch all income
-  const { data: income } = await supabaseAdmin
-    .from('income')
-    .select('*')
-    .order('received_date', { ascending: false });
-
-  // Monthly budget allocations
-  const { data: budgets } = await supabaseAdmin
-    .from('budgets')
-    .select('*')
-    .eq('month', monthStart.toISOString().split('T')[0]);
+  const expenses = expensesRes.data;
+  const income = incomeRes.data;
+  const budgets = budgetsRes.data;
 
   // Calculations
   const totalIncome = income?.reduce((sum, i) => sum + parseFloat(i.amount), 0) || 0;

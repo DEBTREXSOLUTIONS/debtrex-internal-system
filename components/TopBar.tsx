@@ -17,35 +17,50 @@ const STATUSES = [
   { value: 'offline', label: 'Offline', icon: MinusCircle, color: 'text-gray-400', bg: 'bg-gray-400', desc: 'Not working' },
 ];
 
+const STATUS_KEY = 'me_status';
+const MARKED_ONLINE_KEY = 'marked_online';
+
 export default function TopBar({ user, title }: { user: User; title?: string }) {
-  const [status, setStatus] = useState('offline');
+  // Default to 'online'. After mount we restore the chosen status from
+  // sessionStorage so the user's selection survives page navigations.
+  // (We can't read sessionStorage during render because it would cause an
+  // SSR/CSR hydration mismatch.)
+  const [status, setStatus] = useState<string>('online');
   const [open, setOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Load current status
+  // Mark online once per session, not on every page nav.
   useEffect(() => {
-    let active = true;
-    fetch('/api/me/status')
-      .then(r => r.json())
-      .then(data => {
-        if (active && data?.me?.status) setStatus(data.me.status);
-      });
+    try {
+      const saved = sessionStorage.getItem(STATUS_KEY);
+      if (saved) setStatus(saved);
+    } catch {}
 
-    // Mark online on first load
-    fetch('/api/me/status', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'online' }),
-    });
+    const alreadyOnline = sessionStorage.getItem(MARKED_ONLINE_KEY) === '1';
+    if (!alreadyOnline) {
+      fetch('/api/me/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'online' }),
+      }).then(() => {
+        try {
+          sessionStorage.setItem(MARKED_ONLINE_KEY, '1');
+          sessionStorage.setItem(STATUS_KEY, 'online');
+        } catch {}
+      });
+    }
 
     // Set offline on tab close
     const beforeUnload = () => {
+      try {
+        sessionStorage.removeItem(MARKED_ONLINE_KEY);
+        sessionStorage.removeItem(STATUS_KEY);
+      } catch {}
       navigator.sendBeacon?.('/api/me/status', JSON.stringify({ status: 'offline' }));
     };
     window.addEventListener('beforeunload', beforeUnload);
     return () => {
-      active = false;
       window.removeEventListener('beforeunload', beforeUnload);
     };
   }, []);
@@ -64,6 +79,7 @@ export default function TopBar({ user, title }: { user: User; title?: string }) 
     setOpen(false);
     const prev = status;
     setStatus(newStatus); // Optimistic
+    try { sessionStorage.setItem(STATUS_KEY, newStatus); } catch {}
     try {
       const res = await fetch('/api/me/status', {
         method: 'PATCH',
@@ -73,6 +89,7 @@ export default function TopBar({ user, title }: { user: User; title?: string }) 
       if (!res.ok) throw new Error();
     } catch {
       setStatus(prev); // Revert on error
+      try { sessionStorage.setItem(STATUS_KEY, prev); } catch {}
     } finally { setUpdating(false); }
   }
 

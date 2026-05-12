@@ -10,41 +10,42 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  // Fetch user's tasks
-  const { data: myTasks } = await supabaseAdmin
-    .from('tasks')
-    .select(`
-      *,
-      assigned_to_profile:profiles!tasks_assigned_to_fkey(full_name, email),
-      created_by_profile:profiles!tasks_created_by_fkey(full_name)
-    `)
-    .eq('assigned_to', user.id)
-    .neq('status', 'completed')
-    .neq('status', 'cancelled')
-    .order('deadline', { ascending: true })
-    .limit(5);
-
-  // Recent updates from user
-  const { data: recentUpdates } = await supabaseAdmin
-    .from('task_updates')
-    .select('*, task:tasks(title, id)')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(3);
-
-  // Today's events
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  const { data: todayEvents } = await supabaseAdmin
-    .from('events')
-    .select('*')
-    .gte('start_time', today.toISOString())
-    .lt('start_time', tomorrow.toISOString())
-    .order('start_time')
-    .limit(3);
+  // Parallel fetch — these 3 queries don't depend on each other
+  const [myTasksRes, recentUpdatesRes, todayEventsRes] = await Promise.all([
+    supabaseAdmin
+      .from('tasks')
+      .select(`
+        id, title, description, status, priority, deadline,
+        assigned_to_profile:profiles!tasks_assigned_to_fkey(full_name, email)
+      `)
+      .eq('assigned_to', user.id)
+      .neq('status', 'completed')
+      .neq('status', 'cancelled')
+      .order('deadline', { ascending: true })
+      .limit(5),
+    supabaseAdmin
+      .from('task_updates')
+      .select('id, update_text, created_at, task:tasks(title, id)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(3),
+    supabaseAdmin
+      .from('events')
+      .select('id, title, location, start_time')
+      .gte('start_time', today.toISOString())
+      .lt('start_time', tomorrow.toISOString())
+      .order('start_time')
+      .limit(3),
+  ]);
+
+  const myTasks = myTasksRes.data;
+  const recentUpdates = recentUpdatesRes.data;
+  const todayEvents = todayEventsRes.data;
 
   // Stats
   const overdueCount = myTasks?.filter(t =>

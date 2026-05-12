@@ -16,11 +16,11 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   let query = supabaseAdmin
     .from('tasks')
     .select(`
-      *,
-      assigned_to_profile:profiles!tasks_assigned_to_fkey(full_name, email),
-      created_by_profile:profiles!tasks_created_by_fkey(full_name)
+      id, title, description, status, priority, deadline,
+      assigned_to_profile:profiles!tasks_assigned_to_fkey(full_name, email)
     `)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(200);
 
   if (filter === 'mine') {
     query = query.eq('assigned_to', user.id);
