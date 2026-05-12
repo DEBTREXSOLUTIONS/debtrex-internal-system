@@ -47,9 +47,17 @@ export default function PermissionsManager({ matrix: initialMatrix, groups, labe
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error);
-      setSuccess(`Saved ${updates.length} permission${updates.length === 1 ? '' : 's'}. Changes take effect immediately.`);
+      setSuccess(`Saved ${updates.length} permission${updates.length === 1 ? '' : 's'}. Reloading...`);
       setDirty(false);
-      router.refresh();
+      // Bust the sidebar's sessionStorage permission cache, then hard-reload
+      // so the sidebar (and any other in-memory state) reflects the new perms.
+      try {
+        for (let i = sessionStorage.length - 1; i >= 0; i--) {
+          const k = sessionStorage.key(i);
+          if (k && k.startsWith('perms_')) sessionStorage.removeItem(k);
+        }
+      } catch {}
+      window.location.reload();
     } catch (e: any) {
       setError(e.message);
     } finally {
