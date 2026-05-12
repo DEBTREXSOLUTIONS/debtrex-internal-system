@@ -1,10 +1,11 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, isLeadership } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
 import { supabaseAdmin } from '@/lib/supabase';
 import Sidebar from '@/components/Sidebar';
 import TopBar from '@/components/TopBar';
 import Link from 'next/link';
-import { CheckSquare, Clock, AlertCircle, TrendingUp, Calendar, Plus, ArrowRight, Users } from 'lucide-react';
+import { CheckSquare, Clock, AlertCircle, TrendingUp, Calendar, Plus, ArrowRight, Users, Inbox } from 'lucide-react';
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -55,12 +56,51 @@ export default async function DashboardPage() {
   const inProgressCount = myTasks?.filter(t => t.status === 'in_progress').length || 0;
   const totalOpen = myTasks?.length || 0;
 
+  // Pending task requests visible to this user (approver inbox)
+  const canApprove = await hasPermission(user.role, 'task.approve_requests');
+  let pendingReqCount = 0;
+  if (canApprove) {
+    let pq = supabaseAdmin
+      .from('task_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending');
+    if (!isLeadership(user.role)) {
+      const { data: assigns } = await supabaseAdmin
+        .from('manager_assignments')
+        .select('agent_id')
+        .eq('manager_id', user.id);
+      const visible = Array.from(new Set([user.id, ...((assigns ?? []).map((a: any) => a.agent_id))]));
+      const inList = visible.map((id: string) => `"${id}"`).join(',');
+      pq = pq.or(`requested_by.in.(${inList}),target_approver.eq.${user.id}`);
+    }
+    const { count } = await pq;
+    pendingReqCount = count ?? 0;
+  }
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar user={user} />
       <main className="flex-1 min-w-0">
         <TopBar user={user} title="Dashboard" />
         <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+          {canApprove && pendingReqCount > 0 && (
+            <Link
+              href="/tasks/requests"
+              className="mb-6 flex items-center justify-between gap-3 p-4 bg-brand-red-pale border border-brand-red/30 rounded-md hover:border-brand-red transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Inbox size={18} className="text-brand-red" />
+                <div>
+                  <div className="font-semibold text-sm text-brand-red">
+                    {pendingReqCount} pending task request{pendingReqCount === 1 ? '' : 's'}
+                  </div>
+                  <div className="text-xs text-gray-600">Review and approve or deny.</div>
+                </div>
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider text-brand-red">Open inbox →</span>
+            </Link>
+          )}
+
           {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <KPICard

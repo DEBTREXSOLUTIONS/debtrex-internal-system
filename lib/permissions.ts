@@ -23,6 +23,8 @@ export const PERMISSION_KEYS = [
   'task.delete',
   'task.assign_to_anyone',
   'task.view_all',
+  'task.request',
+  'task.approve_requests',
   // Calendar / events
   'event.create',
   'event.edit_any',
@@ -74,7 +76,7 @@ export const PERMISSION_GROUPS: { label: string; keys: PermissionKey[] }[] = [
   },
   {
     label: 'Tasks',
-    keys: ['task.create', 'task.edit_any', 'task.delete', 'task.assign_to_anyone', 'task.view_all'],
+    keys: ['task.create', 'task.edit_any', 'task.delete', 'task.assign_to_anyone', 'task.view_all', 'task.request', 'task.approve_requests'],
   },
   {
     label: 'Calendar / Events',
@@ -129,6 +131,8 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'task.delete': 'Delete tasks',
   'task.assign_to_anyone': 'Assign tasks to any user',
   'task.view_all': 'View all tasks (not just own)',
+  'task.request': 'Request a task (admin approval)',
+  'task.approve_requests': 'Approve / deny task requests',
 
   'event.create': 'Create calendar events',
   'event.edit_any': 'Edit any event (not just own)',

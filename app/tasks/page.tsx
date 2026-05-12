@@ -1,10 +1,11 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser, canViewAllTasks } from '@/lib/auth';
+import { getCurrentUser, canViewAllTasks, isLeadership } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
 import { supabaseAdmin } from '@/lib/supabase';
 import Sidebar from '@/components/Sidebar';
 import TopBar from '@/components/TopBar';
 import Link from 'next/link';
-import { Plus, Filter, Clock } from 'lucide-react';
+import { Plus, Filter, Clock, Inbox } from 'lucide-react';
 
 export default async function TasksPage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
   const user = await getCurrentUser();
@@ -32,6 +33,28 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
 
   const { data: tasks } = await query;
 
+  // Pending task-requests count for the badge — only for approvers
+  const canApprove = await hasPermission(user.role, 'task.approve_requests');
+  const canRequest = await hasPermission(user.role, 'task.request');
+  let pendingReqCount = 0;
+  if (canApprove) {
+    let pq = supabaseAdmin
+      .from('task_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending');
+    if (!isLeadership(user.role)) {
+      const { data: assigns } = await supabaseAdmin
+        .from('manager_assignments')
+        .select('agent_id')
+        .eq('manager_id', user.id);
+      const visible = Array.from(new Set([user.id, ...((assigns ?? []).map((a: any) => a.agent_id))]));
+      const inList = visible.map(id => `"${id}"`).join(',');
+      pq = pq.or(`requested_by.in.(${inList}),target_approver.eq.${user.id}`);
+    }
+    const { count } = await pq;
+    pendingReqCount = count ?? 0;
+  }
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar user={user} />
@@ -52,11 +75,40 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                   All Tasks
                 </FilterTab>
               )}
+              {(canRequest || canApprove) && (
+                <Link
+                  href="/tasks/requests"
+                  className="px-4 py-2 text-sm font-semibold rounded-md text-gray-600 hover:bg-gray-100 transition-colors whitespace-nowrap flex-shrink-0 flex items-center gap-2"
+                >
+                  <Inbox size={14} /> Requests
+                  {canApprove && pendingReqCount > 0 && (
+                    <span className="badge badge-red">{pendingReqCount}</span>
+                  )}
+                </Link>
+              )}
             </div>
             <Link href="/tasks/new" className="btn-primary self-start sm:self-auto">
               <Plus size={14} /> New Task
             </Link>
           </div>
+
+          {canApprove && pendingReqCount > 0 && (
+            <Link
+              href="/tasks/requests"
+              className="mb-6 flex items-center justify-between gap-3 p-4 bg-brand-red-pale border border-brand-red/30 rounded-md hover:border-brand-red transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Inbox size={18} className="text-brand-red" />
+                <div>
+                  <div className="font-semibold text-sm text-brand-red">
+                    {pendingReqCount} pending task request{pendingReqCount === 1 ? '' : 's'}
+                  </div>
+                  <div className="text-xs text-gray-600">Click to review and approve or deny.</div>
+                </div>
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider text-brand-red">Open inbox →</span>
+            </Link>
+          )}
 
           {/* Tasks Grid */}
           {tasks && tasks.length > 0 ? (
