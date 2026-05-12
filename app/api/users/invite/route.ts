@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser, canManageUsers, hashPassword } from '@/lib/auth';
+import { getCurrentUser, hashPassword } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
 import { supabaseAdmin } from '@/lib/supabase';
 import { sendUserInvitedEmail } from '@/lib/email';
 import crypto from 'crypto';
@@ -7,7 +8,9 @@ import crypto from 'crypto';
 export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!canManageUsers(user.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!(await hasPermission(user.role, 'team.invite'))) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
   try {
     const { email, full_name, role, phone } = await request.json();
