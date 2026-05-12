@@ -29,7 +29,12 @@ export async function POST(request: Request) {
   const safeCallerId = callerId.replace(/[^+\d]/g, '');
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
 
-  // Build status callback so we can log the result
+  // Status callback: fire-and-forget event hook (NOT a TwiML continuation).
+  // The previous code used `action=` for this, but `action` makes Twilio
+  // expect TwiML back from the URL — and /api/twilio/status returns JSON,
+  // causing Twilio error 12300 (Invalid Content-Type) on every call.
+  // `statusCallback` is the right attribute: Twilio fires it without
+  // expecting a response body.
   const statusCallback = contactId
     ? `${appUrl}/api/twilio/status?contact_id=${contactId}`
     : '';
@@ -39,7 +44,7 @@ export async function POST(request: Request) {
 
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Dial callerId="${safeCallerId}" record="record-from-answer-dual" answerOnBridge="true" timeout="30"${statusCallback ? ` action="${statusCallback}"` : ''}${recordingCallback ? ` recordingStatusCallback="${recordingCallback}"` : ''}>
+  <Dial callerId="${safeCallerId}" record="record-from-answer-dual" answerOnBridge="true" timeout="30"${statusCallback ? ` statusCallback="${statusCallback}" statusCallbackEvent="initiated ringing answered completed" statusCallbackMethod="POST"` : ''}${recordingCallback ? ` recordingStatusCallback="${recordingCallback}"` : ''}>
     <Number>${safeTo}</Number>
   </Dial>
 </Response>`;
