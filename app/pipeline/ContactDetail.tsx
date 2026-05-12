@@ -8,7 +8,12 @@ import {
   Pin, MessageSquare, FileText, User, PhoneOff, History, ExternalLink,
   Plus
 } from 'lucide-react';
-import BrowserDialer from '@/components/BrowserDialer';
+// Browser-based calling is handled by the global CallWidget (mounted via the
+// Sidebar). We trigger it here via a window CustomEvent rather than embedding
+// the dialer per-contact, so the call survives page navigation.
+function requestCall(detail: { phone: string; name?: string; contactId?: string }) {
+  window.dispatchEvent(new CustomEvent('debtrex:call', { detail }));
+}
 
 const MANAGEMENT_STATUSES = [
   { value: 'new', label: 'New', color: 'gray' },
@@ -228,14 +233,20 @@ export default function ContactDetail({
 
         {/* Action buttons */}
         <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-100">
-          {/* Browser-based Call Now button */}
+          {/* Browser-based Call Now — opens the global CallWidget */}
           {permissions.call && contact.phone && (
-            <BrowserDialer
-              contactId={contact.id}
-              contactName={contact.full_name}
-              contactPhone={contact.phone}
-              onCallEnded={() => router.refresh()}
-            />
+            <button
+              type="button"
+              onClick={() => requestCall({
+                phone: contact.phone,
+                name: contact.full_name,
+                contactId: contact.id,
+              })}
+              className="btn-primary"
+              title="Call now via browser"
+            >
+              <PhoneCall size={14} /> Call Now
+            </button>
           )}
           {permissions.call && !contact.phone && (
             <button type="button"
