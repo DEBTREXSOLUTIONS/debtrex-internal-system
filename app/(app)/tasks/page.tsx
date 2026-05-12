@@ -34,6 +34,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   // Pending task-requests count for the badge — only for approvers
   const canApprove = await hasPermission(user.role, 'task.approve_requests');
   const canRequest = await hasPermission(user.role, 'task.request');
+  const canCreate = await hasPermission(user.role, 'task.create');
   let pendingReqCount = 0;
   if (canApprove) {
     let pq = supabaseAdmin
@@ -81,9 +82,15 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                 </Link>
               )}
             </div>
-            <Link href="/tasks/new" className="btn-primary self-start sm:self-auto">
-              <Plus size={14} /> New Task
-            </Link>
+            {canCreate ? (
+              <Link href="/tasks/new" className="btn-primary self-start sm:self-auto">
+                <Plus size={14} /> New Task
+              </Link>
+            ) : canRequest ? (
+              <Link href="/tasks/requests" className="btn-primary self-start sm:self-auto">
+                <Plus size={14} /> Request Task
+              </Link>
+            ) : null}
           </div>
 
           {canApprove && pendingReqCount > 0 && (
@@ -114,10 +121,18 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
           ) : (
             <div className="card p-12 text-center">
               <div className="font-condensed text-2xl font-black uppercase mb-2">No Tasks Yet</div>
-              <p className="text-gray-500 mb-4">Get started by creating your first task.</p>
-              <Link href="/tasks/new" className="btn-primary">
-                <Plus size={14} /> Create First Task
-              </Link>
+              <p className="text-gray-500 mb-4">
+                {canCreate ? 'Get started by creating your first task.' : 'Request a task to get started.'}
+              </p>
+              {canCreate ? (
+                <Link href="/tasks/new" className="btn-primary">
+                  <Plus size={14} /> Create First Task
+                </Link>
+              ) : canRequest ? (
+                <Link href="/tasks/requests" className="btn-primary">
+                  <Plus size={14} /> Request a Task
+                </Link>
+              ) : null}
             </div>
           )}
     </div>

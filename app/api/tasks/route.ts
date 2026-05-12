@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
 import { supabaseAdmin } from '@/lib/supabase';
 import { sendTaskAssignedEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!(await hasPermission(user.role, 'task.create'))) {
+    return NextResponse.json({ error: 'Forbidden — you can only request tasks, which need admin approval' }, { status: 403 });
+  }
 
   try {
     const body = await request.json();
