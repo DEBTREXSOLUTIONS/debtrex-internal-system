@@ -88,7 +88,7 @@ export default function TeamManager({ members, currentUser, roles = [] }: any) {
                         disabled={updating === m.id || isMe || (!isCEO && ['ceo', 'owner'].includes(m.role))}
                         className="input text-xs py-1 px-2 w-32"
                       >
-                        {ROLES.map(r => (
+                        {ROLES.map((r: any) => (
                           <option key={r.value} value={r.value} disabled={r.value === 'ceo' && !isCEO}>
                             {r.label}
                           </option>
@@ -124,7 +124,7 @@ export default function TeamManager({ members, currentUser, roles = [] }: any) {
       </div>
 
       {/* Invite modal */}
-      {showInvite && <InviteModal onClose={() => { setShowInvite(false); setInviteResult(null); }} onInvited={(result) => { setInviteResult(result); router.refresh(); }} />}
+      {showInvite && <InviteModal roles={ROLES} onClose={() => { setShowInvite(false); setInviteResult(null); }} onInvited={(result: any) => { setInviteResult(result); router.refresh(); }} />}
 
       {/* Invite success modal */}
       {inviteResult?.password && (
@@ -149,7 +149,7 @@ export default function TeamManager({ members, currentUser, roles = [] }: any) {
 
 function Th({ children }: any) { return <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-600">{children}</th>; }
 
-function InviteModal({ onClose, onInvited }: any) {
+function InviteModal({ roles, onClose, onInvited }: any) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState({ email: '', full_name: '', role: 'employee', phone: '' });
@@ -185,7 +185,7 @@ function InviteModal({ onClose, onInvited }: any) {
             <input type="tel" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="input" /></div>
           <div><label className="label">Role *</label>
             <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="input">
-              {ROLES.filter(r => r.value !== 'ceo' && r.value !== 'owner').map(r => (
+              {(roles || []).filter((r: any) => r.value !== 'ceo' && r.value !== 'owner').map((r: any) => (
                 <option key={r.value} value={r.value}>{r.label}</option>
               ))}
             </select></div>
