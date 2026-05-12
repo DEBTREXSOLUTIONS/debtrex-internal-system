@@ -1,12 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Allow production builds to complete even with type errors.
+  // TypeScript and ESLint errors block builds — this catches undefined
+  // identifiers (missing imports, out-of-scope vars) that would otherwise
+  // crash at runtime as "Application error: a client-side exception".
+  // To temporarily bypass during a hotfix, flip these back to `true`.
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   // Reduce client bundle size by tree-shaking these heavy imports
   experimental: {

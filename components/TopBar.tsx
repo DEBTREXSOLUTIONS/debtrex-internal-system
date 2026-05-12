@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { Bell, Search, ChevronDown, Circle, Phone, Calendar, Coffee, MinusCircle } from 'lucide-react';
 import Link from 'next/link';
 
@@ -20,7 +21,45 @@ const STATUSES = [
 const STATUS_KEY = 'me_status';
 const MARKED_ONLINE_KEY = 'marked_online';
 
+// Map a pathname to the title shown in the top bar.
+// First match wins. Use prefix matches for nested routes.
+function deriveTitle(pathname: string): string {
+  const map: [RegExp | string, string][] = [
+    [/^\/pipeline\/management\/[^/]+/, 'Company Detail'],
+    [/^\/pipeline\/sales\/[^/]+/, 'Lead Detail'],
+    ['/pipeline/management', 'Pipeline · Management'],
+    ['/pipeline/sales', 'Pipeline · Sales'],
+    [/^\/tasks\/new/, 'New Task'],
+    [/^\/tasks\/[^/]+/, 'Task Details'],
+    ['/tasks', 'Tasks'],
+    ['/calendar', 'Calendar'],
+    ['/files', 'Files'],
+    ['/budget/allocations', 'Budget Allocations'],
+    ['/budget', 'Budget Tracker'],
+    ['/team', 'Team Members'],
+    ['/performance/assignments', 'Manager Assignments'],
+    ['/performance', 'Performance'],
+    ['/permissions', 'Permissions'],
+    ['/roles', 'Custom Roles'],
+    ['/twilio-numbers', 'Twilio Numbers'],
+    ['/calculators', 'Calculators'],
+    ['/notifications', 'Notifications'],
+    ['/settings', 'Settings'],
+    ['/', 'Dashboard'],
+  ];
+  for (const [pattern, title] of map) {
+    if (typeof pattern === 'string') {
+      if (pathname === pattern) return title;
+    } else if (pattern.test(pathname)) {
+      return title;
+    }
+  }
+  return 'Dashboard';
+}
+
 export default function TopBar({ user, title }: { user: User; title?: string }) {
+  const pathname = usePathname();
+  const displayTitle = title || deriveTitle(pathname);
   // Default to 'online'. After mount we restore the chosen status from
   // sessionStorage so the user's selection survives page navigations.
   // (We can't read sessionStorage during render because it would cause an
@@ -60,8 +99,18 @@ export default function TopBar({ user, title }: { user: User; title?: string }) 
       navigator.sendBeacon?.('/api/me/status', JSON.stringify({ status: 'offline' }));
     };
     window.addEventListener('beforeunload', beforeUnload);
+
+    // Listen for status changes broadcast by the CallWidget (when a call
+    // starts → 'otl', when it ends → previous status).
+    const onStatusChange = (e: Event) => {
+      const next = (e as CustomEvent<string>).detail;
+      if (typeof next === 'string') setStatus(next);
+    };
+    window.addEventListener('debtrex:status', onStatusChange as EventListener);
+
     return () => {
       window.removeEventListener('beforeunload', beforeUnload);
+      window.removeEventListener('debtrex:status', onStatusChange as EventListener);
     };
   }, []);
 
@@ -99,7 +148,7 @@ export default function TopBar({ user, title }: { user: User; title?: string }) 
   return (
     <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-20">
       <div className="pl-12 lg:pl-0 min-w-0 flex-1">
-        <h1 className="font-condensed text-xl sm:text-2xl font-black uppercase truncate">{title || 'Dashboard'}</h1>
+        <h1 className="font-condensed text-xl sm:text-2xl font-black uppercase truncate">{displayTitle}</h1>
         <p className="text-xs text-gray-500 mt-0.5 truncate">
           Welcome back, <span className="font-semibold text-brand-ink">{user.full_name.split(' ')[0]}</span>
         </p>
