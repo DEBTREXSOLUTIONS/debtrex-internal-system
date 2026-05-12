@@ -10,6 +10,17 @@
 -- + Co-Owner see all requests.
 -- ════════════════════════════════════════════════════════════════════
 
+-- ─── 0. ENSURE HELPER FUNCTION EXISTS ───
+-- (used by both migration-003 and migration-008)
+create or replace function seed_permission(p_role text, p_key text, p_enabled boolean)
+returns void as $$
+begin
+  insert into role_permissions (role, permission_key, enabled)
+  values (p_role, p_key, p_enabled)
+  on conflict (role, permission_key) do nothing;
+end;
+$$ language plpgsql;
+
 -- ─── 1. TASK REQUESTS TABLE ───
 create table if not exists task_requests (
   id uuid default uuid_generate_v4() primary key,
