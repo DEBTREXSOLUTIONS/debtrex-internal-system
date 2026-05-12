@@ -2,8 +2,6 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser, isLeadership } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { supabaseAdmin } from '@/lib/supabase';
-import Sidebar from '@/components/Sidebar';
-import TopBar from '@/components/TopBar';
 import Link from 'next/link';
 import { CheckSquare, Clock, AlertCircle, TrendingUp, Calendar, Plus, ArrowRight, Users, Inbox } from 'lucide-react';
 
@@ -78,11 +76,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar user={user} />
-      <main className="flex-1 min-w-0">
-        <TopBar user={user} title="Dashboard" />
-        <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
           {canApprove && pendingReqCount > 0 && (
             <Link
               href="/tasks/requests"
@@ -231,8 +225,6 @@ export default async function DashboardPage() {
               </div>
             </div>
           </div>
-        </div>
-      </main>
     </div>
   );
 }

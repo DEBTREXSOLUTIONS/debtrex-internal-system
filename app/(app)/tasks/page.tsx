@@ -2,8 +2,6 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser, canViewAllTasks, isLeadership } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { supabaseAdmin } from '@/lib/supabase';
-import Sidebar from '@/components/Sidebar';
-import TopBar from '@/components/TopBar';
 import Link from 'next/link';
 import { Plus, Filter, Clock, Inbox } from 'lucide-react';
 
@@ -56,11 +54,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar user={user} />
-      <main className="flex-1 min-w-0">
-        <TopBar user={user} title="Tasks" />
-        <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
           {/* Header actions */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
             <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
@@ -126,8 +120,6 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
               </Link>
             </div>
           )}
-        </div>
-      </main>
     </div>
   );
 }
