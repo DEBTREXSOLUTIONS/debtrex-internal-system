@@ -24,25 +24,27 @@ export interface PerformanceMetrics {
 export async function calculatePerformanceMetrics(userIds: string[]): Promise<PerformanceMetrics[]> {
   if (userIds.length === 0) return [];
 
-  // Fetch user info
-  const { data: users } = await supabaseAdmin
-    .from('profiles')
-    .select('id, full_name, email, role')
-    .in('id', userIds);
+  // Parallel fetch — users, their tasks, and their task updates
+  const [usersRes, tasksRes, updatesRes] = await Promise.all([
+    supabaseAdmin
+      .from('profiles')
+      .select('id, full_name, email, role')
+      .in('id', userIds),
+    supabaseAdmin
+      .from('tasks')
+      .select('id, assigned_to, status, deadline, completed_at, created_at')
+      .in('assigned_to', userIds),
+    supabaseAdmin
+      .from('task_updates')
+      .select('user_id, hours_worked, created_at')
+      .in('user_id', userIds),
+  ]);
+
+  const users = usersRes.data;
+  const tasks = tasksRes.data;
+  const updates = updatesRes.data;
 
   if (!users) return [];
-
-  // Fetch all tasks for these users in a single query
-  const { data: tasks } = await supabaseAdmin
-    .from('tasks')
-    .select('id, assigned_to, status, deadline, completed_at, created_at')
-    .in('assigned_to', userIds);
-
-  // Fetch all task updates (for hours and last activity)
-  const { data: updates } = await supabaseAdmin
-    .from('task_updates')
-    .select('user_id, hours_worked, created_at')
-    .in('user_id', userIds);
 
   const now = new Date();
 

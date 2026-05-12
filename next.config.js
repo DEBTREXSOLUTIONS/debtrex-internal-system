@@ -10,7 +10,7 @@ const nextConfig = {
   },
   // Reduce client bundle size by tree-shaking these heavy imports
   experimental: {
-    optimizePackageImports: ['lucide-react', '@fullcalendar/core', 'date-fns', 'recharts'],
+    optimizePackageImports: ['lucide-react', '@fullcalendar/core'],
   },
   // Compress responses
   compress: true,

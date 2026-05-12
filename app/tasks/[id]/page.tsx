@@ -12,30 +12,34 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   if (!user) redirect('/login');
   const { id } = await params;
 
-  const { data: task } = await supabaseAdmin
-    .from('tasks')
-    .select(`
-      *,
-      assigned_to_profile:profiles!tasks_assigned_to_fkey(id, full_name, email),
-      created_by_profile:profiles!tasks_created_by_fkey(id, full_name)
-    `)
-    .eq('id', id)
-    .single();
+  // Parallel fetch — task, its updates, and its notes
+  const [taskRes, updatesRes, notesRes] = await Promise.all([
+    supabaseAdmin
+      .from('tasks')
+      .select(`
+        *,
+        assigned_to_profile:profiles!tasks_assigned_to_fkey(id, full_name, email),
+        created_by_profile:profiles!tasks_created_by_fkey(id, full_name)
+      `)
+      .eq('id', id)
+      .single(),
+    supabaseAdmin
+      .from('task_updates')
+      .select('*, user:profiles(full_name, role)')
+      .eq('task_id', id)
+      .order('created_at', { ascending: false }),
+    supabaseAdmin
+      .from('task_notes')
+      .select('*, user:profiles(full_name)')
+      .eq('task_id', id)
+      .order('created_at', { ascending: false }),
+  ]);
+
+  const task = taskRes.data;
+  const updates = updatesRes.data;
+  const notes = notesRes.data;
 
   if (!task) notFound();
-
-  // Fetch updates and notes
-  const { data: updates } = await supabaseAdmin
-    .from('task_updates')
-    .select('*, user:profiles(full_name, role)')
-    .eq('task_id', id)
-    .order('created_at', { ascending: false });
-
-  const { data: notes } = await supabaseAdmin
-    .from('task_notes')
-    .select('*, user:profiles(full_name)')
-    .eq('task_id', id)
-    .order('created_at', { ascending: false });
 
   return (
     <div className="flex min-h-screen bg-gray-50">

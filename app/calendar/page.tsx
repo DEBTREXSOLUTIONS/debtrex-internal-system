@@ -9,18 +9,40 @@ export default async function CalendarPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  // Fetch events
-  const { data: events } = await supabaseAdmin
-    .from('events')
-    .select('*')
-    .order('start_time');
+  // Date window: only fetch events/deadlines within ±6 months of now.
+  // FullCalendar can request more via its dateRange callback if the user
+  // navigates far into past/future — but for the default view this keeps
+  // the payload bounded.
+  const windowStart = new Date();
+  windowStart.setMonth(windowStart.getMonth() - 6);
+  const windowEnd = new Date();
+  windowEnd.setMonth(windowEnd.getMonth() + 6);
 
-  // Fetch task deadlines as calendar items
-  const { data: tasks } = await supabaseAdmin
-    .from('tasks')
-    .select('id, title, deadline, priority, status, assigned_to_profile:profiles!tasks_assigned_to_fkey(full_name)')
-    .not('deadline', 'is', null)
-    .neq('status', 'completed');
+  // Parallel fetch
+  const [eventsRes, tasksRes, usersRes] = await Promise.all([
+    supabaseAdmin
+      .from('events')
+      .select('id, title, start_time, end_time, all_day, color')
+      .gte('start_time', windowStart.toISOString())
+      .lte('start_time', windowEnd.toISOString())
+      .order('start_time'),
+    supabaseAdmin
+      .from('tasks')
+      .select('id, title, deadline, priority, status')
+      .not('deadline', 'is', null)
+      .neq('status', 'completed')
+      .gte('deadline', windowStart.toISOString())
+      .lte('deadline', windowEnd.toISOString()),
+    supabaseAdmin
+      .from('profiles')
+      .select('id, full_name, email')
+      .eq('is_active', true)
+      .order('full_name'),
+  ]);
+
+  const events = eventsRes.data;
+  const tasks = tasksRes.data;
+  const users = usersRes.data;
 
   // Combine into calendar items
   const calendarItems = [
@@ -44,13 +66,6 @@ export default async function CalendarPage() {
       url: `/tasks/${t.id}`,
     })),
   ];
-
-  // Fetch users for event creation
-  const { data: users } = await supabaseAdmin
-    .from('profiles')
-    .select('id, full_name, email')
-    .eq('is_active', true)
-    .order('full_name');
 
   return (
     <div className="flex min-h-screen bg-gray-50">
