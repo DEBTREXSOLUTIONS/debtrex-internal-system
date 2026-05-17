@@ -42,8 +42,8 @@ create table if not exists tasks (
   id uuid default uuid_generate_v4() primary key,
   title text not null,
   description text,
-  created_by uuid references profiles(id) not null,
-  assigned_to uuid references profiles(id) not null,
+  created_by uuid references profiles(id) on delete set null,
+  assigned_to uuid references profiles(id) on delete set null,
   status text default 'not_started'
     check (status in ('not_started', 'in_progress', 'submitted', 'completed', 'overdue', 'cancelled')),
   priority text default 'medium'
@@ -66,7 +66,7 @@ create index if not exists tasks_deadline_idx on tasks(deadline);
 create table if not exists task_updates (
   id uuid default uuid_generate_v4() primary key,
   task_id uuid references tasks(id) on delete cascade not null,
-  user_id uuid references profiles(id) not null,
+  user_id uuid references profiles(id) on delete set null,
   update_text text not null,
   hours_worked numeric(5,2),
   status_change text,
@@ -80,7 +80,7 @@ create index if not exists task_updates_task_id_idx on task_updates(task_id);
 create table if not exists task_notes (
   id uuid default uuid_generate_v4() primary key,
   task_id uuid references tasks(id) on delete cascade not null,
-  user_id uuid references profiles(id) not null,
+  user_id uuid references profiles(id) on delete set null,
   note text not null,
   created_at timestamptz default now()
 );
@@ -94,7 +94,7 @@ create table if not exists events (
   start_time timestamptz not null,
   end_time timestamptz not null,
   all_day boolean default false,
-  created_by uuid references profiles(id) not null,
+  created_by uuid references profiles(id) on delete set null,
   category text default 'meeting'
     check (category in ('meeting', 'training', 'deadline', 'holiday', 'personal', 'other')),
   color text default '#E02020',
@@ -123,7 +123,7 @@ create table if not exists budgets (
   category text not null,
   allocated_amount numeric(12,2) not null,
   notes text,
-  created_by uuid references profiles(id),
+  created_by uuid references profiles(id) on delete set null,
   created_at timestamptz default now(),
   unique (month, category)
 );
@@ -137,14 +137,14 @@ create table if not exists expenses (
   category text not null,
   description text not null,
   vendor text,
-  paid_by uuid references profiles(id) not null,
+  paid_by uuid references profiles(id) on delete set null,
   payment_method text
     check (payment_method in ('card', 'wire', 'check', 'cash', 'other')),
   receipt_drive_id text,
   expense_date date not null,
   status text default 'submitted'
     check (status in ('submitted', 'approved', 'rejected', 'reimbursed')),
-  approved_by uuid references profiles(id),
+  approved_by uuid references profiles(id) on delete set null,
   approved_at timestamptz,
   rejection_reason text,
   notes text,
@@ -162,7 +162,7 @@ create table if not exists income (
   source text not null,
   category text,
   received_date date not null,
-  recorded_by uuid references profiles(id),
+  recorded_by uuid references profiles(id) on delete set null,
   notes text,
   created_at timestamptz default now()
 );
@@ -172,7 +172,7 @@ create index if not exists income_date_idx on income(received_date);
 -- ─── 10. AUDIT LOG ───
 create table if not exists audit_log (
   id uuid default uuid_generate_v4() primary key,
-  user_id uuid references profiles(id),
+  user_id uuid references profiles(id) on delete set null,
   action text not null,
   resource_type text,
   resource_id uuid,
