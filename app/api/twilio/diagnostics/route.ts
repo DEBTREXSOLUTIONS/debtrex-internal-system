@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { isLeadership } from '@/lib/roles';
+import { hasPermission } from '@/lib/permissions';
 
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isLeadership(user.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!(await hasPermission(user.role, 'section.twilio_numbers')))
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
