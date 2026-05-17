@@ -11,16 +11,22 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { username, password } = await request.json();
+    const body = await request.json();
+    const password = body.password;
+    const username = body.username ? String(body.username).toLowerCase().trim() : '';
+    const email = body.email ? String(body.email).toLowerCase().trim() : '';
+    const full_name = body.full_name ? String(body.full_name).trim() : '';
+    const role = body.role || 'employee';
 
-    if (!username || !password) {
-      return NextResponse.json({ error: 'Username and password required' }, { status: 400 });
+    if (!password) {
+      return NextResponse.json({ error: 'Password required' }, { status: 400 });
+    }
+    if (!username && !email) {
+      return NextResponse.json({ error: 'Username or email required' }, { status: 400 });
     }
 
-    const login = String(username).toLowerCase().trim();
-    if (!login) {
-      return NextResponse.json({ error: 'Username required' }, { status: 400 });
-    }
+    const login = email || username;
+    const displayName = full_name || username || email;
 
     const passwordHash = await hashPassword(password);
 
@@ -29,8 +35,8 @@ export async function POST(request: Request) {
       .insert({
         email: login,
         password_hash: passwordHash,
-        full_name: login,
-        role: 'employee',
+        full_name: displayName,
+        role,
         is_active: true,
       })
       .select()
@@ -38,20 +44,20 @@ export async function POST(request: Request) {
 
     if (error) {
       if (error.message.includes('duplicate')) {
-        return NextResponse.json({ error: 'A user with this username already exists' }, { status: 400 });
+        return NextResponse.json({ error: 'An account with this username/email already exists' }, { status: 400 });
       }
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     await supabaseAdmin.from('audit_log').insert({
       user_id: user.id,
-      action: 'temp_user_created',
+      action: 'account_created',
       resource_type: 'user',
       resource_id: data.id,
-      details: { username: login },
+      details: { login, mode: email ? 'email' : 'username' },
     });
 
-    return NextResponse.json({ user: data, username: login });
+    return NextResponse.json({ user: data, login });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

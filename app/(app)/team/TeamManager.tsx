@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, X, AlertCircle, UserPlus, Power, PowerOff, Shield, Trash2 } from 'lucide-react';
+import { Plus, X, AlertCircle, UserPlus, UserCog, Power, PowerOff, Shield, Trash2 } from 'lucide-react';
 
 export default function TeamManager({ members, currentUser, roles = [], canDelete = false }: any) {
   const ROLES = roles.length > 0 ? roles : [
@@ -15,8 +15,10 @@ export default function TeamManager({ members, currentUser, roles = [], canDelet
   ];
   const router = useRouter();
   const [showInvite, setShowInvite] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
   const [inviteResult, setInviteResult] = useState<{ password?: string; email?: string } | null>(null);
+  const [createResult, setCreateResult] = useState<{ login?: string } | null>(null);
 
   const isCEO = ['ceo', 'owner'].includes(currentUser.role);
 
@@ -68,9 +70,14 @@ export default function TeamManager({ members, currentUser, roles = [], canDelet
           <h2 className="font-condensed text-xl sm:text-2xl font-black uppercase">Team Members</h2>
           <p className="text-sm text-gray-500">{members.length} total · {members.filter((m: any) => m.is_active).length} active</p>
         </div>
-        <button onClick={() => setShowInvite(true)} className="btn-primary">
-          <UserPlus size={14} /> Invite Team Member
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => setShowInvite(true)} className="btn-primary">
+            <UserPlus size={14} /> Invite Team Member
+          </button>
+          <button onClick={() => setShowCreate(true)} className="btn-outline">
+            <UserCog size={14} /> Create Account
+          </button>
+        </div>
       </div>
 
       {/* Members table */}
@@ -155,6 +162,27 @@ export default function TeamManager({ members, currentUser, roles = [], canDelet
       {/* Invite modal */}
       {showInvite && <InviteModal roles={ROLES} onClose={() => { setShowInvite(false); setInviteResult(null); }} onInvited={(result: any) => { setInviteResult(result); router.refresh(); }} />}
 
+      {/* Create account modal */}
+      {showCreate && <CreateAccountModal roles={ROLES} onClose={() => { setShowCreate(false); setCreateResult(null); }} onCreated={(result: any) => { setCreateResult(result); router.refresh(); }} />}
+
+      {/* Create account success */}
+      {createResult?.login && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Shield className="text-brand-red" size={20} />
+              <h3 className="font-condensed text-2xl font-black uppercase">Account Created</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">The user can now log in with:</p>
+            <div className="bg-brand-red-pale border border-brand-red/20 rounded p-3 text-center mb-4">
+              <div className="text-xs text-gray-500 mb-1">Login</div>
+              <div className="font-mono text-lg font-bold break-all">{createResult.login}</div>
+            </div>
+            <button onClick={() => { setCreateResult(null); setShowCreate(false); }} className="btn-primary w-full">Got it</button>
+          </div>
+        </div>
+      )}
+
       {/* Invite success modal */}
       {inviteResult?.password && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -221,6 +249,132 @@ function InviteModal({ roles, onClose, onInvited }: any) {
           <div className="flex gap-2 pt-3 border-t border-gray-100">
             <button type="submit" disabled={loading} className="btn-primary flex-1 disabled:opacity-50">
               {loading ? 'Inviting...' : 'Send Invitation'}
+            </button>
+            <button type="button" onClick={onClose} className="btn-outline">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function CreateAccountModal({ roles, onClose, onCreated }: any) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [mode, setMode] = useState<'username' | 'email'>('username');
+  const [form, setForm] = useState({ username: '', email: '', full_name: '', password: '', role: 'employee' });
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true); setError('');
+    try {
+      const body: any = { password: form.password, role: form.role };
+      if (mode === 'username') {
+        body.username = form.username;
+      } else {
+        body.email = form.email;
+        if (form.full_name) body.full_name = form.full_name;
+      }
+      const res = await fetch('/api/users/temp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      onCreated(data);
+    } catch (e: any) { setError(e.message); }
+    finally { setLoading(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg max-w-md w-full p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-condensed text-2xl font-black uppercase">Create Account</h3>
+          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
+        </div>
+
+        <div className="flex gap-1 mb-4 p-1 bg-gray-100 rounded">
+          <button
+            type="button"
+            onClick={() => setMode('username')}
+            className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded ${mode === 'username' ? 'bg-white text-brand-red shadow-sm' : 'text-gray-500'}`}
+          >
+            Username
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('email')}
+            className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded ${mode === 'email' ? 'bg-white text-brand-red shadow-sm' : 'text-gray-500'}`}
+          >
+            Email
+          </button>
+        </div>
+
+        {error && <div className="mb-3 p-2 bg-brand-red-pale text-brand-red text-sm rounded flex items-center gap-2"><AlertCircle size={14}/>{error}</div>}
+
+        <form onSubmit={submit} className="space-y-3">
+          {mode === 'username' ? (
+            <div>
+              <label className="label">Username *</label>
+              <input
+                required
+                type="text"
+                autoComplete="off"
+                value={form.username}
+                onChange={e => setForm({ ...form, username: e.target.value })}
+                className="input"
+              />
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="label">Email *</label>
+                <input
+                  required
+                  type="email"
+                  value={form.email}
+                  onChange={e => setForm({ ...form, email: e.target.value })}
+                  className="input"
+                />
+              </div>
+              <div>
+                <label className="label">Full Name</label>
+                <input
+                  type="text"
+                  value={form.full_name}
+                  onChange={e => setForm({ ...form, full_name: e.target.value })}
+                  className="input"
+                />
+              </div>
+            </>
+          )}
+
+          <div>
+            <label className="label">Password *</label>
+            <input
+              required
+              type="text"
+              autoComplete="new-password"
+              value={form.password}
+              onChange={e => setForm({ ...form, password: e.target.value })}
+              className="input font-mono"
+            />
+          </div>
+
+          <div>
+            <label className="label">Role *</label>
+            <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} className="input">
+              {(roles || []).filter((r: any) => r.value !== 'ceo' && r.value !== 'owner').map((r: any) => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex gap-2 pt-3 border-t border-gray-100">
+            <button type="submit" disabled={loading} className="btn-primary flex-1 disabled:opacity-50">
+              {loading ? 'Creating...' : 'Create Account'}
             </button>
             <button type="button" onClick={onClose} className="btn-outline">Cancel</button>
           </div>
