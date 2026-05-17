@@ -1,9 +1,10 @@
 "use client";
 import { useState } from 'react';
-import { Lock, Mail, AlertCircle } from 'lucide-react';
+import { Lock, Mail, User, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [mode, setMode] = useState<'email' | 'username'>('email');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,7 +17,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: identifier, password }),
         credentials: 'include',
       });
       const data = await res.json();
@@ -84,17 +85,40 @@ export default function LoginPage() {
             </div>
           )}
 
+          <div className="flex gap-1 mb-4 p-1 bg-gray-100 rounded">
+            <button
+              type="button"
+              onClick={() => { setMode('email'); setIdentifier(''); }}
+              className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded ${mode === 'email' ? 'bg-white text-brand-red shadow-sm' : 'text-gray-500'}`}
+            >
+              Email
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode('username'); setIdentifier(''); }}
+              className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded ${mode === 'username' ? 'bg-white text-brand-red shadow-sm' : 'text-gray-500'}`}
+            >
+              Username
+            </button>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="label">Email Address</label>
+              <label className="label">{mode === 'email' ? 'Email Address' : 'Username'}</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                {mode === 'email' ? (
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                ) : (
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                )}
                 <input
-                  type="email"
+                  key={mode}
+                  type={mode === 'email' ? 'email' : 'text'}
                   required
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="you@debtrex.com"
+                  autoComplete={mode === 'email' ? 'email' : 'username'}
+                  value={identifier}
+                  onChange={e => setIdentifier(e.target.value)}
+                  placeholder={mode === 'email' ? 'you@debtrex.com' : 'username'}
                   className="input pl-10"
                 />
               </div>
