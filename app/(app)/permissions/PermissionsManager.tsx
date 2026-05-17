@@ -76,7 +76,7 @@ export default function PermissionsManager({ matrix: initialMatrix, groups, labe
           <div className="flex-1 min-w-0">
             <h2 className="font-condensed text-xl sm:text-2xl font-black uppercase">Role Permissions</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Toggle what each role can do. Changes take effect within a minute (cache TTL).
+              Toggle what each role can do. Changes take effect immediately after saving.
             </p>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { supabaseAdmin } from './supabase';
 
 // All permission keys — kept in sync with database/migration-003.sql seed list.
@@ -181,15 +182,12 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'roles.manage': 'Create / edit / delete custom roles',
 };
 
-// In-memory cache to avoid hitting DB on every check
-let permissionCache: Map<string, Map<string, boolean>> | null = null;
-let cacheLoadedAt = 0;
-const CACHE_TTL_MS = 300_000; // 5 minutes
-
-async function loadPermissions(): Promise<Map<string, Map<string, boolean>>> {
-  if (permissionCache && Date.now() - cacheLoadedAt < CACHE_TTL_MS) {
-    return permissionCache;
-  }
+// Per-request cache via React's cache(). Each HTTP request reads perms from
+// the DB once, and multiple hasPermission() calls within that request share
+// the result. There is intentionally no cross-request cache: a module-level
+// cache cannot be reliably invalidated across multiple Node processes /
+// serverless instances, which is what caused stale-permission bugs after save.
+const loadPermissions = cache(async function loadPermissions(): Promise<Map<string, Map<string, boolean>>> {
   const { data } = await supabaseAdmin
     .from('role_permissions')
     .select('role, permission_key, enabled');
@@ -198,16 +196,12 @@ async function loadPermissions(): Promise<Map<string, Map<string, boolean>>> {
     if (!map.has(row.role)) map.set(row.role, new Map());
     map.get(row.role)!.set(row.permission_key, row.enabled);
   });
-  permissionCache = map;
-  cacheLoadedAt = Date.now();
   return map;
-}
+});
 
-// Force-invalidate the cache (call after any permission change)
-export function invalidatePermissionCache() {
-  permissionCache = null;
-  cacheLoadedAt = 0;
-}
+// Kept as a no-op for callers that still invoke it. The per-request cache
+// doesn't need manual invalidation — the next request reads fresh data.
+export function invalidatePermissionCache() {}
 
 /**
  * Check if a single role has a specific permission.
