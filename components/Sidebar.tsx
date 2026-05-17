@@ -47,33 +47,21 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
     } catch { return {}; }
   });
 
-  // Initialize permissions from sessionStorage cache to avoid flicker on navigation
-  const [permissions, setPermissions] = useState<SidebarPermissions>(() => {
-    if (initialPermissions && Object.keys(initialPermissions).length > 0) return initialPermissions;
-    if (typeof window === 'undefined') return {};
-    try {
-      const cached = sessionStorage.getItem(`perms_${user.id}`);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Date.now() - parsed.savedAt < 300_000) { // 5-minute cache
-          return parsed.permissions;
-        }
-      }
-    } catch {}
-    return {};
-  });
-  const [permsLoaded, setPermsLoaded] = useState(() => {
-    if (initialPermissions && Object.keys(initialPermissions).length > 0) return true;
-    if (typeof window === 'undefined') return false;
-    try {
-      const cached = sessionStorage.getItem(`perms_${user.id}`);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        return Date.now() - parsed.savedAt < 300_000;
-      }
-    } catch {}
-    return false;
-  });
+  // Permissions are server-rendered fresh on every navigation by the layout.
+  // We keep them in state purely so a post-mount refetch (fallback path) can
+  // update them without remounting.
+  const hasInitial = !!(initialPermissions && Object.keys(initialPermissions).length > 0);
+  const [permissions, setPermissions] = useState<SidebarPermissions>(initialPermissions || {});
+  const [permsLoaded, setPermsLoaded] = useState(hasInitial);
+
+  // Sync when the server-rendered prop changes (Next.js layouts persist, but
+  // the server re-runs on each navigation and passes fresh values).
+  useEffect(() => {
+    if (initialPermissions && Object.keys(initialPermissions).length > 0) {
+      setPermissions(initialPermissions);
+      setPermsLoaded(true);
+    }
+  }, [initialPermissions]);
 
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
@@ -90,9 +78,9 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
     } catch {}
   }, [collapsed]);
 
-  // Fetch permissions only if not already cached
+  // Fallback fetch if the layout didn't supply permissions for any reason.
   useEffect(() => {
-    if (permsLoaded) return; // Already have them
+    if (permsLoaded) return;
     let active = true;
     fetch('/api/me/permissions')
       .then(r => r.json())
@@ -101,17 +89,11 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
         if (data.permissions) {
           setPermissions(data.permissions);
           setPermsLoaded(true);
-          try {
-            sessionStorage.setItem(`perms_${user.id}`, JSON.stringify({
-              permissions: data.permissions,
-              savedAt: Date.now(),
-            }));
-          } catch {}
         }
       })
       .catch(() => { if (active) setPermsLoaded(true); });
     return () => { active = false; };
-  }, [permsLoaded, user.id]);
+  }, [permsLoaded]);
 
   const can = (key: string, fallback: boolean) =>
     permsLoaded ? !!permissions[key] : fallback;

@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
+import { getPermissions } from '@/lib/permissions';
 import Sidebar from '@/components/Sidebar';
 import TopBar from '@/components/TopBar';
 
@@ -17,9 +18,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
+  const permissions = await getPermissions(user.role);
+
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <Sidebar user={user} />
+      <Sidebar user={user} permissions={permissions} />
       <main className="flex-1 min-w-0">
         <TopBar user={user} />
         {children}
