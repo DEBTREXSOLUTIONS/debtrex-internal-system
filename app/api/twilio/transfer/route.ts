@@ -94,20 +94,27 @@ export async function POST(request: Request) {
     }
 
     // ─── Merge (3-way conference) ───
-    const conferenceName = `xfer-${call_sid}`;
+    // Conference name is scoped to this call so simultaneous transfers on
+    // other calls don't collide. Twilio requires it to be a safe string.
+    const conferenceName = `xfer-${call_sid}`.replace(/[^a-zA-Z0-9_\-]/g, '');
 
-    const conferenceTwiml = (label: string) => `<?xml version="1.0" encoding="UTF-8"?>
+    // Note: `waitUrl=""` is a Twilio gotcha — it makes Twilio try to fetch
+    // an empty URL for hold music and emits "Internal Application Error".
+    // Omitting the attribute lets Twilio use its default hold music until
+    // the conference starts. `startConferenceOnEnter` on both participants
+    // means the music plays only briefly (until the second leg arrives).
+    const conferenceTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Dial answerOnBridge="true">
-    <Conference startConferenceOnEnter="true" endConferenceOnExit="false" beep="false" waitUrl="">${conferenceName}</Conference>
+    <Conference startConferenceOnEnter="true" endConferenceOnExit="false" beep="false">${conferenceName}</Conference>
   </Dial>
 </Response>`;
 
-    // Move customer + agent into the conference room.
-    await Promise.all([
-      client.calls(customerLeg.sid).update({ twiml: conferenceTwiml('customer') }),
-      client.calls(call_sid).update({ twiml: conferenceTwiml('agent') }),
-    ]);
+    // Order matters: move the CUSTOMER first. If we update the agent's
+    // (parent) leg first, Twilio tears down the parent's existing <Dial>
+    // and the customer's child leg gets hung up before it can be redirected.
+    await client.calls(customerLeg.sid).update({ twiml: conferenceTwiml });
+    await client.calls(call_sid).update({ twiml: conferenceTwiml });
 
     // Dial the target into the same conference. Use the agent's assigned
     // caller ID if we know it, else the company default.
@@ -152,7 +159,19 @@ export async function POST(request: Request) {
       conference: conferenceName,
     });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Transfer failed' }, { status: 500 });
+    // Twilio API errors carry useful detail in .moreInfo / .code; surface
+    // them so the agent sees something better than "Internal Application
+    // Error" if a TwiML update bounces back.
+    console.error('Transfer failed:', {
+      message: e?.message,
+      code: e?.code,
+      status: e?.status,
+      moreInfo: e?.moreInfo,
+    });
+    return NextResponse.json({
+      error: e?.message || 'Transfer failed',
+      twilio_code: e?.code,
+    }, { status: 500 });
   }
 }
 

@@ -17,6 +17,8 @@ export async function GET(request: Request) {
     });
   }
 
+  // Do NOT set `waitUrl=""` — Twilio fetches the empty URL for hold music
+  // and emits "Internal Application Error". Omit to use the default music.
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Dial answerOnBridge="true">
