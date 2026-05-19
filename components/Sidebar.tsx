@@ -239,15 +239,13 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
       </nav>
 
       <div className="border-t border-white/10 flex-shrink-0">
-        {can('call.log', user.role !== 'viewer' && user.role !== 'accountant') && (
-          <button
-            type="button"
-            onClick={() => setHistoryOpen(true)}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-colors"
-          >
-            <History size={15} /> Call History
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => setHistoryOpen(true)}
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+        >
+          <History size={15} /> Call History
+        </button>
         <Link
           href="/settings"
           prefetch={false}

@@ -52,6 +52,11 @@ export default function CallWidget({ user }: { user: User }) {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const prevStatusRef = useRef<string | null>(null);
+  // Tracks the call_logs row for the in-progress outbound call so we can
+  // PATCH it with the final duration/outcome on disconnect.
+  const logIdRef = useRef<string | null>(null);
+  const acceptedRef = useRef<boolean>(false);
+  const startedAtRef = useRef<number | null>(null);
 
   // ─── Status auto-sync: bump to OTL during call, restore after ───
   const broadcastStatus = (s: string) => {
@@ -180,10 +185,25 @@ export default function CallWidget({ user }: { user: User }) {
       stopRingtone();
       setState('in-call');
       setOtlStatus();
+      acceptedRef.current = true;
       const startedAt = Date.now();
+      startedAtRef.current = startedAt;
       timerRef.current = setInterval(() => {
         setDuration(Math.floor((Date.now() - startedAt) / 1000));
       }, 1000);
+
+      // CallSid is reliably populated by the time `accept` fires. Backfill it
+      // on the log row so the Twilio status webhook can match this call later.
+      if (logIdRef.current) {
+        const sid = call.parameters?.CallSid;
+        if (sid) {
+          fetch('/api/twilio/log-browser-call', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: logIdRef.current, call_sid: sid }),
+          }).catch(() => {});
+        }
+      }
     });
 
     call.on('disconnect', () => {
@@ -191,11 +211,35 @@ export default function CallWidget({ user }: { user: User }) {
       stopTimer();
       setState('ended');
       restoreStatus();
+      finalizeLog();
       setTimeout(() => resetCall(), 1500);
     });
 
-    call.on('cancel', () => { stopRingtone(); stopTimer(); restoreStatus(); resetCall(); });
-    call.on('reject', () => { stopRingtone(); stopTimer(); restoreStatus(); resetCall(); });
+    call.on('cancel', () => { stopRingtone(); stopTimer(); restoreStatus(); finalizeLog(); resetCall(); });
+    call.on('reject', () => { stopRingtone(); stopTimer(); restoreStatus(); finalizeLog(); resetCall(); });
+  }
+
+  // Write the final duration/outcome to call_logs from the browser. We can't
+  // rely on the Twilio status webhook in dev because Twilio can't reach
+  // localhost; this fills the row in regardless of environment.
+  function finalizeLog() {
+    const id = logIdRef.current;
+    if (!id) return;
+    const startedAt = startedAtRef.current;
+    const elapsed = startedAt ? Math.floor((Date.now() - startedAt) / 1000) : 0;
+    const accepted = acceptedRef.current;
+    fetch('/api/twilio/log-browser-call', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id,
+        duration_seconds: accepted ? elapsed : 0,
+        outcome: accepted ? 'connected' : 'no_answer',
+      }),
+    }).catch(() => {});
+    logIdRef.current = null;
+    acceptedRef.current = false;
+    startedAtRef.current = null;
   }
 
   function stopRingtone() {
@@ -249,9 +293,12 @@ export default function CallWidget({ user }: { user: User }) {
         },
       });
       callRef.current = call;
+      acceptedRef.current = false;
+      startedAtRef.current = null;
+      logIdRef.current = null;
 
       // Log immediately so even unanswered/cancelled calls show in history.
-      // Status webhook later updates outcome/duration via CallSid match.
+      // The PATCH on disconnect fills in final duration/outcome.
       fetch('/api/twilio/log-browser-call', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -260,7 +307,16 @@ export default function CallWidget({ user }: { user: User }) {
           to_number: safePhone,
           call_sid: call.parameters?.CallSid || null,
         }),
-      }).catch(() => {});
+      })
+        .then(async (r) => {
+          const body = await r.json().catch(() => ({}));
+          if (!r.ok) {
+            console.error('Failed to create call log row:', body.error || r.status);
+            return;
+          }
+          if (body?.id) logIdRef.current = body.id;
+        })
+        .catch((e) => console.error('Call log POST errored:', e));
 
       wireCallEvents(call, 'outbound', { phone: safePhone, name, contactId });
     } catch (e: any) {
