@@ -125,12 +125,17 @@ export async function POST(request: Request) {
       .single();
     const callerId = agentProfile?.twilio_phone_number || process.env.TWILIO_PHONE_NUMBER || '';
 
-    const dialIntoConferenceUrl = `${APP_URL}/api/twilio/transfer/conference-twiml?room=${encodeURIComponent(conferenceName)}`;
+    // Inline TwiML — avoids any dependency on NEXT_PUBLIC_APP_URL being a
+    // public HTTPS URL Twilio can reach (which is what was causing
+    // "an application error has occurred" on the target leg).
+    const dialIntoConferenceTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Dial answerOnBridge="true">
+    <Conference startConferenceOnEnter="true" endConferenceOnExit="true" beep="false">${conferenceName}</Conference>
+  </Dial>
+</Response>`;
 
     if (target.type === 'agent' || twimlTarget.includes('<Client>')) {
-      // For Client targets we still need to ring them — easiest path is to
-      // create a fresh call to the Client with TwiML that drops them into
-      // the conference.
       const clientId = extractTagValue(twimlTarget, 'Client');
       if (!clientId) {
         return NextResponse.json({ error: 'Internal: bad client target' }, { status: 500 });
@@ -138,7 +143,7 @@ export async function POST(request: Request) {
       await client.calls.create({
         to: `client:${clientId}`,
         from: callerId,
-        url: dialIntoConferenceUrl,
+        twiml: dialIntoConferenceTwiml,
       });
     } else {
       const phoneNumber = extractTagValue(twimlTarget, 'Number');
@@ -148,7 +153,7 @@ export async function POST(request: Request) {
       await client.calls.create({
         to: phoneNumber,
         from: callerId,
-        url: dialIntoConferenceUrl,
+        twiml: dialIntoConferenceTwiml,
       });
     }
 
