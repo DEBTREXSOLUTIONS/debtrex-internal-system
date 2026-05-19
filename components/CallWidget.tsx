@@ -3,9 +3,14 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import type { CSSProperties } from 'react';
 import {
   PhoneCall, PhoneOff, Mic, MicOff, Hash, Loader2, Phone,
-  X, Delete, Minimize2, ArrowRightLeft,
+  X, Delete, Minimize2, ArrowRightLeft, ExternalLink,
 } from 'lucide-react';
 import TransferModal from './TransferModal';
+
+// BroadcastChannel name shared with CallPopupClient. Bumping this name
+// would orphan any popup windows the user opened with the old version,
+// so keep it stable.
+const POPUP_CHANNEL = 'debtrex-call-widget';
 
 interface User {
   id: string;
@@ -156,6 +161,13 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
   const [inMerge, setInMerge] = useState(false);
   const [completing, setCompleting] = useState(false);
 
+  // Popout-window state. When `poppedOut` is true the in-page widget hides
+  // itself (the popup is the visible surface). The channel is what we use
+  // to push state to the popup and receive command messages from it.
+  const [poppedOut, setPoppedOut] = useState(false);
+  const popupWindowRef = useRef<Window | null>(null);
+  const channelRef = useRef<BroadcastChannel | null>(null);
+
   const deviceRef = useRef<any>(null);
   const callRef = useRef<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -282,6 +294,124 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
     return () => window.removeEventListener('debtrex:call', onCallRequest as EventListener);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deviceReady]);
+
+  // ─── Popout window: BroadcastChannel wiring ───
+  // Setup once on mount. The channel stays open whether or not the popup
+  // is currently active so that:
+  //   1. A popup opened later can request the current state ('popup-opened')
+  //   2. The widget can publish state changes without setup latency.
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') return;
+    const channel = new BroadcastChannel(POPUP_CHANNEL);
+    channelRef.current = channel;
+
+    channel.onmessage = (e) => {
+      const msg = e.data;
+      if (!msg?.type) return;
+      switch (msg.type) {
+        case 'popup-opened':
+          // Popup just loaded — send current state and mark us as popped-out.
+          setPoppedOut(true);
+          // publishState is recreated each render via closure; trigger one
+          // via a microtask so it sees the latest state.
+          queueMicrotask(() => publishStateRef.current?.());
+          break;
+        case 'popup-closed':
+          setPoppedOut(false);
+          popupWindowRef.current = null;
+          break;
+        case 'hangup':
+          hangup();
+          break;
+        case 'accept':
+          accept();
+          break;
+        case 'reject':
+          reject();
+          break;
+        case 'toggle-mute':
+          toggleMute();
+          break;
+        case 'send-digit':
+          if (typeof msg.payload === 'string') sendDigit(msg.payload);
+          break;
+        case 'open-transfer':
+          // The transfer modal needs to be in the main window; raise it.
+          setTransferOpen(true);
+          try { window.focus(); } catch {}
+          break;
+      }
+    };
+
+    // Tell any open popup that the main window is going away (so it can
+    // close itself instead of becoming an orphaned ghost UI).
+    function onMainUnload() {
+      try { channel.postMessage({ type: 'main-close' }); } catch {}
+    }
+    window.addEventListener('beforeunload', onMainUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', onMainUnload);
+      try { channel.postMessage({ type: 'main-close' }); } catch {}
+      try { channel.close(); } catch {}
+      channelRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Latest publishState in a ref so the channel handler can call it
+  // without being recreated every render.
+  const publishStateRef = useRef<(() => void) | null>(null);
+  publishStateRef.current = () => {
+    if (!channelRef.current) return;
+    channelRef.current.postMessage({
+      type: 'state',
+      payload: {
+        state,
+        direction,
+        callInfo,
+        duration,
+        muted,
+        inMerge,
+        activeCallSid,
+        canTransfer,
+        permissionError,
+      },
+    });
+  };
+
+  // Publish state whenever anything user-visible changes.
+  useEffect(() => {
+    publishStateRef.current?.();
+  }, [state, direction, callInfo, duration, muted, inMerge, activeCallSid, permissionError]);
+
+  function openPopout() {
+    // Already open and not closed? Just focus it.
+    if (popupWindowRef.current && !popupWindowRef.current.closed) {
+      try { popupWindowRef.current.focus(); } catch {}
+      return;
+    }
+    const w = 340, h = 480;
+    const left = (window.screen.availWidth - w) / 2;
+    const top = (window.screen.availHeight - h) / 2;
+    const features = `width=${w},height=${h},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes`;
+    const win = window.open('/call-popup', 'debtrex-call-popup', features);
+    if (!win) {
+      setPermissionError('Popup was blocked — allow popups for this site and try again.');
+      return;
+    }
+    popupWindowRef.current = win;
+    setPoppedOut(true);
+    // Poll for close so we can restore the in-page UI even if the popup's
+    // unload handler didn't fire (e.g. force-quit).
+    const poll = setInterval(() => {
+      if (popupWindowRef.current?.closed) {
+        clearInterval(poll);
+        popupWindowRef.current = null;
+        setPoppedOut(false);
+      }
+    }, 800);
+  }
 
   // ─── Call event wiring (shared by inbound + outbound) ───
   // Takes direction + info as args (not from state) to avoid stale-closure
@@ -530,6 +660,12 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
 
   // ── In-call / ringing UI (non-modal floating panel) ──
   if (state !== 'idle') {
+    // If the popup is showing the call surface, the in-page widget hides.
+    // Audio still flows here (this window owns the Voice SDK device); the
+    // popup is just remote-controlling us.
+    if (poppedOut) {
+      return audioEl;
+    }
     if (minimized) {
       return (
         <>
@@ -587,12 +723,21 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
             >
               <Minimize2 size={14} />
             </button>
+            <button
+              type="button"
+              onClick={openPopout}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="absolute top-3 right-10 text-white/60 hover:text-white"
+              title="Open in popup window"
+            >
+              <ExternalLink size={14} />
+            </button>
             {pos && (
               <button
                 type="button"
                 onClick={resetPosition}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="absolute top-3 right-10 text-[9px] uppercase tracking-widest text-white/40 hover:text-white/80 font-bold"
+                className="absolute top-3 right-[68px] text-[9px] uppercase tracking-widest text-white/40 hover:text-white/80 font-bold"
                 title="Snap back to default corner"
               >
                 Reset
@@ -780,6 +925,8 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
   }
 
   // ── Idle: floating launcher + dialer panel ──
+  // When the popup is open, suppress the in-page UI (popup is the surface).
+  if (poppedOut) return audioEl;
   return (
     <>
       {audioEl}
