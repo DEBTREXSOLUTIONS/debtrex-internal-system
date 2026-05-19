@@ -2,13 +2,20 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   PhoneCall, PhoneOff, Mic, MicOff, Hash, Loader2, Phone,
-  X, Delete, Minimize2
+  X, Delete, Minimize2, ArrowRightLeft,
 } from 'lucide-react';
+import TransferModal from './TransferModal';
 
 interface User {
   id: string;
   role: string;
   status?: string;
+}
+
+// Permissions piped down so we can show/hide the Transfer button.
+interface WidgetProps {
+  user: User;
+  canTransfer?: boolean;
 }
 
 type CallState = 'idle' | 'ringing' | 'connecting' | 'in-call' | 'ended';
@@ -30,7 +37,7 @@ const STATUS_KEY = 'me_status';
 // Global call widget. Mounted once via the Sidebar so it's available on every
 // authenticated page. Handles BOTH inbound and outbound calls on a single
 // Twilio Voice SDK Device. Non-modal — agents keep working during calls.
-export default function CallWidget({ user }: { user: User }) {
+export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
   const [state, setState] = useState<CallState>('idle');
   const [direction, setDirection] = useState<'inbound' | 'outbound' | null>(null);
   const [callInfo, setCallInfo] = useState<{ phone: string; name?: string; contactId?: string } | null>(null);
@@ -46,6 +53,11 @@ export default function CallWidget({ user }: { user: User }) {
 
   // Whether the in-call widget is minimized to a pill in the corner
   const [minimized, setMinimized] = useState(false);
+
+  const [transferOpen, setTransferOpen] = useState(false);
+  // Current call's SID — populated by Twilio once the call begins. Needed
+  // for the transfer modal so the backend can target the right call.
+  const [activeCallSid, setActiveCallSid] = useState<string | null>(null);
 
   const deviceRef = useRef<any>(null);
   const callRef = useRef<any>(null);
@@ -70,10 +82,12 @@ export default function CallWidget({ user }: { user: User }) {
     } catch {}
     try { sessionStorage.setItem(STATUS_KEY, 'otl'); } catch {}
     broadcastStatus('otl');
-    fetch('/api/me/status', {
-      method: 'PATCH',
+    // Lock=true is enforced server-side so the agent can't manually switch
+    // away from OTL while on a call.
+    fetch('/api/me/status/lock', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'otl' }),
+      body: JSON.stringify({ lock: true }),
     }).catch(() => {});
   }, []);
 
@@ -82,10 +96,10 @@ export default function CallWidget({ user }: { user: User }) {
     prevStatusRef.current = null;
     try { sessionStorage.setItem(STATUS_KEY, restoreTo); } catch {}
     broadcastStatus(restoreTo);
-    fetch('/api/me/status', {
-      method: 'PATCH',
+    fetch('/api/me/status/lock', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: restoreTo }),
+      body: JSON.stringify({ lock: false, restore_to: restoreTo }),
     }).catch(() => {});
   }, []);
 
@@ -192,17 +206,17 @@ export default function CallWidget({ user }: { user: User }) {
         setDuration(Math.floor((Date.now() - startedAt) / 1000));
       }, 1000);
 
+      const sid = call.parameters?.CallSid;
+      if (sid) setActiveCallSid(sid);
+
       // CallSid is reliably populated by the time `accept` fires. Backfill it
       // on the log row so the Twilio status webhook can match this call later.
-      if (logIdRef.current) {
-        const sid = call.parameters?.CallSid;
-        if (sid) {
-          fetch('/api/twilio/log-browser-call', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: logIdRef.current, call_sid: sid }),
-          }).catch(() => {});
-        }
+      if (logIdRef.current && sid) {
+        fetch('/api/twilio/log-browser-call', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: logIdRef.current, call_sid: sid }),
+        }).catch(() => {});
       }
     });
 
@@ -263,6 +277,8 @@ export default function CallWidget({ user }: { user: User }) {
     setDuration(0);
     setMuted(false);
     setShowKeypad(false);
+    setTransferOpen(false);
+    setActiveCallSid(null);
   }
 
   // ─── Outbound calling ───
@@ -527,6 +543,16 @@ export default function CallWidget({ user }: { user: User }) {
                 >
                   <Hash size={18} />
                 </button>
+                {canTransfer && activeCallSid && (
+                  <button
+                    type="button"
+                    onClick={() => setTransferOpen(true)}
+                    className="w-12 h-12 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                    title="Transfer / Merge"
+                  >
+                    <ArrowRightLeft size={18} />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={hangup}
@@ -550,6 +576,21 @@ export default function CallWidget({ user }: { user: User }) {
             )}
           </div>
         </div>
+
+        {transferOpen && activeCallSid && (
+          <TransferModal
+            callSid={activeCallSid}
+            onClose={() => setTransferOpen(false)}
+            onTransferred={(mode) => {
+              setTransferOpen(false);
+              if (mode === 'blind') {
+                // The agent's leg will be dropped by Twilio once redirected;
+                // we proactively reset to keep the UI tidy.
+                setTimeout(() => { try { callRef.current?.disconnect?.(); } catch {} }, 500);
+              }
+            }}
+          />
+        )}
       </>
     );
   }

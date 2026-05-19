@@ -58,6 +58,10 @@ export const PERMISSION_KEYS = [
   'call.log',
   'call.make',
   'call.view_all',
+  'call.transfer',
+  'transfer.manage',
+  'team.manage_status',
+  'calls.view_stats',
   // Scripts
   'scripts.manage',
   'scripts.manage_tags',
@@ -108,7 +112,11 @@ export const PERMISSION_GROUPS: { label: string; keys: PermissionKey[] }[] = [
   },
   {
     label: 'Calls',
-    keys: ['call.log', 'call.make', 'call.view_all'],
+    keys: ['call.log', 'call.make', 'call.view_all', 'call.transfer', 'calls.view_stats'],
+  },
+  {
+    label: 'Transfer Protocol',
+    keys: ['transfer.manage', 'team.manage_status'],
   },
   {
     label: 'Scripts',
@@ -174,6 +182,10 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'call.log': 'Log calls manually',
   'call.make': 'Make calls (Twilio)',
   'call.view_all': "View everyone's call logs",
+  'call.transfer': 'Transfer / merge live calls',
+  'transfer.manage': 'Manage Transfer Protocol (contacts, extensions, queues, routing)',
+  'team.manage_status': "Override any agent's status (unlock OTL)",
+  'calls.view_stats': 'View Calls Tracker (per-agent OB/IN/time)',
 
   'scripts.manage': 'Create / edit / delete script sections + scripts',
   'scripts.manage_tags': 'Create / edit / delete script tags',

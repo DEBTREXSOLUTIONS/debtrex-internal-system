@@ -42,6 +42,8 @@ function deriveTitle(pathname: string): string {
     ['/permissions', 'Permissions'],
     ['/roles', 'Custom Roles'],
     ['/twilio-numbers', 'Twilio Numbers'],
+    ['/transfer-protocol', 'Transfer Protocol'],
+    ['/calls/tracker', 'Calls Tracker'],
     ['/calculators', 'Calculators'],
     ['/notifications', 'Notifications'],
     ['/settings', 'Settings'],
@@ -65,6 +67,7 @@ export default function TopBar({ user, title }: { user: User; title?: string }) 
   // (We can't read sessionStorage during render because it would cause an
   // SSR/CSR hydration mismatch.)
   const [status, setStatus] = useState<string>('online');
+  const [locked, setLocked] = useState(false);
   const [open, setOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -101,12 +104,23 @@ export default function TopBar({ user, title }: { user: User; title?: string }) 
     window.addEventListener('beforeunload', beforeUnload);
 
     // Listen for status changes broadcast by the CallWidget (when a call
-    // starts → 'otl', when it ends → previous status).
+    // starts → 'otl', when it ends → previous status). The widget broadcasts
+    // 'otl' on accept which we also treat as a lock signal.
     const onStatusChange = (e: Event) => {
       const next = (e as CustomEvent<string>).detail;
-      if (typeof next === 'string') setStatus(next);
+      if (typeof next === 'string') {
+        setStatus(next);
+        setLocked(next === 'otl');
+      }
     };
     window.addEventListener('debtrex:status', onStatusChange as EventListener);
+
+    // Initial server reconciliation — if a previous tab left us OTL+locked,
+    // the picker should reflect that.
+    fetch('/api/me/status').then(r => r.json()).then(d => {
+      if (d?.me?.status) setStatus(d.me.status);
+      if (d?.me?.status_locked) setLocked(true);
+    }).catch(() => {});
 
     return () => {
       window.removeEventListener('beforeunload', beforeUnload);
@@ -124,6 +138,7 @@ export default function TopBar({ user, title }: { user: User; title?: string }) 
   }, [open]);
 
   async function changeStatus(newStatus: string) {
+    if (locked) return;
     setUpdating(true);
     setOpen(false);
     const prev = status;
@@ -135,7 +150,11 @@ export default function TopBar({ user, title }: { user: User; title?: string }) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        // 423 = locked (race: someone else accepted a call for us)
+        if (res.status === 423) setLocked(true);
+        throw new Error();
+      }
     } catch {
       setStatus(prev); // Revert on error
       try { sessionStorage.setItem(STATUS_KEY, prev); } catch {}
@@ -159,17 +178,19 @@ export default function TopBar({ user, title }: { user: User; title?: string }) 
         <div className="relative" ref={ref}>
           <button
             type="button"
-            onClick={() => setOpen(o => !o)}
-            disabled={updating}
-            className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md border border-gray-200 hover:border-gray-300 transition-colors disabled:opacity-60"
-            title={current.desc}
+            onClick={() => { if (!locked) setOpen(o => !o); }}
+            disabled={updating || locked}
+            className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md border border-gray-200 transition-colors disabled:opacity-60 ${locked ? 'cursor-not-allowed' : 'hover:border-gray-300'}`}
+            title={locked ? 'Status locked — on a call. Only an admin can change this.' : current.desc}
           >
-            <span className={`w-2 h-2 rounded-full ${current.bg} flex-shrink-0 ${status === 'online' ? 'ring-2 ring-green-200' : ''}`} />
+            <span className={`w-2 h-2 rounded-full ${current.bg} flex-shrink-0 ${status === 'online' ? 'ring-2 ring-green-200' : ''} ${locked ? 'animate-pulse' : ''}`} />
             <span className="text-xs font-bold uppercase tracking-wider hidden sm:inline">{current.label}</span>
-            <ChevronDown size={11} className="text-gray-400" />
+            {locked
+              ? <span className="text-[9px] uppercase tracking-widest text-brand-red font-bold hidden sm:inline">Locked</span>
+              : <ChevronDown size={11} className="text-gray-400" />}
           </button>
 
-          {open && (
+          {open && !locked && (
             <div className="absolute right-0 top-full mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden z-30">
               <div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Set Your Status</div>

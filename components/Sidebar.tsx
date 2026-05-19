@@ -4,7 +4,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, CheckSquare, Calendar, FolderOpen, DollarSign,
   Users, Settings, LogOut, Menu, X, Trophy, Calculator, UserCheck,
-  Building2, Phone, Shield, ChevronDown, ChevronRight, FileText, History
+  Building2, Phone, Shield, ChevronDown, ChevronRight, FileText, History,
+  ArrowRightLeft, BarChart3,
 } from 'lucide-react';
 import { useState, useEffect, memo } from 'react';
 import CallWidget from './CallWidget';
@@ -135,7 +136,9 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
         { href: '/performance', label: 'Performance', icon: Trophy, show: can('section.performance', isLeadership || isManager) },
         { href: '/performance/assignments', label: 'Manager Assignments', icon: UserCheck, show: can('performance.assign_managers', isLeadership) },
         { href: '/team', label: 'Team Members', icon: Users, show: can('section.team', isLeadership) },
+        { href: '/calls/tracker', label: 'Calls Tracker', icon: BarChart3, show: can('calls.view_stats', isLeadership || isManager) },
         { href: '/twilio-numbers', label: 'Twilio Numbers', icon: Phone, show: can('section.twilio_numbers', isLeadership) },
+        { href: '/transfer-protocol', label: 'Transfer Protocol', icon: ArrowRightLeft, show: can('transfer.manage', isLeadership) },
       ],
     },
     {
@@ -305,7 +308,7 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
 
       {/* Global call widget — handles inbound + outbound Twilio Voice calls,
           shows a floating dialer, and auto-syncs status to OTL during calls. */}
-      <CallWidget user={user} />
+      <CallWidget user={user} canTransfer={can('call.transfer', isLeadership || isManager)} />
 
       <CallHistory open={historyOpen} onClose={() => setHistoryOpen(false)} />
     </>
