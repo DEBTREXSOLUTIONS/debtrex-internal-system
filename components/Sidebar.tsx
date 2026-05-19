@@ -4,10 +4,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, CheckSquare, Calendar, FolderOpen, DollarSign,
   Users, Settings, LogOut, Menu, X, Trophy, Calculator, UserCheck,
-  Building2, Phone, Shield, ChevronDown, ChevronRight, FileText
+  Building2, Phone, Shield, ChevronDown, ChevronRight, FileText, History
 } from 'lucide-react';
 import { useState, useEffect, memo } from 'react';
 import CallWidget from './CallWidget';
+import CallHistory from './CallHistory';
 
 interface User {
   id: string;
@@ -37,6 +38,7 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   // Initialize collapsed state from localStorage
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
@@ -237,6 +239,15 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
       </nav>
 
       <div className="border-t border-white/10 flex-shrink-0">
+        {can('call.log', user.role !== 'viewer' && user.role !== 'accountant') && (
+          <button
+            type="button"
+            onClick={() => setHistoryOpen(true)}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+          >
+            <History size={15} /> Call History
+          </button>
+        )}
         <Link
           href="/settings"
           prefetch={false}
@@ -297,6 +308,8 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
       {/* Global call widget — handles inbound + outbound Twilio Voice calls,
           shows a floating dialer, and auto-syncs status to OTL during calls. */}
       <CallWidget user={user} />
+
+      <CallHistory open={historyOpen} onClose={() => setHistoryOpen(false)} />
     </>
   );
 }
