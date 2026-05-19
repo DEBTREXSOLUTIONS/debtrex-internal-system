@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
   }
 
-  const { call_sid, mode, target } = body || {};
+  const { call_sid, mode, target, end_conference } = body || {};
   if (!call_sid || !mode || !target?.type || !target?.value) {
     return NextResponse.json({ error: 'call_sid, mode, target.{type,value} required' }, { status: 400 });
   }
@@ -84,6 +84,14 @@ export async function POST(request: Request) {
   </Dial>
 </Response>`;
       await client.calls(customerLeg.sid).update({ twiml });
+
+      // If this blind was fired during a merge, the agent + previous merge
+      // target are still sitting in the conference. End it so their legs
+      // (and their CallWidget UIs) clean up.
+      if (end_conference) {
+        const conferenceName = `xfer-${call_sid}`.replace(/[^a-zA-Z0-9_\-]/g, '');
+        await endConferenceByName(client, conferenceName);
+      }
 
       return NextResponse.json({
         ok: true,
@@ -177,6 +185,24 @@ export async function POST(request: Request) {
       error: e?.message || 'Transfer failed',
       twilio_code: e?.code,
     }, { status: 500 });
+  }
+}
+
+// Find an in-progress conference by friendlyName and end it (kicks out
+// every participant). Used to clean up after a blind-during-merge or a
+// "complete transfer" drop-out.
+async function endConferenceByName(client: ReturnType<typeof twilio>, name: string): Promise<void> {
+  try {
+    const confs = await client.conferences.list({
+      friendlyName: name,
+      status: 'in-progress',
+      limit: 1,
+    });
+    if (confs[0]) {
+      await client.conferences(confs[0].sid).update({ status: 'completed' });
+    }
+  } catch (e) {
+    console.error('Failed to end conference', name, e);
   }
 }
 

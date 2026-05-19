@@ -24,10 +24,12 @@ type Mode = 'blind' | 'merge';
 
 export default function TransferModal({
   callSid,
+  inMerge = false,
   onClose,
   onTransferred,
 }: {
   callSid: string;
+  inMerge?: boolean;
   onClose: () => void;
   onTransferred: (mode: Mode) => void;
 }) {
@@ -63,7 +65,15 @@ export default function TransferModal({
       const res = await fetch('/api/twilio/transfer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ call_sid: callSid, mode, target: { type, value } }),
+        body: JSON.stringify({
+          call_sid: callSid,
+          mode,
+          target: { type, value },
+          // If we're already in a merge and the agent blinds, the server
+          // must tear down the existing conference so the merge target's
+          // leg ends too (otherwise their UI is stuck "in call").
+          end_conference: inMerge && mode === 'blind',
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
@@ -92,7 +102,16 @@ export default function TransferModal({
         <div className="bg-brand-ink text-white p-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
             <ArrowRightLeft size={18} />
-            <div className="font-condensed text-lg font-black uppercase tracking-wider">Transfer Call</div>
+            <div>
+              <div className="font-condensed text-lg font-black uppercase tracking-wider leading-none">
+                {inMerge ? 'Redirect Call' : 'Transfer Call'}
+              </div>
+              {inMerge && (
+                <div className="text-[9px] uppercase tracking-widest text-white/50 mt-1">
+                  Currently merged — blind will end the conference
+                </div>
+              )}
+            </div>
           </div>
           <button type="button" onClick={onClose} className="text-white/60 hover:text-white" aria-label="Close">
             <X size={18} />

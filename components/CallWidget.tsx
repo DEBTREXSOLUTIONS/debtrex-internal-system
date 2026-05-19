@@ -58,6 +58,12 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
   // Current call's SID — populated by Twilio once the call begins. Needed
   // for the transfer modal so the backend can target the right call.
   const [activeCallSid, setActiveCallSid] = useState<string | null>(null);
+  // Tracks whether this call is currently in a merge (3-way conference).
+  // When true, the hangup button doubles as "Complete Transfer" and
+  // blind/redirect operations must also end the conference so the other
+  // participants get cleaned up.
+  const [inMerge, setInMerge] = useState(false);
+  const [completing, setCompleting] = useState(false);
 
   const deviceRef = useRef<any>(null);
   const callRef = useRef<any>(null);
@@ -279,6 +285,30 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
     setShowKeypad(false);
     setTransferOpen(false);
     setActiveCallSid(null);
+    setInMerge(false);
+    setCompleting(false);
+  }
+
+  // Drop out of a merge — completes the warm transfer. Customer + merge
+  // target stay connected; our leg is hung up server-side so the local
+  // disconnect handler runs naturally.
+  async function completeTransfer() {
+    if (!activeCallSid) return;
+    setCompleting(true);
+    try {
+      await fetch('/api/twilio/transfer/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ call_sid: activeCallSid }),
+      });
+    } catch (e) {
+      console.error('Complete transfer failed', e);
+    } finally {
+      setCompleting(false);
+    }
+    // Server already hung us up — let the disconnect event do cleanup,
+    // but force a local hangup as a safety net.
+    try { callRef.current?.disconnect?.(); } catch {}
   }
 
   // ─── Outbound calling ───
@@ -548,19 +578,32 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
                     type="button"
                     onClick={() => setTransferOpen(true)}
                     className="w-12 h-12 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 flex items-center justify-center transition-colors"
-                    title="Transfer / Merge"
+                    title={inMerge ? 'Redirect / Transfer' : 'Transfer / Merge'}
                   >
                     <ArrowRightLeft size={18} />
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={hangup}
-                  className="w-14 h-14 rounded-full bg-brand-red text-white flex items-center justify-center hover:bg-brand-red-dark transition-colors"
-                  title="Hang up"
-                >
-                  <PhoneOff size={18} />
-                </button>
+                {inMerge ? (
+                  <button
+                    type="button"
+                    onClick={completeTransfer}
+                    disabled={completing}
+                    className="px-4 h-14 rounded-full bg-brand-red text-white flex items-center justify-center gap-2 hover:bg-brand-red-dark transition-colors disabled:opacity-60"
+                    title="Drop out of the merge — customer stays connected to the other party"
+                  >
+                    {completing ? <Loader2 size={16} className="animate-spin" /> : <PhoneOff size={16} />}
+                    <span className="text-xs font-bold uppercase tracking-wider">Complete</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={hangup}
+                    className="w-14 h-14 rounded-full bg-brand-red text-white flex items-center justify-center hover:bg-brand-red-dark transition-colors"
+                    title="Hang up"
+                  >
+                    <PhoneOff size={18} />
+                  </button>
+                )}
               </>
             )}
 
@@ -580,12 +623,16 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
         {transferOpen && activeCallSid && (
           <TransferModal
             callSid={activeCallSid}
+            inMerge={inMerge}
             onClose={() => setTransferOpen(false)}
             onTransferred={(mode) => {
               setTransferOpen(false);
-              if (mode === 'blind') {
-                // The agent's leg will be dropped by Twilio once redirected;
-                // we proactively reset to keep the UI tidy.
+              if (mode === 'merge') {
+                setInMerge(true);
+              } else if (mode === 'blind') {
+                // The agent's leg will be dropped by Twilio once redirected
+                // (and if we were in a merge, the conference is ended by
+                // the server). Proactively disconnect locally as a backup.
                 setTimeout(() => { try { callRef.current?.disconnect?.(); } catch {} }, 500);
               }
             }}
