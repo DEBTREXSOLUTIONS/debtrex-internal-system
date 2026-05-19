@@ -184,18 +184,6 @@ export default function CallWidget({ user }: { user: User }) {
       timerRef.current = setInterval(() => {
         setDuration(Math.floor((Date.now() - startedAt) / 1000));
       }, 1000);
-
-      // For outbound calls with a contact, log to call_logs
-      if (callDirection === 'outbound' && info.contactId) {
-        try {
-          const callSid = call.parameters?.CallSid || null;
-          await fetch('/api/twilio/log-browser-call', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contact_id: info.contactId, call_sid: callSid }),
-          });
-        } catch {}
-      }
     });
 
     call.on('disconnect', () => {
@@ -261,6 +249,19 @@ export default function CallWidget({ user }: { user: User }) {
         },
       });
       callRef.current = call;
+
+      // Log immediately so even unanswered/cancelled calls show in history.
+      // Status webhook later updates outcome/duration via CallSid match.
+      fetch('/api/twilio/log-browser-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contact_id: contactId || null,
+          to_number: safePhone,
+          call_sid: call.parameters?.CallSid || null,
+        }),
+      }).catch(() => {});
+
       wireCallEvents(call, 'outbound', { phone: safePhone, name, contactId });
     } catch (e: any) {
       console.error('Failed to place call:', e);

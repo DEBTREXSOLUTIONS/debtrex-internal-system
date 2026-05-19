@@ -35,8 +35,10 @@ export async function POST(request: Request) {
   // causing Twilio error 12300 (Invalid Content-Type) on every call.
   // `statusCallback` is the right attribute: Twilio fires it without
   // expecting a response body.
-  const statusCallback = contactId
-    ? `${appUrl}/api/twilio/status?contact_id=${contactId}`
+  // Always fire status updates — webhook matches rows by CallSid, not by contact.
+  // Without this, dialer-only calls would never get duration/outcome filled in.
+  const statusCallback = appUrl
+    ? `${appUrl}/api/twilio/status${contactId ? `?contact_id=${contactId}` : ''}`
     : '';
   const recordingCallback = contactId
     ? `${appUrl}/api/twilio/recording?contact_id=${contactId}`
