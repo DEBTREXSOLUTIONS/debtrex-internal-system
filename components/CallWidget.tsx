@@ -483,7 +483,7 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
                 <div className="text-[10px] uppercase tracking-widest opacity-60">
                   {state === 'ringing' && (direction === 'inbound' ? 'Incoming Call' : 'Calling...')}
                   {state === 'connecting' && 'Connecting...'}
-                  {state === 'in-call' && 'On Call'}
+                  {state === 'in-call' && (inMerge ? 'Consulting — Customer on Hold' : 'On Call')}
                   {state === 'ended' && 'Call Ended'}
                 </div>
                 <div className="font-condensed text-lg font-black truncate">
@@ -584,16 +584,26 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
                   </button>
                 )}
                 {inMerge ? (
-                  <button
-                    type="button"
-                    onClick={completeTransfer}
-                    disabled={completing}
-                    className="px-4 h-14 rounded-full bg-brand-red text-white flex items-center justify-center gap-2 hover:bg-brand-red-dark transition-colors disabled:opacity-60"
-                    title="Drop out of the merge — customer stays connected to the other party"
-                  >
-                    {completing ? <Loader2 size={16} className="animate-spin" /> : <PhoneOff size={16} />}
-                    <span className="text-xs font-bold uppercase tracking-wider">Complete</span>
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={completeTransfer}
+                      disabled={completing}
+                      className="px-4 h-12 rounded-full bg-green-600 text-white flex items-center justify-center gap-2 hover:bg-green-700 transition-colors disabled:opacity-60"
+                      title="Hand the customer off to the other agent and drop your leg"
+                    >
+                      {completing ? <Loader2 size={16} className="animate-spin" /> : <ArrowRightLeft size={16} />}
+                      <span className="text-xs font-bold uppercase tracking-wider">Transfer</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={hangup}
+                      className="w-12 h-12 rounded-full bg-brand-red text-white flex items-center justify-center hover:bg-brand-red-dark transition-colors"
+                      title="Hang up — drops you AND the consult; customer stays on hold until they hang up"
+                    >
+                      <PhoneOff size={18} />
+                    </button>
+                  </>
                 ) : (
                   <button
                     type="button"

@@ -85,12 +85,15 @@ export async function POST(request: Request) {
 </Response>`;
       await client.calls(customerLeg.sid).update({ twiml });
 
-      // If this blind was fired during a merge, the agent + previous merge
-      // target are still sitting in the conference. End it so their legs
-      // (and their CallWidget UIs) clean up.
+      // If this blind was fired while a merge was in progress, agent A
+      // is in a consult room with the previous merge target, and the
+      // customer is in a hold room. Customer was just redirected out by
+      // the TwiML update above — now end both rooms so agent A's leg AND
+      // the previous merge target's leg both clean up.
       if (end_conference) {
-        const conferenceName = `xfer-${call_sid}`.replace(/[^a-zA-Z0-9_\-]/g, '');
-        await endConferenceByName(client, conferenceName);
+        const sidSafe = call_sid.replace(/[^a-zA-Z0-9_\-]/g, '');
+        await endConferenceByName(client, `hold-${sidSafe}`);
+        await endConferenceByName(client, `consult-${sidSafe}`);
       }
 
       return NextResponse.json({
@@ -101,28 +104,45 @@ export async function POST(request: Request) {
       });
     }
 
-    // ─── Merge (3-way conference) ───
-    // Conference name is scoped to this call so simultaneous transfers on
-    // other calls don't collide. Twilio requires it to be a safe string.
-    const conferenceName = `xfer-${call_sid}`.replace(/[^a-zA-Z0-9_\-]/g, '');
+    // ─── Merge (warm transfer setup) ───
+    // Two conferences, both scoped to this call SID so concurrent transfers
+    // on other calls don't collide:
+    //   hold-XXX    — customer sits here with hold music, alone.
+    //   consult-XXX — agent A + agent B (the target) talk privately here.
+    //
+    // The agent later clicks "Transfer" → /api/twilio/transfer/complete,
+    // which moves the customer from the hold room into the consult room
+    // and hangs up agent A's leg. Agent B + customer keep talking.
+    const sidSafe = call_sid.replace(/[^a-zA-Z0-9_\-]/g, '');
+    const holdRoom = `hold-${sidSafe}`;
+    const consultRoom = `consult-${sidSafe}`;
 
-    // Note: `waitUrl=""` is a Twilio gotcha — it makes Twilio try to fetch
-    // an empty URL for hold music and emits "Internal Application Error".
-    // Omitting the attribute lets Twilio use its default hold music until
-    // the conference starts. `startConferenceOnEnter` on both participants
-    // means the music plays only briefly (until the second leg arrives).
-    const conferenceTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+    // Customer → hold conference. `startConferenceOnEnter="false"` keeps
+    // hold music playing for them (Twilio's default music) until something
+    // else joins. `endConferenceOnExit="true"` so the hold room collapses
+    // as soon as the customer leaves it (during Transfer or hangup).
+    const customerHoldTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Dial answerOnBridge="true">
-    <Conference startConferenceOnEnter="true" endConferenceOnExit="false" beep="false">${conferenceName}</Conference>
+    <Conference startConferenceOnEnter="false" endConferenceOnExit="true" beep="false">${holdRoom}</Conference>
   </Dial>
 </Response>`;
 
-    // Order matters: move the CUSTOMER first. If we update the agent's
-    // (parent) leg first, Twilio tears down the parent's existing <Dial>
-    // and the customer's child leg gets hung up before it can be redirected.
-    await client.calls(customerLeg.sid).update({ twiml: conferenceTwiml });
-    await client.calls(call_sid).update({ twiml: conferenceTwiml });
+    // Agent A → consult conference. He'll be alone until Agent B joins.
+    // `endConferenceOnExit="false"` because when agent A drops out to
+    // complete the transfer, customer + agent B keep talking.
+    const agentConsultTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Dial answerOnBridge="true">
+    <Conference startConferenceOnEnter="true" endConferenceOnExit="false" beep="false">${consultRoom}</Conference>
+  </Dial>
+</Response>`;
+
+    // Order matters: customer FIRST. If we move agent A first, Twilio
+    // tears down his original <Dial> and hangs up customer before we
+    // can redirect them.
+    await client.calls(customerLeg.sid).update({ twiml: customerHoldTwiml });
+    await client.calls(call_sid).update({ twiml: agentConsultTwiml });
 
     // Dial the target into the same conference. Use the agent's assigned
     // caller ID if we know it, else the company default.
@@ -134,12 +154,17 @@ export async function POST(request: Request) {
     const callerId = agentProfile?.twilio_phone_number || process.env.TWILIO_PHONE_NUMBER || '';
 
     // Inline TwiML — avoids any dependency on NEXT_PUBLIC_APP_URL being a
-    // public HTTPS URL Twilio can reach (which is what was causing
-    // "an application error has occurred" on the target leg).
+    // public HTTPS URL Twilio can reach.
+    //
+    // Target joins the CONSULT room (with agent A). When agent A clicks
+    // Transfer, customer is moved into this same consult room and agent A
+    // drops, leaving customer + target talking.
+    // `endConferenceOnExit="true"` on the target so the room ends when
+    // they hang up — customer is then released cleanly.
     const dialIntoConferenceTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Dial answerOnBridge="true">
-    <Conference startConferenceOnEnter="true" endConferenceOnExit="true" beep="false">${conferenceName}</Conference>
+    <Conference startConferenceOnEnter="true" endConferenceOnExit="true" beep="false">${consultRoom}</Conference>
   </Dial>
 </Response>`;
 
@@ -169,7 +194,8 @@ export async function POST(request: Request) {
       ok: true,
       mode: 'merge',
       target: targetLabel,
-      conference: conferenceName,
+      hold_room: holdRoom,
+      consult_room: consultRoom,
     });
   } catch (e: any) {
     // Twilio API errors carry useful detail in .moreInfo / .code; surface

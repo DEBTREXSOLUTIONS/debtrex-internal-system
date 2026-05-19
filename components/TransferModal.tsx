@@ -233,9 +233,9 @@ export default function TransferModal({
         </div>
 
         <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 text-[10px] text-gray-500 leading-relaxed flex-shrink-0">
-          <strong className="text-gray-700 uppercase tracking-wider">Blind</strong> — hand off and drop.
+          <strong className="text-gray-700 uppercase tracking-wider">Blind</strong> — customer transferred immediately, you drop.
           <span className="mx-2">•</span>
-          <strong className="text-gray-700 uppercase tracking-wider">Merge</strong> — 3-way conference, you stay on.
+          <strong className="text-gray-700 uppercase tracking-wider">Merge</strong> — customer on hold while you brief the other agent; then click Transfer to hand off.
         </div>
 
         {submitting && (
