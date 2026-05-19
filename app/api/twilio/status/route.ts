@@ -12,6 +12,20 @@ export async function POST(request: Request) {
   const callSid = formData.get('CallSid')?.toString();
   const callStatus = formData.get('CallStatus')?.toString();
   const callDuration = formData.get('CallDuration')?.toString();
+  const errorCode = formData.get('ErrorCode')?.toString();
+  const errorMessage = formData.get('ErrorMessage')?.toString();
+  const from = formData.get('From')?.toString();
+  const to = formData.get('To')?.toString();
+
+  // Log every failure with full context — this is where you find out why
+  // Twilio is saying "your call could not be completed". The ErrorCode
+  // tells you exactly: e.g. 13224 = invalid 'From', 13225 = invalid 'To',
+  // 13227 = geo permission denied, 21215 = international not enabled.
+  if (callStatus === 'failed' || callStatus === 'canceled' || errorCode) {
+    console.error('Twilio call failed:', {
+      callSid, callStatus, errorCode, errorMessage, from, to, duration: callDuration,
+    });
+  }
 
   if (!callSid) return NextResponse.json({ ok: true }); // Ignore malformed
 
