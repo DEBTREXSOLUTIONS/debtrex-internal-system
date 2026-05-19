@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from 'react';
+import type { CSSProperties } from 'react';
 import {
   PhoneCall, PhoneOff, Mic, MicOff, Hash, Loader2, Phone,
   X, Delete, Minimize2, ArrowRightLeft,
@@ -58,6 +59,96 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
   // Current call's SID — populated by Twilio once the call begins. Needed
   // for the transfer modal so the backend can target the right call.
   const [activeCallSid, setActiveCallSid] = useState<string | null>(null);
+
+  // ─── Draggable position ───
+  // The in-call panel and the dialer can be dragged around. We store the
+  // user's chosen position in localStorage so it persists across calls and
+  // page reloads. `null` means "use the default bottom-right anchor".
+  const POS_KEY = 'callwidget_pos';
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem(POS_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (typeof parsed?.x === 'number' && typeof parsed?.y === 'number') return parsed;
+    } catch {}
+    return null;
+  });
+
+  const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+
+  function onDragStart(e: React.PointerEvent<HTMLDivElement>) {
+    // Don't start a drag from interactive elements inside the header
+    // (close/minimize buttons live there).
+    if ((e.target as HTMLElement).closest('button')) return;
+    const panel = e.currentTarget.parentElement as HTMLElement | null;
+    if (!panel) return;
+    const rect = panel.getBoundingClientRect();
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: rect.left,
+      origY: rect.top,
+    };
+    (e.currentTarget as any).setPointerCapture?.(e.pointerId);
+  }
+
+  function onDragMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragRef.current) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    const panel = e.currentTarget.parentElement as HTMLElement | null;
+    const w = panel?.offsetWidth ?? 320;
+    const h = panel?.offsetHeight ?? 400;
+    // Clamp inside viewport so the panel can't get lost off-screen.
+    const maxX = Math.max(0, window.innerWidth - w);
+    const maxY = Math.max(0, window.innerHeight - h);
+    const x = Math.min(Math.max(0, dragRef.current.origX + dx), maxX);
+    const y = Math.min(Math.max(0, dragRef.current.origY + dy), maxY);
+    setPos({ x, y });
+  }
+
+  function onDragEnd(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragRef.current) return;
+    dragRef.current = null;
+    (e.currentTarget as any).releasePointerCapture?.(e.pointerId);
+    // Persist on drop, not on every move (cheaper).
+    setPos(p => {
+      if (p) {
+        try { localStorage.setItem(POS_KEY, JSON.stringify(p)); } catch {}
+      }
+      return p;
+    });
+  }
+
+  function resetPosition() {
+    setPos(null);
+    try { localStorage.removeItem(POS_KEY); } catch {}
+  }
+
+  // Apply the dragged position via inline style. When `pos` is null we let
+  // Tailwind's bottom-4 right-4 do its thing.
+  const panelStyle: CSSProperties | undefined = pos
+    ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto' }
+    : undefined;
+
+  // Re-clamp when the window resizes so the panel doesn't end up offscreen.
+  useEffect(() => {
+    if (!pos) return;
+    function onResize() {
+      setPos(p => {
+        if (!p) return p;
+        const w = 340;
+        const h = 360;
+        const maxX = Math.max(0, window.innerWidth - w);
+        const maxY = Math.max(0, window.innerHeight - h);
+        return { x: Math.min(p.x, maxX), y: Math.min(p.y, maxY) };
+      });
+    }
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [pos]);
   // Tracks whether this call is currently in a merge (3-way conference).
   // When true, the hangup button doubles as "Complete Transfer" and
   // blind/redirect operations must also end the conference so the other
@@ -443,34 +534,70 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
       return (
         <>
           {audioEl}
-          <button
-            type="button"
-            onClick={() => setMinimized(false)}
-            className="fixed bottom-4 right-4 z-50 bg-brand-ink text-white px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 hover:bg-black transition-colors"
+          <div
+            className="fixed bottom-4 right-4 z-50"
+            style={panelStyle}
           >
-            <span className={`w-2 h-2 rounded-full ${state === 'in-call' ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-pulse'}`} />
-            <PhoneCall size={14} />
-            <span className="text-xs font-bold uppercase tracking-wider">
-              {state === 'in-call' ? fmtDuration(duration) : state === 'ringing' ? 'Incoming' : '…'}
-            </span>
-          </button>
+            <div
+              onPointerDown={onDragStart}
+              onPointerMove={onDragMove}
+              onPointerUp={onDragEnd}
+              onPointerCancel={onDragEnd}
+              className="cursor-grab active:cursor-grabbing select-none touch-none"
+              title="Drag to move"
+            >
+              <button
+                type="button"
+                onClick={() => setMinimized(false)}
+                className="bg-brand-ink text-white px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 hover:bg-black transition-colors"
+              >
+                <span className={`w-2 h-2 rounded-full ${state === 'in-call' ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-pulse'}`} />
+                <PhoneCall size={14} />
+                <span className="text-xs font-bold uppercase tracking-wider">
+                  {state === 'in-call' ? fmtDuration(duration) : state === 'ringing' ? 'Incoming' : '…'}
+                </span>
+              </button>
+            </div>
+          </div>
         </>
       );
     }
     return (
       <>
         {audioEl}
-        <div className="fixed bottom-4 right-4 z-50 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-2xl overflow-hidden border border-gray-200 fade-in">
-          {/* Header with minimize */}
-          <div className="bg-brand-ink text-white p-4 relative">
+        <div
+          className="fixed bottom-4 right-4 z-50 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-2xl overflow-hidden border border-gray-200 fade-in"
+          style={panelStyle}
+        >
+          {/* Header with minimize — drag handle */}
+          <div
+            className="bg-brand-ink text-white p-4 relative cursor-grab active:cursor-grabbing select-none touch-none"
+            onPointerDown={onDragStart}
+            onPointerMove={onDragMove}
+            onPointerUp={onDragEnd}
+            onPointerCancel={onDragEnd}
+            title="Drag to move"
+          >
             <button
               type="button"
               onClick={() => setMinimized(true)}
+              onPointerDown={(e) => e.stopPropagation()}
               className="absolute top-3 right-3 text-white/60 hover:text-white"
               title="Minimize"
             >
               <Minimize2 size={14} />
             </button>
+            {pos && (
+              <button
+                type="button"
+                onClick={resetPosition}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="absolute top-3 right-10 text-[9px] uppercase tracking-widest text-white/40 hover:text-white/80 font-bold"
+                title="Snap back to default corner"
+              >
+                Reset
+              </button>
+            )}
             <div className="flex items-center gap-3">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
                 state === 'ringing' ? 'bg-green-500 animate-pulse' : 'bg-brand-red'
@@ -672,20 +799,44 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
 
       {/* Dialer panel */}
       {dialerOpen && (
-        <div className="fixed bottom-4 right-4 z-40 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-2xl overflow-hidden border border-gray-200 fade-in">
-          <div className="bg-brand-ink text-white p-3 flex items-center justify-between">
+        <div
+          className="fixed bottom-4 right-4 z-40 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-2xl overflow-hidden border border-gray-200 fade-in"
+          style={panelStyle}
+        >
+          <div
+            className="bg-brand-ink text-white p-3 flex items-center justify-between cursor-grab active:cursor-grabbing select-none touch-none"
+            onPointerDown={onDragStart}
+            onPointerMove={onDragMove}
+            onPointerUp={onDragEnd}
+            onPointerCancel={onDragEnd}
+            title="Drag to move"
+          >
             <div className="flex items-center gap-2">
               <Phone size={16} />
               <span className="font-condensed text-base font-black uppercase tracking-wider">Dialer</span>
             </div>
-            <button
-              type="button"
-              onClick={() => { setDialerOpen(false); setDialNumber(''); }}
-              className="text-white/60 hover:text-white"
-              aria-label="Close dialer"
-            >
-              <X size={16} />
-            </button>
+            <div className="flex items-center gap-2">
+              {pos && (
+                <button
+                  type="button"
+                  onClick={resetPosition}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  className="text-[9px] uppercase tracking-widest text-white/40 hover:text-white/80 font-bold"
+                  title="Snap back to default corner"
+                >
+                  Reset
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => { setDialerOpen(false); setDialNumber(''); }}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="text-white/60 hover:text-white"
+                aria-label="Close dialer"
+              >
+                <X size={16} />
+              </button>
+            </div>
           </div>
 
           {!deviceReady && (
