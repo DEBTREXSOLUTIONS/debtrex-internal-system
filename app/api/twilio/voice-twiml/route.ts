@@ -44,18 +44,11 @@ export async function POST(request: Request) {
   if (agentId) {
     const { data: agent } = await supabaseAdmin
       .from('profiles')
-      .select('twilio_phone_number, outbound_use_default')
+      .select('twilio_phone_number')
       .eq('id', agentId)
       .single();
-    // Honor the "use default for outbound" flag — agent keeps their
-    // assigned number for inbound but outbound goes through the env
-    // default. Use case: their assigned number got flagged by Twilio's
-    // outbound carrier so it can't place calls anymore.
-    if (agent?.twilio_phone_number && !agent.outbound_use_default) {
+    if (agent?.twilio_phone_number) {
       assigned = agent.twilio_phone_number.replace(/[^+\d]/g, '');
-    }
-    if (agent?.outbound_use_default) {
-      console.log('voice-twiml: agent flagged outbound_use_default, forcing env default', { agentId });
     }
   }
 
