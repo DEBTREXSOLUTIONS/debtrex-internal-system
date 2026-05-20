@@ -92,7 +92,14 @@ export async function POST(request: Request) {
     agentId, to: to.replace(/[^+\d]/g, ''), callerId, source: callerIdSource,
   });
 
-  const safeTo = to.replace(/[^+\d]/g, '');
+  let safeTo = to.replace(/[^+\d]/g, '');
+  // Normalize to E.164 if no country code provided (assume US)
+  if (!safeTo.startsWith('+')) {
+    const d = safeTo.replace(/\D/g, '');
+    if (d.length === 10) safeTo = `+1${d}`;
+    else if (d.length === 11 && d.startsWith('1')) safeTo = `+${d}`;
+    else safeTo = `+${d}`;
+  }
   const safeCallerId = callerId;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
 

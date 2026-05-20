@@ -681,8 +681,15 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
       }
     }
 
-    const safePhone = phone.replace(/[^+\d]/g, '');
+    let safePhone = phone.replace(/[^+\d]/g, '');
     if (!safePhone) return;
+    // Normalize to E.164: 10-digit → +1XXXXXXXXXX, 11-digit starting with 1 → +1XXXXXXXXXX
+    const digits = safePhone.replace(/\D/g, '');
+    if (!safePhone.startsWith('+')) {
+      if (digits.length === 10) safePhone = `+1${digits}`;
+      else if (digits.length === 11 && digits.startsWith('1')) safePhone = `+${digits}`;
+      else safePhone = `+${digits}`;
+    }
 
     setDirection('outbound');
     setCallInfo({ phone: safePhone, name, contactId });
@@ -792,8 +799,7 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
 
   function dialerCall() {
     if (!dialNumber) return;
-    const formatted = dialNumber.startsWith('+') ? dialNumber : dialNumber;
-    placeOutboundCall(formatted);
+    placeOutboundCall(dialNumber);
     setDialNumber('');
   }
 
