@@ -213,22 +213,27 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
   }, []);
 
   // ─── Device lifecycle ───
-  useEffect(() => {
-    let mounted = true;
-    let refreshInterval: NodeJS.Timeout | null = null;
+  // Tracks whether a device reset is in progress so the UI can show
+  // feedback and we don't fire overlapping resets.
+  const [resetting, setResetting] = useState(false);
+  const mountedRef = useRef(true);
 
-    async function initDevice() {
+  // Build (or rebuild) the Voice SDK Device. Used at mount and by the
+  // manual "Reset Device" button when the device gets into a stuck
+  // state (e.g. after a Conference end where Twilio's SDK silently
+  // breaks the WebRTC connection without firing events).
+  async function initDevice() {
       try {
         const tokenRes = await fetch('/api/twilio/voice-token');
         if (!tokenRes.ok) return; // Not configured or no permission
         const tokenData = await tokenRes.json();
-        if (!mounted || !tokenData.token) return;
+        if (!mountedRef.current || !tokenData.token) return;
 
         const { Device } = await import('@twilio/voice-sdk');
         const device = new Device(tokenData.token, { logLevel: 1 });
         deviceRef.current = device;
 
-        device.on('registered', () => { if (mounted) setDeviceReady(true); });
+        device.on('registered', () => { if (mountedRef.current) setDeviceReady(true); });
 
         device.on('error', (err: any) => {
           console.error('Twilio Device error:', err);
@@ -286,6 +291,39 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
       }
     }
 
+  // Manually re-build the device. Destroys the current one (releasing any
+  // stuck WebRTC connection) and creates a fresh registration. Use when
+  // calls fail post-transfer because the SDK is in a bad state.
+  async function resetDevice() {
+    if (resetting) return;
+    setResetting(true);
+    setPermissionError('');
+    try {
+      // Tear down current state.
+      callRef.current = null;
+      setDeviceReady(false);
+      resetCall();
+      if (deviceRef.current) {
+        try { deviceRef.current.destroy(); } catch {}
+        deviceRef.current = null;
+      }
+      // Also clear any stuck server-side lock for this user.
+      fetch('/api/me/status/lock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lock: false, restore_to: 'online' }),
+      }).catch(() => {});
+      // Build a fresh device.
+      await initDevice();
+    } finally {
+      setResetting(false);
+    }
+  }
+
+  useEffect(() => {
+    mountedRef.current = true;
+    let refreshInterval: NodeJS.Timeout | null = null;
+
     initDevice();
 
     // Refresh token every 50 minutes (expires at 60)
@@ -300,7 +338,7 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
     }, 50 * 60 * 1000);
 
     return () => {
-      mounted = false;
+      mountedRef.current = false;
       if (refreshInterval) clearInterval(refreshInterval);
       stopTimer();
       if (deviceRef.current) {
@@ -689,9 +727,16 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
       wireCallEvents(call, 'outbound', { phone: safePhone, name, contactId });
     } catch (e: any) {
       console.error('Failed to place call:', e);
-      setPermissionError(e.message || 'Failed to start call');
+      setPermissionError(
+        (e?.message || 'Failed to start call') +
+        ' — try clicking "Reset phone" below if this keeps happening.'
+      );
       restoreStatus();
       resetCall();
+      // If the Voice SDK couldn't even initiate the call (typically because
+      // it's in a stuck state from a prior conference), proactively rebuild
+      // the device so the agent's next attempt has a clean SDK.
+      setTimeout(() => { resetDevice(); }, 300);
     }
   }
 
@@ -1087,14 +1132,43 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
             </div>
           </div>
 
-          {!deviceReady && (
+          {!deviceReady && !resetting && (
             <div className="px-4 py-2 bg-yellow-50 text-yellow-800 text-xs flex items-center gap-2">
               <Loader2 size={12} className="animate-spin" /> Initializing phone…
             </div>
           )}
-          {permissionError && (
-            <div className="px-4 py-2 bg-brand-red-pale text-brand-red text-xs">{permissionError}</div>
+          {resetting && (
+            <div className="px-4 py-2 bg-blue-50 text-blue-800 text-xs flex items-center gap-2">
+              <Loader2 size={12} className="animate-spin" /> Resetting phone…
+            </div>
           )}
+          {permissionError && (
+            <div className="px-4 py-2 bg-brand-red-pale text-brand-red text-xs flex items-center justify-between gap-2">
+              <span>{permissionError}</span>
+              <button
+                type="button"
+                onClick={resetDevice}
+                disabled={resetting}
+                className="text-[10px] font-bold uppercase tracking-wider underline whitespace-nowrap disabled:opacity-50"
+              >
+                Reset
+              </button>
+            </div>
+          )}
+          {/* Always-available reset for stuck states (post-transfer Voice
+              SDK bug). Tucked in so it's there when needed but doesn't
+              clutter the normal flow. */}
+          <div className="px-4 pt-2">
+            <button
+              type="button"
+              onClick={resetDevice}
+              disabled={resetting}
+              className="w-full text-[10px] uppercase tracking-widest text-gray-400 hover:text-brand-red font-bold py-1 disabled:opacity-50"
+              title="Rebuild the Voice SDK device — use if calls fail after a transfer"
+            >
+              {resetting ? 'Resetting…' : 'Reset phone (if calls fail after transfer)'}
+            </button>
+          </div>
 
           {/* Number display */}
           <div className="px-4 pt-4 pb-2">
