@@ -4,8 +4,13 @@ import { listTwilioNumbers } from '@/lib/twilio';
 // Twilio hits this URL when a browser-based call is placed.
 // The browser passes a "To" parameter — we return TwiML telling Twilio to dial it.
 
-// Cache the set of valid Twilio numbers in-memory so we don't hit the API
+// Cache the set of owned Twilio numbers in-memory so we don't hit the API
 // on every outbound call. 60-second TTL is fine — numbers change rarely.
+//
+// NOTE: We deliberately do NOT filter by `capabilities.voice`. That field
+// indicates whether the number can RECEIVE inbound voice calls — not
+// whether it's usable as an outbound caller ID. Any number you own can be
+// a caller ID; filtering by capability locks people out of working setups.
 let numbersCache: { value: Set<string>; expiresAt: number } | null = null;
 
 async function getValidTwilioNumbers(): Promise<Set<string>> {
@@ -81,9 +86,11 @@ export async function POST(request: Request) {
     );
   }
 
-  if (callerIdSource !== 'agent-assigned' && callerIdSource !== 'env-default') {
-    console.warn('voice-twiml: caller ID fell back', { agentId, assigned, envDefault, used: callerId, source: callerIdSource });
-  }
+  // Always log the resolved TwiML inputs so we can correlate with Twilio
+  // Console call logs when something goes wrong.
+  console.log('voice-twiml: outbound', {
+    agentId, to: to.replace(/[^+\d]/g, ''), callerId, source: callerIdSource,
+  });
 
   const safeTo = to.replace(/[^+\d]/g, '');
   const safeCallerId = callerId;
@@ -96,10 +103,23 @@ export async function POST(request: Request) {
     ? `${appUrl}/api/twilio/recording?contact_id=${contactId}`
     : '';
 
+  // NOTE on TwiML attributes:
+  //   - `statusCallback*` are NOT valid on <Dial> — they live on the noun
+  //     (<Number> / <Client>). Putting them on <Dial> triggers Twilio
+  //     XML validation warning 12200 and the callbacks never fire.
+  //   - Recording (record / recordingStatusCallback) DOES belong on <Dial>.
+  //   - We only enable recording when there's a contact_id to file it
+  //     against. Recording dialer-only calls just generates orphan files,
+  //     and on some Twilio configurations enabling record on international
+  //     calls without a callback URL produces validation noise.
+  const statusAttrs = statusCallback
+    ? ` statusCallback="${statusCallback}" statusCallbackEvent="initiated ringing answered completed" statusCallbackMethod="POST"`
+    : '';
+  const recordAttr = contactId ? ' record="record-from-answer-dual"' : '';
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Dial callerId="${safeCallerId}" record="record-from-answer-dual" answerOnBridge="true" timeout="30"${statusCallback ? ` statusCallback="${statusCallback}" statusCallbackEvent="initiated ringing answered completed" statusCallbackMethod="POST"` : ''}${recordingCallback ? ` recordingStatusCallback="${recordingCallback}"` : ''}>
-    <Number>${safeTo}</Number>
+  <Dial callerId="${safeCallerId}"${recordAttr} answerOnBridge="true" timeout="30"${recordingCallback ? ` recordingStatusCallback="${recordingCallback}"` : ''}>
+    <Number${statusAttrs}>${safeTo}</Number>
   </Dial>
 </Response>`;
 

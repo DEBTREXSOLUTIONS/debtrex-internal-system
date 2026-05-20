@@ -30,7 +30,7 @@ export async function GET() {
   const assignedClean = assignedRaw ? assignedRaw.replace(/[^+\d]/g, '') : null;
   const envClean = number ? number.replace(/[^+\d]/g, '') : null;
 
-  let twilioNumbers: { phoneNumber: string; friendlyName: string; sid: string }[] = [];
+  let twilioNumbers: Awaited<ReturnType<typeof listTwilioNumbers>> = [];
   let listError: string | null = null;
   try {
     twilioNumbers = await listTwilioNumbers();
@@ -38,20 +38,28 @@ export async function GET() {
     listError = e?.message || 'failed to fetch';
   }
 
+  // Only voice-capable numbers can be used as outbound caller ID. A number
+  // that's owned but SMS-only will be listed by the API but Twilio rejects
+  // it on outbound with "your call could not be completed."
+  const voiceCapableSet = new Set(
+    twilioNumbers.filter(n => n.capabilities.voice).map(n => n.phoneNumber.replace(/[^+\d]/g, '')),
+  );
   const ownedSet = new Set(twilioNumbers.map(n => n.phoneNumber.replace(/[^+\d]/g, '')));
 
-  // Walk the same resolution voice-twiml uses
+  // Walk the same resolution voice-twiml uses (voice-capable only)
   let resolvedCallerId: string | null = null;
   let resolvedSource = 'none';
-  if (assignedClean && ownedSet.has(assignedClean)) {
+  if (assignedClean && voiceCapableSet.has(assignedClean)) {
     resolvedCallerId = assignedClean;
     resolvedSource = 'agent-assigned';
-  } else if (envClean && ownedSet.has(envClean)) {
+  } else if (envClean && voiceCapableSet.has(envClean)) {
     resolvedCallerId = envClean;
-    resolvedSource = assignedClean ? 'env-fallback (assigned not on account)' : 'env-default';
-  } else if (ownedSet.size > 0) {
-    resolvedCallerId = Array.from(ownedSet)[0];
-    resolvedSource = 'first-available (env + assigned both invalid)';
+    resolvedSource = assignedClean
+      ? (ownedSet.has(assignedClean) ? 'env-fallback (assigned has no voice capability)' : 'env-fallback (assigned not on account)')
+      : 'env-default';
+  } else if (voiceCapableSet.size > 0) {
+    resolvedCallerId = Array.from(voiceCapableSet)[0];
+    resolvedSource = 'first-voice-capable (env + assigned both unusable)';
   }
 
   return NextResponse.json({
@@ -61,6 +69,7 @@ export async function GET() {
       assigned_twilio_phone_number_raw: assignedRaw,
       assigned_twilio_phone_number_cleaned: assignedClean,
       assigned_is_on_account: assignedClean ? ownedSet.has(assignedClean) : false,
+      assigned_has_voice_capability: assignedClean ? voiceCapableSet.has(assignedClean) : false,
     },
     resolved: {
       caller_id_for_outbound: resolvedCallerId,
@@ -80,7 +89,11 @@ export async function GET() {
       configured: !!(sid && token),
       list_numbers_error: listError,
       owned_count: twilioNumbers.length,
-      owned_numbers: twilioNumbers.map(n => n.phoneNumber),
+      owned_numbers_with_capabilities: twilioNumbers.map(n => ({
+        number: n.phoneNumber,
+        voice: n.capabilities.voice,
+        sms: n.capabilities.sms,
+      })),
     },
     webhooks: {
       status_callback: appUrl ? `${appUrl}/api/twilio/status` : '⚠️  APP_URL not set',

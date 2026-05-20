@@ -235,6 +235,33 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
           if (err.message?.toLowerCase().includes('mic') || err.code === 31402) {
             setPermissionError('Microphone access denied. Allow it to receive or place calls.');
           }
+          // If the device errored out mid-call (e.g. WebRTC connection lost
+          // after a conference end), clear our local call state so the
+          // agent isn't stuck unable to place new calls. The device itself
+          // will re-register automatically via the token refresh interval.
+          if (err.code === 31005 || err.code === 31009 || err.code === 53000 || err.code === 53405) {
+            console.warn('Twilio device entered a bad state — resetting local call state');
+            callRef.current = null;
+            restoreStatus();
+            resetCall();
+          }
+        });
+
+        // When the device disconnects from Twilio's signaling layer (e.g.
+        // network blip, token rotation), our active-call state can desync.
+        // Clearing on `unregistered` ensures we recover cleanly when the
+        // device re-registers.
+        device.on('unregistered', () => {
+          if (callRef.current) {
+            try {
+              const s = callRef.current.status?.();
+              if (s !== 'open' && s !== 'ringing') {
+                callRef.current = null;
+              }
+            } catch {
+              callRef.current = null;
+            }
+          }
         });
 
         device.on('incoming', (call: any) => {
@@ -458,6 +485,33 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
 
     call.on('cancel', () => { stopRingtone(); stopTimer(); restoreStatus(); finalizeLog(); resetCall(); });
     call.on('reject', () => { stopRingtone(); stopTimer(); restoreStatus(); finalizeLog(); resetCall(); });
+
+    // Twilio Voice SDK doesn't always fire 'disconnect' when a Conference
+    // ends server-side (the most common scenario: this Client is the
+    // merge target, the customer hangs up, the conference collapses).
+    // Poll the call's status() — if it transitions to 'closed' without
+    // firing disconnect, treat that as a disconnect ourselves.
+    const closeWatcher = setInterval(() => {
+      try {
+        const s = call.status?.();
+        if (s === 'closed' || s === 'rejected') {
+          clearInterval(closeWatcher);
+          if (callRef.current === call) {
+            console.warn('Call status went to closed without disconnect event — cleaning up');
+            stopRingtone();
+            stopTimer();
+            restoreStatus();
+            finalizeLog();
+            resetCall();
+          }
+        }
+      } catch {
+        clearInterval(closeWatcher);
+      }
+    }, 1500);
+    // Stop watching after 30 minutes (max conceivable call length) to
+    // avoid a leak if everything else cleaned up properly.
+    setTimeout(() => clearInterval(closeWatcher), 30 * 60 * 1000);
   }
 
   // Write the final duration/outcome to call_logs from the browser. We can't
@@ -530,6 +584,27 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
     // Server already hung us up — let the disconnect event do cleanup,
     // but force a local hangup as a safety net.
     try { callRef.current?.disconnect?.(); } catch {}
+    // BACKUP: Twilio's Voice SDK occasionally doesn't fire 'disconnect'
+    // when a Conference ends. If we're still holding a callRef 3 seconds
+    // after a transfer completes, force-clear it so the agent can place
+    // new outbound calls.
+    setTimeout(() => {
+      if (callRef.current) {
+        try {
+          const s = callRef.current.status?.();
+          if (s !== 'open') {
+            console.warn('Forcing call state reset after transfer (disconnect never fired)');
+            callRef.current = null;
+            restoreStatus();
+            resetCall();
+          }
+        } catch {
+          callRef.current = null;
+          restoreStatus();
+          resetCall();
+        }
+      }
+    }, 3000);
   }
 
   // ─── Outbound calling ───
@@ -540,7 +615,33 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
     }
     // callRef.current is a more reliable in-call check than `state` here:
     // the event listener that calls this function may close over stale state.
-    if (callRef.current) return;
+    //
+    // BUT — Twilio Voice SDK sometimes fails to fire `disconnect` when a
+    // call ends via Conference termination (which happens after a merge
+    // transfer completes). That can leave a stale callRef pointing at a
+    // dead call. Detect that by inspecting the call's status() and clear
+    // it instead of silently blocking the new call.
+    if (callRef.current) {
+      let stale = false;
+      try {
+        const s = callRef.current.status?.();
+        // Closed / pending / disconnected are not "active". The Voice SDK
+        // exposes status as a string: 'open' | 'pending' | 'closed' | etc.
+        if (typeof s === 'string' && s !== 'open' && s !== 'connecting' && s !== 'ringing') {
+          stale = true;
+        }
+      } catch {
+        // If status() throws the object is unusable — treat as stale.
+        stale = true;
+      }
+      if (stale) {
+        console.warn('placeOutboundCall: clearing stale callRef before new outbound', { status: (() => { try { return callRef.current?.status?.(); } catch { return 'unreadable'; } })() });
+        try { callRef.current.disconnect?.(); } catch {}
+        callRef.current = null;
+      } else {
+        return; // Real active call — don't double-dial.
+      }
+    }
 
     const safePhone = phone.replace(/[^+\d]/g, '');
     if (!safePhone) return;

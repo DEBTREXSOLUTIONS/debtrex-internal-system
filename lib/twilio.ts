@@ -126,7 +126,14 @@ export function normalizePhone(phone: string): string | null {
  * List ALL phone numbers currently owned in the Twilio account.
  * Used by the admin assignment UI to pick which number to give each agent.
  */
-export async function listTwilioNumbers(): Promise<{ phoneNumber: string; friendlyName: string; sid: string }[]> {
+export interface TwilioNumber {
+  phoneNumber: string;
+  friendlyName: string;
+  sid: string;
+  capabilities: { voice: boolean; sms: boolean; mms: boolean; fax: boolean };
+}
+
+export async function listTwilioNumbers(): Promise<TwilioNumber[]> {
   if (!isTwilioConfigured()) return [];
 
   const auth = Buffer.from(`${ACCOUNT_SID}:${AUTH_TOKEN}`).toString('base64');
@@ -142,5 +149,11 @@ export async function listTwilioNumbers(): Promise<{ phoneNumber: string; friend
     phoneNumber: n.phone_number,
     friendlyName: n.friendly_name || n.phone_number,
     sid: n.sid,
+    capabilities: {
+      voice: !!n.capabilities?.voice,
+      sms: !!n.capabilities?.sms,
+      mms: !!n.capabilities?.mms,
+      fax: !!n.capabilities?.fax,
+    },
   }));
 }
