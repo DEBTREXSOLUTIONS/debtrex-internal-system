@@ -14,50 +14,65 @@ export async function PATCH(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { id } = await params;
-  const { twilio_phone_number, twilio_phone_label } = await request.json();
+  const body = await request.json();
+  const { twilio_phone_number, twilio_phone_label, outbound_use_default } = body;
 
-  // Normalize phone if set
-  let normalizedNumber: string | null = null;
-  if (twilio_phone_number) {
-    normalizedNumber = normalizePhone(twilio_phone_number);
-    if (!normalizedNumber) {
-      return NextResponse.json({ error: 'Invalid phone number format' }, { status: 400 });
+  // Only touch fields that were explicitly present in the request — that
+  // way a flag-only toggle doesn't accidentally clear the assigned number.
+  const updates: Record<string, unknown> = {};
+
+  if ('twilio_phone_number' in body) {
+    let normalizedNumber: string | null = null;
+    if (twilio_phone_number) {
+      normalizedNumber = normalizePhone(twilio_phone_number);
+      if (!normalizedNumber) {
+        return NextResponse.json({ error: 'Invalid phone number format' }, { status: 400 });
+      }
+      const { data: existing } = await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name')
+        .eq('twilio_phone_number', normalizedNumber)
+        .neq('id', id)
+        .single();
+      if (existing) {
+        return NextResponse.json(
+          { error: `${normalizedNumber} is already assigned to ${existing.full_name}. Unassign it first.` },
+          { status: 409 }
+        );
+      }
     }
+    updates.twilio_phone_number = normalizedNumber;
+    updates.twilio_phone_assigned_at = normalizedNumber ? new Date().toISOString() : null;
+    updates.twilio_phone_assigned_by = normalizedNumber ? user.id : null;
+  }
 
-    // Check it's not already assigned to a different user
-    const { data: existing } = await supabaseAdmin
-      .from('profiles')
-      .select('id, full_name')
-      .eq('twilio_phone_number', normalizedNumber)
-      .neq('id', id)
-      .single();
+  if ('twilio_phone_label' in body) {
+    updates.twilio_phone_label = twilio_phone_label || null;
+  }
 
-    if (existing) {
-      return NextResponse.json(
-        { error: `${normalizedNumber} is already assigned to ${existing.full_name}. Unassign it first.` },
-        { status: 409 }
-      );
-    }
+  if (typeof outbound_use_default === 'boolean') {
+    updates.outbound_use_default = outbound_use_default;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
   }
 
   const { error } = await supabaseAdmin
     .from('profiles')
-    .update({
-      twilio_phone_number: normalizedNumber,
-      twilio_phone_label: twilio_phone_label || null,
-      twilio_phone_assigned_at: normalizedNumber ? new Date().toISOString() : null,
-      twilio_phone_assigned_by: normalizedNumber ? user.id : null,
-    })
+    .update(updates)
     .eq('id', id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   await supabaseAdmin.from('audit_log').insert({
     user_id: user.id,
-    action: normalizedNumber ? 'twilio_number_assigned' : 'twilio_number_unassigned',
+    action: 'twilio_number_assigned' in updates
+      ? (updates.twilio_phone_number ? 'twilio_number_assigned' : 'twilio_number_unassigned')
+      : 'twilio_outbound_flag_updated',
     resource_type: 'profile',
     resource_id: id,
-    details: { twilio_phone_number: normalizedNumber, label: twilio_phone_label },
+    details: updates,
   });
 
   return NextResponse.json({ success: true });

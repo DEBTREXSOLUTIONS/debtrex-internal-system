@@ -17,18 +17,47 @@ export default function TwilioNumbersManager({ twilioConfigured, twilioNumbers, 
     users.filter((u: any) => u.twilio_phone_number).map((u: any) => u.twilio_phone_number)
   );
 
-  async function assignNumber(userId: string, phoneNumber: string | null, label: string | null) {
+  async function assignNumber(
+    userId: string,
+    phoneNumber: string | null,
+    label: string | null,
+    outboundUseDefault?: boolean,
+  ) {
     setAssigning(userId); setError(''); setSuccess('');
     try {
       const res = await fetch(`/api/users/${userId}/twilio-number`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ twilio_phone_number: phoneNumber, twilio_phone_label: label }),
+        body: JSON.stringify({
+          twilio_phone_number: phoneNumber,
+          twilio_phone_label: label,
+          ...(typeof outboundUseDefault === 'boolean' ? { outbound_use_default: outboundUseDefault } : {}),
+        }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error);
       setSuccess(phoneNumber ? `Assigned ${phoneNumber}` : 'Number unassigned');
       setEditingUser(null);
+      router.refresh();
+    } catch (e: any) { setError(e.message); }
+    finally { setAssigning(null); }
+  }
+
+  // Toggle the outbound_use_default flag without touching the assigned
+  // number itself — agent keeps their number for inbound routing.
+  async function toggleOutboundUseDefault(userId: string, current: boolean) {
+    setAssigning(userId); setError(''); setSuccess('');
+    try {
+      const res = await fetch(`/api/users/${userId}/twilio-number`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outbound_use_default: !current }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error);
+      setSuccess(!current
+        ? 'Outbound now uses company default for this user'
+        : 'Outbound now uses the assigned number for this user');
       router.refresh();
     } catch (e: any) { setError(e.message); }
     finally { setAssigning(null); }
@@ -153,9 +182,28 @@ export default function TwilioNumbersManager({ twilioConfigured, twilioNumbers, 
                                 ))}
                             </select>
                           ) : (
-                            <span className="font-mono font-bold text-sm">
-                              {u.twilio_phone_number || <span className="text-gray-400 font-sans font-normal text-xs italic">— default —</span>}
-                            </span>
+                            <div className="flex flex-col gap-1">
+                              <span className="font-mono font-bold text-sm">
+                                {u.twilio_phone_number || <span className="text-gray-400 font-sans font-normal text-xs italic">— default —</span>}
+                              </span>
+                              {u.twilio_phone_number && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleOutboundUseDefault(u.id, !!u.outbound_use_default)}
+                                  disabled={assigning === u.id}
+                                  className={`text-[9px] uppercase tracking-widest font-bold w-fit px-1.5 py-0.5 rounded ${
+                                    u.outbound_use_default
+                                      ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                  }`}
+                                  title={u.outbound_use_default
+                                    ? 'Outbound is using the company default. Click to use the assigned number for outbound again.'
+                                    : 'Outbound uses this assigned number. Click to force outbound through company default (use when this number gets rejected by Twilio).'}
+                                >
+                                  {u.outbound_use_default ? 'Outbound → default' : 'Outbound → assigned'}
+                                </button>
+                              )}
+                            </div>
                           )}
                         </td>
                         <td className="px-4 py-3">

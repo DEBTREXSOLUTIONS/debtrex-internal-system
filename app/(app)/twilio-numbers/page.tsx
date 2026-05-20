@@ -16,7 +16,7 @@ export default async function TwilioNumbersPage() {
 
   const { data: users } = await supabaseAdmin
     .from('profiles')
-    .select('id, full_name, email, role, phone, twilio_phone_number, twilio_phone_label')
+    .select('id, full_name, email, role, phone, twilio_phone_number, twilio_phone_label, outbound_use_default')
     .eq('is_active', true)
     .order('full_name');
 
