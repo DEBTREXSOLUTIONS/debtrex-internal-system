@@ -19,6 +19,7 @@ export const PERMISSION_KEYS = [
   'section.twilio_numbers',
   'section.custom_roles',
   'section.scripts',
+  'section.leads',
   // Tasks
   'task.create',
   'task.edit_any',
@@ -54,6 +55,11 @@ export const PERMISSION_KEYS = [
   'pipeline.view_all',
   'pipeline.assign_to_anyone',
   'pipeline.export',
+  // Leads
+  'leads.create',
+  'leads.edit',
+  'leads.delete',
+  'leads.export',
   // Calls
   'call.log',
   'call.make',
@@ -81,6 +87,7 @@ export const PERMISSION_GROUPS: { label: string; keys: PermissionKey[] }[] = [
       'section.budget', 'section.team', 'section.performance',
       'section.calculators', 'section.pipeline_management', 'section.pipeline_sales',
       'section.twilio_numbers', 'section.custom_roles', 'section.scripts',
+      'section.leads',
     ],
   },
   {
@@ -109,6 +116,10 @@ export const PERMISSION_GROUPS: { label: string; keys: PermissionKey[] }[] = [
       'pipeline.create', 'pipeline.edit_any', 'pipeline.delete',
       'pipeline.view_all', 'pipeline.assign_to_anyone', 'pipeline.export',
     ],
+  },
+  {
+    label: 'Leads',
+    keys: ['leads.create', 'leads.edit', 'leads.delete', 'leads.export'],
   },
   {
     label: 'Calls',
@@ -143,6 +154,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'section.twilio_numbers': 'See Twilio Numbers page',
   'section.custom_roles': 'See Custom Roles page',
   'section.scripts': 'See Scripts section',
+  'section.leads': 'See Leads section',
 
   'task.create': 'Create new tasks',
   'task.edit_any': 'Edit any task (not just own)',
@@ -178,6 +190,11 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'pipeline.view_all': 'View all contacts (not just assigned)',
   'pipeline.assign_to_anyone': 'Reassign contacts to others',
   'pipeline.export': 'Export contact lists',
+
+  'leads.create': 'Add new leads',
+  'leads.edit': 'Edit leads (name, contact info, status)',
+  'leads.delete': 'Delete leads',
+  'leads.export': 'Export leads to CSV',
 
   'call.log': 'Log calls manually',
   'call.make': 'Make calls (Twilio)',

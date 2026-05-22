@@ -5,7 +5,7 @@ import {
   LayoutDashboard, CheckSquare, Calendar, FolderOpen, DollarSign,
   Users, Settings, LogOut, Menu, X, Trophy, Calculator, UserCheck,
   Building2, Phone, Shield, ChevronDown, ChevronRight, FileText, History,
-  ArrowRightLeft, BarChart3,
+  ArrowRightLeft, BarChart3, UserPlus,
 } from 'lucide-react';
 import { useState, useEffect, memo } from 'react';
 import CallWidget from './CallWidget';
@@ -121,6 +121,13 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
       items: [
         { href: '/pipeline/sales', label: 'Sales', icon: Phone, show: can('section.pipeline_sales', user.role !== 'viewer' && user.role !== 'accountant') },
         { href: '/pipeline/management', label: 'Management', icon: Building2, show: can('section.pipeline_management', isLeadership) },
+      ],
+    },
+    {
+      label: 'Leads',
+      items: [
+        { href: '/leads', label: 'All Leads', icon: Users, show: can('section.leads', user.role !== 'viewer' && user.role !== 'accountant') },
+        { href: '/leads/new', label: 'Add Lead', icon: UserPlus, show: can('section.leads', user.role !== 'viewer' && user.role !== 'accountant') },
       ],
     },
     {
