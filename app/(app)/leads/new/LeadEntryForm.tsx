@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
-  UserPlus, User, Phone, Mail, Globe, AlertCircle, Check, List,
+  UserPlus, User, Phone, Mail, Globe, MapPin, Home, AlertCircle, Check, List,
 } from 'lucide-react';
 
 type LeadType = 'client' | 'business';
@@ -13,10 +13,12 @@ interface RecentLead {
   phone: string | null;
   email: string | null;
   website: string | null;
+  state: string | null;
+  address: string | null;
   lead_type: LeadType;
 }
 
-const EMPTY = { name: '', phone: '', email: '', website: '' };
+const EMPTY = { name: '', phone: '', email: '', website: '', state: '', address: '' };
 
 export default function LeadEntryForm() {
   const [form, setForm] = useState(EMPTY);
@@ -176,16 +178,47 @@ export default function LeadEntryForm() {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="label">Website</label>
+              <div className="relative">
+                <Globe size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value={form.website}
+                  onChange={e => setForm({ ...form, website: e.target.value })}
+                  className="input pl-9"
+                  placeholder="example.com"
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="label">State</label>
+              <div className="relative">
+                <MapPin size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value={form.state}
+                  onChange={e => setForm({ ...form, state: e.target.value })}
+                  className="input pl-9"
+                  placeholder="e.g. California"
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+          </div>
+
           <div>
-            <label className="label">Website</label>
+            <label className="label">Address</label>
             <div className="relative">
-              <Globe size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Home size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                value={form.website}
-                onChange={e => setForm({ ...form, website: e.target.value })}
+                value={form.address}
+                onChange={e => setForm({ ...form, address: e.target.value })}
                 className="input pl-9"
-                placeholder="example.com"
+                placeholder="Street address"
                 autoComplete="off"
               />
             </div>
@@ -229,7 +262,9 @@ export default function LeadEntryForm() {
                   {lead.lead_type}
                 </span>
                 <span className="text-gray-500 truncate">
-                  {[lead.phone, lead.email, lead.website].filter(Boolean).join(' · ') || '—'}
+                  {[lead.phone, lead.email, lead.website, lead.state, lead.address]
+                    .filter(Boolean)
+                    .join(' · ') || '—'}
                 </span>
               </div>
             ))}

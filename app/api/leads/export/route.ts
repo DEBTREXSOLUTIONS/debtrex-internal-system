@@ -32,7 +32,7 @@ export async function GET(request: Request) {
   for (let from = 0; ; from += BATCH) {
     let query = supabaseAdmin
       .from('leads')
-      .select('name, phone, email, website, lead_type, status, created_at')
+      .select('name, phone, email, website, state, address, lead_type, status, created_at')
       .order('created_at', { ascending: false })
       .range(from, from + BATCH - 1);
 
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     if (VALID_STATUSES.includes(status)) query = query.eq('status', status);
     if (search) {
       query = query.or(
-        `name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,website.ilike.%${search}%`
+        `name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,website.ilike.%${search}%,state.ilike.%${search}%,address.ilike.%${search}%`
       );
     }
 
@@ -51,11 +51,11 @@ export async function GET(request: Request) {
     if (data.length < BATCH) break;
   }
 
-  const header = ['Name', 'Phone', 'Email', 'Website', 'Type', 'Status', 'Created'];
+  const header = ['Name', 'Phone', 'Email', 'Website', 'State', 'Address', 'Type', 'Status', 'Created'];
   const lines = [header.join(',')];
   for (const r of rows) {
     lines.push(
-      [r.name, r.phone, r.email, r.website, r.lead_type, r.status, r.created_at]
+      [r.name, r.phone, r.email, r.website, r.state, r.address, r.lead_type, r.status, r.created_at]
         .map(csvCell)
         .join(',')
     );

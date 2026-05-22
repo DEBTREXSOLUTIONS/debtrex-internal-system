@@ -17,6 +17,8 @@ interface Lead {
   phone: string | null;
   email: string | null;
   website: string | null;
+  state: string | null;
+  address: string | null;
   lead_type: LeadType;
   status: LeadStatus;
   created_at: string;
@@ -169,7 +171,7 @@ export default function LeadsClient({
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name, phone, email, or website..."
+            placeholder="Search by name, phone, email, website, state, or address..."
             className="input pl-10"
           />
         </div>
@@ -206,6 +208,8 @@ export default function LeadsClient({
                 <th className="text-left font-bold px-3 py-2.5">Phone</th>
                 <th className="text-left font-bold px-3 py-2.5">Email</th>
                 <th className="text-left font-bold px-3 py-2.5">Website</th>
+                <th className="text-left font-bold px-3 py-2.5">State</th>
+                <th className="text-left font-bold px-3 py-2.5">Address</th>
                 <th className="text-left font-bold px-3 py-2.5">Status</th>
                 <th className="text-left font-bold px-3 py-2.5">Added</th>
                 {permissions.delete && <th className="px-3 py-2.5 w-10" />}
@@ -214,7 +218,7 @@ export default function LeadsClient({
             <tbody>
               {leads.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-3 py-12 text-center text-gray-500">
+                  <td colSpan={permissions.delete ? 10 : 9} className="px-3 py-12 text-center text-gray-500">
                     <Users size={28} className="mx-auto text-gray-300 mb-2" />
                     <div className="font-bold uppercase font-condensed text-lg">No leads found</div>
                     <div className="text-sm">
@@ -258,6 +262,12 @@ export default function LeadsClient({
                           <Globe size={12} className="text-gray-400" /> {lead.website}
                         </a>
                       ) : <span className="text-gray-300">—</span>}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-gray-700">
+                      {lead.state || <span className="text-gray-300">—</span>}
+                    </td>
+                    <td className="px-3 py-2 max-w-[240px] truncate text-gray-700" title={lead.address || ''}>
+                      {lead.address || <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-3 py-2">
                       {permissions.edit ? (

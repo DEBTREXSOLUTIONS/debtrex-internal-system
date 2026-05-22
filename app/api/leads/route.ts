@@ -22,6 +22,8 @@ function cleanLead(input: any) {
     phone: input?.phone?.toString().trim() || null,
     email: input?.email?.toString().trim() || null,
     website: input?.website?.toString().trim() || null,
+    state: input?.state?.toString().trim() || null,
+    address: input?.address?.toString().trim() || null,
     lead_type: type,
     status,
   };
@@ -53,7 +55,7 @@ export async function GET(request: Request) {
   if (VALID_STATUSES.includes(status)) query = query.eq('status', status);
   if (search) {
     query = query.or(
-      `name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,website.ilike.%${search}%`
+      `name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,website.ilike.%${search}%,state.ilike.%${search}%,address.ilike.%${search}%`
     );
   }
 

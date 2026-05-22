@@ -24,7 +24,7 @@ export async function PATCH(
     if (!body.name.trim()) return NextResponse.json({ error: 'Name cannot be empty' }, { status: 400 });
     update.name = body.name.trim();
   }
-  for (const f of ['phone', 'email', 'website'] as const) {
+  for (const f of ['phone', 'email', 'website', 'state', 'address'] as const) {
     if (body[f] !== undefined) update[f] = body[f]?.toString().trim() || null;
   }
   if (body.lead_type !== undefined) {
