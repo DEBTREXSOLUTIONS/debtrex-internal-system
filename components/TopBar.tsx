@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { Bell, Search, ChevronDown, Circle, Phone, Calendar, Coffee, MinusCircle } from 'lucide-react';
 import Link from 'next/link';
+import UsaClocks from './UsaClocks';
 
 interface User {
   id: string;
@@ -174,6 +175,9 @@ export default function TopBar({ user, title }: { user: User; title?: string }) 
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+        {/* US time zone clocks */}
+        <UsaClocks />
+
         {/* Status picker */}
         <div className="relative" ref={ref}>
           <button
