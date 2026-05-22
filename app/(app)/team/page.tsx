@@ -13,7 +13,7 @@ export default async function TeamPage() {
 
   const { data: members } = await supabaseAdmin
     .from('profiles')
-    .select('id, email, full_name, role, is_active, last_login_at, created_at, phone')
+    .select('id, email, full_name, role, is_active, last_login_at, created_at, phone, totp_enabled')
     .order('created_at', { ascending: false });
 
   // Dynamic roles: built-in + custom

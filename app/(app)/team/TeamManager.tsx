@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, X, AlertCircle, UserPlus, UserCog, Power, PowerOff, Shield, Trash2 } from 'lucide-react';
+import { Plus, X, AlertCircle, UserPlus, UserCog, Power, PowerOff, Shield, ShieldCheck, Trash2 } from 'lucide-react';
 
 export default function TeamManager({ members, currentUser, roles = [], canDelete = false }: any) {
   const ROLES = roles.length > 0 ? roles : [
@@ -50,6 +50,23 @@ export default function TeamManager({ members, currentUser, roles = [], canDelet
     } finally { setUpdating(null); }
   }
 
+  async function reset2fa(userId: string, name: string) {
+    if (!confirm(`Reset two-factor authentication for ${name}? They will be required to set up a new authenticator app on their next login.`)) return;
+    setUpdating(userId);
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reset_2fa: true }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Failed to reset 2FA');
+      }
+      router.refresh();
+    } finally { setUpdating(null); }
+  }
+
   async function deleteUser(userId: string, name: string) {
     if (!confirm(`Permanently delete ${name}? This cannot be undone. Their tasks, calls, and history will remain but be detached from this account.`)) return;
     setUpdating(userId);
@@ -83,10 +100,10 @@ export default function TeamManager({ members, currentUser, roles = [], canDelet
       {/* Members table */}
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[700px]">
+          <table className="w-full text-sm min-w-[820px]">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <Th>Name</Th><Th>Email</Th><Th>Role</Th><Th>Last Login</Th><Th>Status</Th><Th>Actions</Th>
+                <Th>Name</Th><Th>Email</Th><Th>Role</Th><Th>Last Login</Th><Th>Status</Th><Th>2FA</Th><Th>Actions</Th>
               </tr>
             </thead>
             <tbody>
@@ -126,6 +143,25 @@ export default function TeamManager({ members, currentUser, roles = [], canDelet
                       <span className={`badge ${m.is_active ? 'badge-green' : 'badge-gray'}`}>
                         {m.is_active ? 'Active' : 'Inactive'}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {m.totp_enabled ? (
+                        <div className="flex items-center gap-2">
+                          <span className="badge badge-green">On</span>
+                          {!isMe && (
+                            <button
+                              onClick={() => reset2fa(m.id, m.full_name)}
+                              disabled={updating === m.id}
+                              className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-brand-blue disabled:opacity-50 flex items-center gap-1"
+                              title="Reset this user's 2FA (lost-device recovery)"
+                            >
+                              <ShieldCheck size={12} /> Reset
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="badge badge-gray">Not set up</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       {!isMe && (

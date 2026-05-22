@@ -174,6 +174,12 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
 
   async function handleLogout() {
     setLoggingOut(true);
+    // Clear TopBar's cached presence flags so the next login re-marks the
+    // user online (logout sets their status to offline server-side).
+    try {
+      sessionStorage.removeItem('marked_online');
+      sessionStorage.removeItem('me_status');
+    } catch {}
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
   }

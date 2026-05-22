@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { getPermissions } from '@/lib/permissions';
 import Sidebar from '@/components/Sidebar';
 import TopBar from '@/components/TopBar';
+import SessionGuard from '@/components/SessionGuard';
 
 // Shared shell for every authenticated page.
 //
@@ -22,6 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen bg-gray-50">
+      <SessionGuard />
       <Sidebar user={user} permissions={permissions} />
       <main className="flex-1 min-w-0">
         <TopBar user={user} />

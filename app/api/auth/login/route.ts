@@ -1,7 +1,21 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { verifyPassword, createSessionToken, attachSessionCookie } from '@/lib/auth';
+import {
+  verifyPassword,
+  createPreAuthToken,
+  isDeviceTrusted,
+  buildLoggedInResponse,
+} from '@/lib/auth';
 
+// Stage 1 of login: verify the password, then decide the 2FA stage.
+//
+// Response `stage`:
+//   'done'   — fully logged in (session cookie attached). Device was trusted.
+//   'enroll' — password OK but no authenticator set up yet; client must enroll.
+//   'verify' — password OK, enrolled, but this device needs an authenticator code.
+//
+// 'enroll' / 'verify' also return a short-lived `preAuth` token the client
+// hands back to the matching /api/auth/2fa/* endpoint to finish logging in.
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
@@ -29,32 +43,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Update last login
-    await supabaseAdmin
-      .from('profiles')
-      .update({ last_login_at: new Date().toISOString() })
-      .eq('id', user.id);
+    // Password OK — now the 2FA gate.
+    if (!user.totp_enabled) {
+      // 2FA is mandatory: no authenticator yet → force enrollment.
+      return NextResponse.json({ stage: 'enroll', preAuth: createPreAuthToken(user.id) });
+    }
 
-    // Audit log
-    await supabaseAdmin.from('audit_log').insert({
-      user_id: user.id,
-      action: 'login',
-      details: { email },
-    });
+    // Enrolled. If this device passed 2FA within the last 24h, skip the code.
+    if (await isDeviceTrusted(user.id)) {
+      return buildLoggedInResponse(user, { trustDevice: false, method: 'device_trusted' });
+    }
 
-    const token = createSessionToken(user);
-
-    // Build the response and attach the cookie to it directly
-    const response = NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        full_name: user.full_name,
-        role: user.role,
-      },
-    });
-
-    return attachSessionCookie(response, token);
+    // Enrolled, but this device must present an authenticator code.
+    return NextResponse.json({ stage: 'verify', preAuth: createPreAuthToken(user.id) });
   } catch (e: any) {
     return NextResponse.json({ error: 'Login failed: ' + e.message }, { status: 500 });
   }

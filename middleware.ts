@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const PUBLIC_PATHS = ['/login', '/api/auth/login', '/api/auth/setup'];
+// The /api/auth/2fa/* routes run before a session cookie exists — they are
+// gated by their own short-lived pre-auth token instead.
+const PUBLIC_PATHS = ['/login', '/api/auth/login', '/api/auth/setup', '/api/auth/2fa'];
 const JWT_SECRET_RAW = process.env.JWT_SECRET!;
 const secret = new TextEncoder().encode(JWT_SECRET_RAW);
 

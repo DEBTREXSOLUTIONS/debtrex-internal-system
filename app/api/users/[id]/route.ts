@@ -38,6 +38,14 @@ export async function PATCH(
     }
   }
 
+  // Resetting 2FA (lost-device recovery) → require any team management permission.
+  if (body.reset_2fa === true) {
+    const canAny = (await hasPermission(user.role, 'team.change_roles')) || (await hasPermission(user.role, 'team.deactivate'));
+    if (!canAny) {
+      return NextResponse.json({ error: 'Forbidden — you need team management permission to reset 2FA' }, { status: 403 });
+    }
+  }
+
   // Don't allow modifying your own role / active status
   if (id === user.id && (body.role !== undefined || body.is_active !== undefined)) {
     return NextResponse.json({ error: 'Cannot change your own role or active status' }, { status: 400 });
@@ -48,6 +56,17 @@ export async function PATCH(
   if (body.is_active !== undefined) updates.is_active = body.is_active;
   if (body.full_name) updates.full_name = body.full_name;
   if (body.phone !== undefined) updates.phone = body.phone;
+  if (body.reset_2fa === true) {
+    // Clear enrollment so the user is forced to set up a new authenticator
+    // on their next login.
+    updates.totp_enabled = false;
+    updates.totp_secret = null;
+    updates.totp_enrolled_at = null;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
+  }
 
   const { data, error } = await supabaseAdmin
     .from('profiles')
