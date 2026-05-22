@@ -34,7 +34,7 @@ export default async function NotificationsPage() {
                     className="block p-4 hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="mt-1 w-2 h-2 rounded-full bg-brand-red flex-shrink-0" />
+                      <div className="mt-1 w-2 h-2 rounded-full bg-brand-blue flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-sm">{n.title}</div>
                         {n.message && <div className="text-sm text-gray-600 mt-1">{n.message}</div>}

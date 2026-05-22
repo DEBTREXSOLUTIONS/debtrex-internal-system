@@ -130,7 +130,7 @@ export default function TransferModal({
               key={key}
               onClick={() => setTab(key)}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
-                tab === key ? 'bg-white text-brand-red border-b-2 border-brand-red' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                tab === key ? 'bg-white text-brand-blue border-b-2 border-brand-blue' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
               }`}
             >
               <Icon size={13} /> {label}
@@ -139,7 +139,7 @@ export default function TransferModal({
         </div>
 
         {error && (
-          <div className="mx-3 mt-3 px-3 py-2 bg-brand-red-pale text-brand-red text-xs rounded">{error}</div>
+          <div className="mx-3 mt-3 px-3 py-2 bg-brand-blue-pale text-brand-blue text-xs rounded">{error}</div>
         )}
 
         {tab !== 'dial' && (
@@ -149,7 +149,7 @@ export default function TransferModal({
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search name, extension, phone..."
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-brand-red"
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-brand-blue"
             />
           </div>
         )}
@@ -208,7 +208,7 @@ export default function TransferModal({
                 value={dialNumber}
                 onChange={e => setDialNumber(e.target.value.replace(/[^+\d]/g, ''))}
                 placeholder="+1 555 555 1234"
-                className="w-full px-3 py-2 text-lg font-condensed border-b-2 border-gray-200 focus:border-brand-red focus:outline-none"
+                className="w-full px-3 py-2 text-lg font-condensed border-b-2 border-gray-200 focus:border-brand-blue focus:outline-none"
               />
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <button
@@ -223,7 +223,7 @@ export default function TransferModal({
                   type="button"
                   disabled={!dialNumber || submitting}
                   onClick={() => doTransfer('merge', 'phone', dialNumber)}
-                  className="h-11 rounded-md bg-brand-red text-white font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-brand-red-dark"
+                  className="h-11 rounded-md bg-brand-blue text-white font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-brand-blue-dark"
                 >
                   <GitMerge size={14} /> Merge
                 </button>
@@ -240,7 +240,7 @@ export default function TransferModal({
 
         {submitting && (
           <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-            <Loader2 size={22} className="animate-spin text-brand-red" />
+            <Loader2 size={22} className="animate-spin text-brand-blue" />
           </div>
         )}
       </div>
@@ -281,7 +281,7 @@ function TargetRow({
         type="button"
         onClick={onMerge}
         disabled={disabled}
-        className="px-2 py-1 rounded bg-brand-red text-white text-[10px] uppercase tracking-wider font-bold disabled:opacity-50 hover:bg-brand-red-dark"
+        className="px-2 py-1 rounded bg-brand-blue text-white text-[10px] uppercase tracking-wider font-bold disabled:opacity-50 hover:bg-brand-blue-dark"
         title="3-way merge"
       >
         Merge

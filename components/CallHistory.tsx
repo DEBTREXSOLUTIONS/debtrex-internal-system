@@ -127,7 +127,7 @@ export default function CallHistory({ open, onClose }: { open: boolean; onClose:
 
         <div className="flex-1 overflow-y-auto">
           {error && (
-            <div className="m-3 px-3 py-2 bg-brand-red-pale text-brand-red text-xs rounded">{error}</div>
+            <div className="m-3 px-3 py-2 bg-brand-blue-pale text-brand-blue text-xs rounded">{error}</div>
           )}
 
           {loading && calls.length === 0 && (
@@ -149,7 +149,7 @@ export default function CallHistory({ open, onClose }: { open: boolean; onClose:
                 ? PhoneMissed
                 : c.direction === 'inbound' ? PhoneIncoming : PhoneOutgoing;
               const iconColor = missed
-                ? 'text-brand-red'
+                ? 'text-brand-blue'
                 : c.direction === 'inbound' ? 'text-blue-600' : 'text-green-600';
               const otherParty = c.contact?.full_name
                 || c.contact?.phone

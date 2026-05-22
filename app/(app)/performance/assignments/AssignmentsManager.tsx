@@ -64,7 +64,7 @@ export default function AssignmentsManager({ users, assignments }: any) {
       </div>
 
       {error && (
-        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-red-pale border border-brand-red/20 rounded-md text-brand-red text-sm">
+        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-blue-pale border border-brand-blue/20 rounded-md text-brand-blue text-sm">
           <AlertCircle size={16} /> {error}
         </div>
       )}
@@ -96,7 +96,7 @@ export default function AssignmentsManager({ users, assignments }: any) {
           return (
             <div key={manager.id} className="card p-4 sm:p-5">
               <div className="flex items-center gap-3 pb-3 border-b border-gray-100 mb-3">
-                <div className="w-10 h-10 rounded-full bg-brand-red text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
                   {initials}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -104,7 +104,7 @@ export default function AssignmentsManager({ users, assignments }: any) {
                   <div className="text-xs text-gray-500 uppercase tracking-wider">{manager.role}</div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <div className="font-condensed text-2xl font-black text-brand-red">{agents.length}</div>
+                  <div className="font-condensed text-2xl font-black text-brand-blue">{agents.length}</div>
                   <div className="text-[10px] text-gray-500 uppercase tracking-wider">Agents</div>
                 </div>
               </div>
@@ -125,7 +125,7 @@ export default function AssignmentsManager({ users, assignments }: any) {
                       <button
                         onClick={() => deleteAssignment(a.id, manager.full_name, a.agent.full_name)}
                         disabled={working === a.id}
-                        className="opacity-0 group-hover:opacity-100 sm:opacity-100 p-1.5 hover:bg-red-50 text-brand-red rounded transition-all disabled:opacity-50 flex-shrink-0"
+                        className="opacity-0 group-hover:opacity-100 sm:opacity-100 p-1.5 hover:bg-red-50 text-brand-blue rounded transition-all disabled:opacity-50 flex-shrink-0"
                         title="Remove"
                       >
                         <Trash2 size={12} />
@@ -199,12 +199,12 @@ function AddAssignmentModal({ users, onClose, onSaved }: any) {
       <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] flex flex-col">
         <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
           <h3 className="font-condensed text-xl sm:text-2xl font-black uppercase">New Assignment</h3>
-          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
+          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-blue" /></button>
         </div>
 
         <form onSubmit={submit} className="p-4 sm:p-6 overflow-y-auto flex-1">
           {err && (
-            <div className="mb-3 p-2 bg-brand-red-pale text-brand-red text-sm rounded flex items-center gap-2">
+            <div className="mb-3 p-2 bg-brand-blue-pale text-brand-blue text-sm rounded flex items-center gap-2">
               <AlertCircle size={14} /> {err}
             </div>
           )}
@@ -235,14 +235,14 @@ function AddAssignmentModal({ users, onClose, onSaved }: any) {
                     <label
                       key={u.id}
                       className={`flex items-center gap-3 p-2.5 border-b border-gray-100 last:border-0 cursor-pointer transition-colors ${
-                        checked ? 'bg-brand-red-pale' : 'hover:bg-gray-50'
+                        checked ? 'bg-brand-blue-pale' : 'hover:bg-gray-50'
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggleAgent(u.id)}
-                        className="w-4 h-4 accent-brand-red flex-shrink-0"
+                        className="w-4 h-4 accent-brand-blue flex-shrink-0"
                       />
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold truncate">{u.full_name}</div>

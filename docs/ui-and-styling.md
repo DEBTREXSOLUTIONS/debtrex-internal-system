@@ -10,10 +10,10 @@ If you want to change visual design (a button color, a font, the brand red), thi
 
 | Token | Hex | Tailwind class |
 |-------|-----|----------------|
-| Brand Red | `#E02020` | `bg-brand-red`, `text-brand-red`, `border-brand-red` |
-| Brand Red Dark (hover) | `#B81414` | `bg-brand-red-dark` |
-| Brand Red Light | `#FF3B3B` | `bg-brand-red-light` |
-| Brand Red Pale (backgrounds) | `#FFF0F0` | `bg-brand-red-pale` |
+| Brand Red | `#E02020` | `bg-brand-blue`, `text-brand-blue`, `border-brand-blue` |
+| Brand Red Dark (hover) | `#B81414` | `bg-brand-blue-dark` |
+| Brand Red Light | `#FF3B3B` | `bg-brand-blue-light` |
+| Brand Red Pale (backgrounds) | `#FFF0F0` | `bg-brand-blue-pale` |
 | Ink (primary text) | `#111111` | `text-brand-ink`, `bg-brand-ink` |
 | Ink-2 (secondary text) | `#333333` | `text-brand-ink-2` |
 
@@ -175,9 +175,9 @@ Common sizes:
 
 | Purpose | Class |
 |---------|-------|
-| Primary action button | `bg-brand-red text-white` |
+| Primary action button | `bg-brand-blue text-white` |
 | Secondary action button | `border-brand-ink text-brand-ink` |
-| Error / overdue | `text-brand-red` / `bg-brand-red-pale` |
+| Error / overdue | `text-brand-blue` / `bg-brand-blue-pale` |
 | Success | `text-green-700` / `bg-green-50` |
 | Warning | `text-yellow-700` / `bg-yellow-50` |
 | Info | `text-blue-700` / `bg-blue-50` |

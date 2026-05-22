@@ -79,7 +79,7 @@ export default function DTICalculator({ onSaved }: any) {
         </p>
 
         {error && (
-          <div className="mb-3 flex items-center gap-2 p-3 bg-brand-red-pale border border-brand-red/20 rounded-md text-brand-red text-sm">
+          <div className="mb-3 flex items-center gap-2 p-3 bg-brand-blue-pale border border-brand-blue/20 rounded-md text-brand-blue text-sm">
             <AlertCircle size={16} /> {error}
           </div>
         )}
@@ -171,7 +171,7 @@ export default function DTICalculator({ onSaved }: any) {
         <div className={`p-5 rounded-lg ${
           category?.color === 'green' ? 'bg-green-600 text-white' :
           category?.color === 'yellow' ? 'bg-yellow-500 text-white' :
-          category?.color === 'red' ? 'bg-brand-red text-white' :
+          category?.color === 'red' ? 'bg-brand-blue text-white' :
           'bg-gray-100 text-gray-500'
         }`}>
           <div className={`text-xs uppercase tracking-widest font-semibold mb-2 ${category ? 'opacity-80' : ''}`}>
@@ -205,7 +205,7 @@ export default function DTICalculator({ onSaved }: any) {
 }
 
 function RefRow({ color, range, label }: any) {
-  const dotColor = color === 'green' ? 'bg-green-500' : color === 'yellow' ? 'bg-yellow-500' : 'bg-brand-red';
+  const dotColor = color === 'green' ? 'bg-green-500' : color === 'yellow' ? 'bg-yellow-500' : 'bg-brand-blue';
   return (
     <div className="flex items-center gap-2">
       <div className={`w-2 h-2 rounded-full ${dotColor}`} />

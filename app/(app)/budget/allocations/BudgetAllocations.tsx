@@ -189,7 +189,7 @@ export default function BudgetAllocations({ month, allocations: initial, spentBy
 
       {/* Status messages */}
       {error && (
-        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-red-pale border border-brand-red/20 rounded-md text-brand-red text-sm">
+        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-blue-pale border border-brand-blue/20 rounded-md text-brand-blue text-sm">
           <AlertCircle size={16} /> {error}
         </div>
       )}
@@ -209,7 +209,7 @@ export default function BudgetAllocations({ month, allocations: initial, spentBy
           <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">Spent This Month</div>
           <div className="font-condensed text-3xl font-black mt-1">{fmt(totalSpent)}</div>
         </div>
-        <div className={`p-5 rounded-lg ${totalSpent > totalAllocated && totalAllocated > 0 ? 'bg-brand-red text-white' : 'card'}`}>
+        <div className={`p-5 rounded-lg ${totalSpent > totalAllocated && totalAllocated > 0 ? 'bg-brand-blue text-white' : 'card'}`}>
           <div className={`text-xs uppercase tracking-wider font-semibold ${totalSpent > totalAllocated && totalAllocated > 0 ? 'opacity-80' : 'text-gray-500'}`}>
             Remaining
           </div>
@@ -282,18 +282,18 @@ export default function BudgetAllocations({ month, allocations: initial, spentBy
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className={`font-semibold ${over ? 'text-brand-red' : ''}`}>{fmt(spent)}</div>
+                        <div className={`font-semibold ${over ? 'text-brand-blue' : ''}`}>{fmt(spent)}</div>
                         {allocated > 0 && (
                           <div className="mt-1 w-32 h-1.5 bg-gray-100 rounded overflow-hidden">
                             <div
-                              className={`h-full ${over ? 'bg-brand-red' : 'bg-brand-ink'}`}
+                              className={`h-full ${over ? 'bg-brand-blue' : 'bg-brand-ink'}`}
                               style={{ width: `${Math.min(pct, 100)}%` }}
                             />
                           </div>
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`font-semibold ${remaining < 0 ? 'text-brand-red' : 'text-green-700'}`}>
+                        <span className={`font-semibold ${remaining < 0 ? 'text-brand-blue' : 'text-green-700'}`}>
                           {fmt(remaining)}
                         </span>
                       </td>
@@ -312,7 +312,7 @@ export default function BudgetAllocations({ month, allocations: initial, spentBy
                             <button
                               onClick={() => saveRow(idx)}
                               disabled={saving === `${idx}`}
-                              className="px-2 py-1 bg-brand-red hover:bg-brand-red-dark text-white rounded text-xs font-bold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1"
+                              className="px-2 py-1 bg-brand-blue hover:bg-brand-blue-dark text-white rounded text-xs font-bold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1"
                             >
                               <Save size={11} /> Save
                             </button>
@@ -320,7 +320,7 @@ export default function BudgetAllocations({ month, allocations: initial, spentBy
                           <button
                             onClick={() => deleteRow(idx)}
                             disabled={saving === `${idx}`}
-                            className="p-1.5 hover:bg-red-50 text-brand-red rounded transition-colors disabled:opacity-50"
+                            className="p-1.5 hover:bg-red-50 text-brand-blue rounded transition-colors disabled:opacity-50"
                             title="Delete"
                           >
                             <Trash2 size={12} />

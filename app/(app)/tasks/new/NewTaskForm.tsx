@@ -60,7 +60,7 @@ export default function NewTaskForm({ users, currentUser }: any) {
         <h2 className="font-condensed text-2xl font-black uppercase mb-6">New Task</h2>
 
         {error && (
-          <div className="mb-4 flex items-center gap-2 p-3 bg-brand-red-pale border border-brand-red/20 rounded-md text-brand-red text-sm">
+          <div className="mb-4 flex items-center gap-2 p-3 bg-brand-blue-pale border border-brand-blue/20 rounded-md text-brand-blue text-sm">
             <AlertCircle size={16} /> {error}
           </div>
         )}

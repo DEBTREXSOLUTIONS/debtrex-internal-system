@@ -164,7 +164,7 @@ export default function ContactDetail({
       </Link>
 
       {error && (
-        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-red-pale border border-brand-red/20 rounded-md text-brand-red text-sm">
+        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-blue-pale border border-brand-blue/20 rounded-md text-brand-blue text-sm">
           <AlertCircle size={16} /> {error}
         </div>
       )}
@@ -196,7 +196,7 @@ export default function ContactDetail({
       {/* Header */}
       <div className="card p-4 sm:p-6 mb-6">
         <div className="flex items-start gap-4 mb-4">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-brand-red text-white flex items-center justify-center font-bold text-xl flex-shrink-0">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-xl flex-shrink-0">
             {initials}
           </div>
           <div className="flex-1 min-w-0">
@@ -276,7 +276,7 @@ export default function ContactDetail({
             </>
           )}
           {!editing && permissions.delete && (
-            <button type="button" onClick={deleteContact} className="btn-ghost text-brand-red ml-auto">
+            <button type="button" onClick={deleteContact} className="btn-ghost text-brand-blue ml-auto">
               <Trash2 size={14} /> Delete
             </button>
           )}
@@ -286,12 +286,12 @@ export default function ContactDetail({
         {!editing && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 pt-4 border-t border-gray-100 text-sm">
             {contact.phone && (
-              <a href={`tel:${contact.phone}`} className="flex items-center gap-2 text-gray-700 hover:text-brand-red truncate">
+              <a href={`tel:${contact.phone}`} className="flex items-center gap-2 text-gray-700 hover:text-brand-blue truncate">
                 <Phone size={14} className="text-gray-400 flex-shrink-0" /> {contact.phone}
               </a>
             )}
             {contact.email && (
-              <a href={`mailto:${contact.email}`} className="flex items-center gap-2 text-gray-700 hover:text-brand-red truncate">
+              <a href={`mailto:${contact.email}`} className="flex items-center gap-2 text-gray-700 hover:text-brand-blue truncate">
                 <Mail size={14} className="text-gray-400 flex-shrink-0" /> {contact.email}
               </a>
             )}
@@ -459,7 +459,7 @@ function Tab({ active, onClick, icon: Icon, children }: any) {
       type="button"
       onClick={onClick}
       className={`flex items-center gap-2 px-4 py-3 text-sm font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
-        active ? 'border-brand-red text-brand-red' : 'border-transparent text-gray-500 hover:text-brand-ink'
+        active ? 'border-brand-blue text-brand-blue' : 'border-transparent text-gray-500 hover:text-brand-ink'
       }`}
     >
       <Icon size={14} /> {children}
@@ -603,7 +603,7 @@ function NotesPanel({ contactId, notes, currentUser }: any) {
       ) : (
         <div className="space-y-2">
           {notes.map((n: any) => (
-            <div key={n.id} className={`card p-4 ${n.is_pinned ? 'border-brand-red' : ''}`}>
+            <div key={n.id} className={`card p-4 ${n.is_pinned ? 'border-brand-blue' : ''}`}>
               <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm whitespace-pre-wrap">{n.note}</p>
@@ -616,7 +616,7 @@ function NotesPanel({ contactId, notes, currentUser }: any) {
                   <button type="button"
                     onClick={() => togglePin(n.id, n.is_pinned)}
                     className={`p-1.5 rounded transition-colors ${
-                      n.is_pinned ? 'text-brand-red' : 'text-gray-400 hover:text-brand-red'
+                      n.is_pinned ? 'text-brand-blue' : 'text-gray-400 hover:text-brand-blue'
                     }`}
                     title={n.is_pinned ? 'Unpin' : 'Pin'}
                   >
@@ -625,7 +625,7 @@ function NotesPanel({ contactId, notes, currentUser }: any) {
                   {n.user_id === currentUser.id && (
                     <button type="button"
                       onClick={() => deleteNote(n.id)}
-                      className="p-1.5 hover:bg-red-50 text-brand-red rounded"
+                      className="p-1.5 hover:bg-red-50 text-brand-blue rounded"
                       title="Delete"
                     >
                       <Trash2 size={12} />
@@ -740,11 +740,11 @@ function LogCallModal({ contactId, onClose, onLogged }: any) {
       <div className="bg-white rounded-lg max-w-md w-full p-4 sm:p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-condensed text-xl font-black uppercase">Log Call</h3>
-          <button type="button" onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
+          <button type="button" onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-blue" /></button>
         </div>
 
         {err && (
-          <div className="mb-3 p-2 bg-brand-red-pale text-brand-red text-sm rounded flex items-center gap-2">
+          <div className="mb-3 p-2 bg-brand-blue-pale text-brand-blue text-sm rounded flex items-center gap-2">
             <AlertCircle size={14} /> {err}
           </div>
         )}
@@ -755,7 +755,7 @@ function LogCallModal({ contactId, onClose, onLogged }: any) {
               type="button"
               onClick={() => setDirection('outbound')}
               className={`px-3 py-2 text-sm font-bold uppercase tracking-wider rounded ${
-                direction === 'outbound' ? 'bg-brand-red text-white' : 'bg-gray-100 text-gray-600'
+                direction === 'outbound' ? 'bg-brand-blue text-white' : 'bg-gray-100 text-gray-600'
               }`}
             >
               ↗ Outbound
@@ -764,7 +764,7 @@ function LogCallModal({ contactId, onClose, onLogged }: any) {
               type="button"
               onClick={() => setDirection('inbound')}
               className={`px-3 py-2 text-sm font-bold uppercase tracking-wider rounded ${
-                direction === 'inbound' ? 'bg-brand-red text-white' : 'bg-gray-100 text-gray-600'
+                direction === 'inbound' ? 'bg-brand-blue text-white' : 'bg-gray-100 text-gray-600'
               }`}
             >
               ↙ Inbound
@@ -875,7 +875,7 @@ function TeamMemberRow({ user, badge, badgeColor, note, removable, onRemove }: a
   const initials = (user.full_name || '?').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
   return (
     <div className="card p-3 sm:p-4 flex items-center gap-3">
-      <div className="w-10 h-10 rounded-full bg-brand-red text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+      <div className="w-10 h-10 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
         {initials}
       </div>
       <div className="flex-1 min-w-0">
@@ -891,7 +891,7 @@ function TeamMemberRow({ user, badge, badgeColor, note, removable, onRemove }: a
       {removable && (
         <button type="button"
           onClick={onRemove}
-          className="p-2 hover:bg-red-50 text-brand-red rounded transition-colors flex-shrink-0"
+          className="p-2 hover:bg-red-50 text-brand-blue rounded transition-colors flex-shrink-0"
           title="Remove"
         >
           <Trash2 size={14} />
@@ -942,12 +942,12 @@ function AddCollaboratorsModal({ contactId, users, existingCollabIds, onClose, o
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] flex flex-col">
         <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
           <h3 className="font-condensed text-xl font-black uppercase">Add Team Members</h3>
-          <button type="button" onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
+          <button type="button" onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-blue" /></button>
         </div>
 
         <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           {err && (
-            <div className="mb-3 p-2 bg-brand-red-pale text-brand-red text-sm rounded flex items-center gap-2">
+            <div className="mb-3 p-2 bg-brand-blue-pale text-brand-blue text-sm rounded flex items-center gap-2">
               <AlertCircle size={14} /> {err}
             </div>
           )}
@@ -959,7 +959,7 @@ function AddCollaboratorsModal({ contactId, users, existingCollabIds, onClose, o
                 type="button"
                 onClick={() => setRole('collaborator')}
                 className={`px-3 py-2 text-sm font-bold uppercase tracking-wider rounded border-2 ${
-                  role === 'collaborator' ? 'border-brand-red bg-brand-red-pale text-brand-red' : 'border-gray-200 text-gray-600'
+                  role === 'collaborator' ? 'border-brand-blue bg-brand-blue-pale text-brand-blue' : 'border-gray-200 text-gray-600'
                 }`}
               >
                 Collaborator
@@ -968,7 +968,7 @@ function AddCollaboratorsModal({ contactId, users, existingCollabIds, onClose, o
                 type="button"
                 onClick={() => setRole('observer')}
                 className={`px-3 py-2 text-sm font-bold uppercase tracking-wider rounded border-2 ${
-                  role === 'observer' ? 'border-brand-red bg-brand-red-pale text-brand-red' : 'border-gray-200 text-gray-600'
+                  role === 'observer' ? 'border-brand-blue bg-brand-blue-pale text-brand-blue' : 'border-gray-200 text-gray-600'
                 }`}
               >
                 Observer
@@ -999,14 +999,14 @@ function AddCollaboratorsModal({ contactId, users, existingCollabIds, onClose, o
                   <label
                     key={u.id}
                     className={`flex items-center gap-3 p-2.5 border-b border-gray-100 last:border-0 cursor-pointer transition-colors ${
-                      checked ? 'bg-brand-red-pale' : 'hover:bg-gray-50'
+                      checked ? 'bg-brand-blue-pale' : 'hover:bg-gray-50'
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggle(u.id)}
-                      className="w-4 h-4 accent-brand-red flex-shrink-0"
+                      className="w-4 h-4 accent-brand-blue flex-shrink-0"
                     />
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold truncate">{u.full_name}</div>

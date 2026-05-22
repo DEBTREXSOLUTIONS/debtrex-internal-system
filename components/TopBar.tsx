@@ -190,7 +190,7 @@ export default function TopBar({ user, title }: { user: User; title?: string }) 
             <span className={`w-2 h-2 rounded-full ${current.bg} flex-shrink-0 ${status === 'online' ? 'ring-2 ring-green-200' : ''} ${locked ? 'animate-pulse' : ''}`} />
             <span className="text-xs font-bold uppercase tracking-wider hidden sm:inline">{current.label}</span>
             {locked
-              ? <span className="text-[9px] uppercase tracking-widest text-brand-red font-bold hidden sm:inline">Locked</span>
+              ? <span className="text-[9px] uppercase tracking-widest text-brand-blue font-bold hidden sm:inline">Locked</span>
               : <ChevronDown size={11} className="text-gray-400" />}
           </button>
 
@@ -208,17 +208,17 @@ export default function TopBar({ user, title }: { user: User; title?: string }) 
                     type="button"
                     onClick={() => changeStatus(s.value)}
                     className={`w-full flex items-start gap-3 px-3 py-2.5 transition-colors text-left ${
-                      active ? 'bg-brand-red-pale' : 'hover:bg-gray-50'
+                      active ? 'bg-brand-blue-pale' : 'hover:bg-gray-50'
                     }`}
                   >
                     <span className={`w-2.5 h-2.5 rounded-full ${s.bg} mt-1.5 flex-shrink-0`} />
                     <div className="flex-1 min-w-0">
-                      <div className={`text-sm font-bold ${active ? 'text-brand-red' : 'text-gray-800'}`}>
+                      <div className={`text-sm font-bold ${active ? 'text-brand-blue' : 'text-gray-800'}`}>
                         {s.label}
                       </div>
                       <div className="text-[11px] text-gray-500 leading-tight mt-0.5">{s.desc}</div>
                     </div>
-                    {active && <span className="text-brand-red text-xs">●</span>}
+                    {active && <span className="text-brand-blue text-xs">●</span>}
                   </button>
                 );
               })}
@@ -232,13 +232,13 @@ export default function TopBar({ user, title }: { user: User; title?: string }) 
           <input
             type="text"
             placeholder="Search..."
-            className="pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:border-brand-red w-56"
+            className="pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:border-brand-blue w-56"
           />
         </div>
 
         <Link
           href="/notifications"
-          className="relative p-2 text-gray-600 hover:text-brand-red transition-colors"
+          className="relative p-2 text-gray-600 hover:text-brand-blue transition-colors"
           aria-label="Notifications"
         >
           <Bell size={18} />

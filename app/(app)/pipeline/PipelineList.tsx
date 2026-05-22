@@ -163,13 +163,13 @@ function StatusPill({ label, active, onClick, color }: any) {
     blue: 'bg-blue-50 text-blue-700',
     yellow: 'bg-yellow-50 text-yellow-700',
     green: 'bg-green-50 text-green-700',
-    red: 'bg-brand-red-pale text-brand-red',
+    red: 'bg-brand-blue-pale text-brand-blue',
   };
   return (
     <button type="button"
       onClick={onClick}
       className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md whitespace-nowrap flex-shrink-0 transition-colors ${
-        active ? 'bg-brand-red text-white' : colors[color] || 'bg-gray-100 text-gray-700'
+        active ? 'bg-brand-blue text-white' : colors[color] || 'bg-gray-100 text-gray-700'
       }`}
     >
       {label}
@@ -191,10 +191,10 @@ function ContactCard({ contact, type, statuses }: any) {
   return (
     <Link
       href={`/pipeline/${type}/${contact.id}`}
-      className="card p-4 hover:border-brand-red transition-all hover:shadow-md fade-in block"
+      className="card p-4 hover:border-brand-blue transition-all hover:shadow-md fade-in block"
     >
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-10 h-10 rounded-full bg-brand-red text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+        <div className="w-10 h-10 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
           {initials}
         </div>
         <div className="flex-1 min-w-0">
@@ -224,7 +224,7 @@ function ContactCard({ contact, type, statuses }: any) {
         {type === 'sales' && contact.estimated_debt && (
           <div className="flex items-center gap-2">
             <DollarSign size={11} className="text-gray-400 flex-shrink-0" />
-            Debt: <span className="font-bold text-brand-red">{fmt(contact.estimated_debt)}</span>
+            Debt: <span className="font-bold text-brand-blue">{fmt(contact.estimated_debt)}</span>
           </div>
         )}
         {type === 'management' && contact.deal_value && (
@@ -308,12 +308,12 @@ function AddContactModal({ type, statuses, onClose, onCreated }: any) {
           <h3 className="font-condensed text-xl sm:text-2xl font-black uppercase">
             New {type === 'management' ? 'Company' : 'Lead'}
           </h3>
-          <button type="button" onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
+          <button type="button" onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-blue" /></button>
         </div>
 
         <form onSubmit={submit} className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-3">
           {error && (
-            <div className="p-2 bg-brand-red-pale text-brand-red text-sm rounded flex items-center gap-2">
+            <div className="p-2 bg-brand-blue-pale text-brand-blue text-sm rounded flex items-center gap-2">
               <AlertCircle size={14} /> {error}
             </div>
           )}

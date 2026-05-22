@@ -80,18 +80,18 @@ export default async function DashboardPage() {
           {canApprove && pendingReqCount > 0 && (
             <Link
               href="/tasks/requests"
-              className="mb-6 flex items-center justify-between gap-3 p-4 bg-brand-red-pale border border-brand-red/30 rounded-md hover:border-brand-red transition-colors"
+              className="mb-6 flex items-center justify-between gap-3 p-4 bg-brand-blue-pale border border-brand-blue/30 rounded-md hover:border-brand-blue transition-colors"
             >
               <div className="flex items-center gap-3">
-                <Inbox size={18} className="text-brand-red" />
+                <Inbox size={18} className="text-brand-blue" />
                 <div>
-                  <div className="font-semibold text-sm text-brand-red">
+                  <div className="font-semibold text-sm text-brand-blue">
                     {pendingReqCount} pending task request{pendingReqCount === 1 ? '' : 's'}
                   </div>
                   <div className="text-xs text-gray-600">Review and approve or deny.</div>
                 </div>
               </div>
-              <span className="text-xs font-bold uppercase tracking-wider text-brand-red">Open inbox →</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-brand-blue">Open inbox →</span>
             </Link>
           )}
 
@@ -193,9 +193,9 @@ export default async function DashboardPage() {
                   <div className="space-y-3 text-sm">
                     {recentUpdates.map((update: any) => (
                       <div key={update.id} className="flex gap-3 pb-3 border-b border-gray-100 last:border-0">
-                        <div className="w-2 h-2 rounded-full bg-brand-red mt-1.5 flex-shrink-0"/>
+                        <div className="w-2 h-2 rounded-full bg-brand-blue mt-1.5 flex-shrink-0"/>
                         <div className="flex-1 min-w-0">
-                          <Link href={`/tasks/${update.task?.id}`} className="font-semibold hover:text-brand-red truncate block">
+                          <Link href={`/tasks/${update.task?.id}`} className="font-semibold hover:text-brand-blue truncate block">
                             {update.task?.title}
                           </Link>
                           <div className="text-xs text-gray-600 line-clamp-2">{update.update_text}</div>
@@ -231,7 +231,7 @@ export default async function DashboardPage() {
 
 function KPICard({ icon: Icon, label, value, color }: any) {
   const colors = {
-    red: 'bg-brand-red-pale text-brand-red border-brand-red/20',
+    red: 'bg-brand-blue-pale text-brand-blue border-brand-blue/20',
     blue: 'bg-blue-50 text-blue-700 border-blue-200',
     gray: 'bg-gray-50 text-gray-700 border-gray-200',
   };
@@ -267,7 +267,7 @@ function TaskCard({ task }: any) {
   return (
     <Link
       href={`/tasks/${task.id}`}
-      className="block p-4 border border-gray-200 rounded-md hover:border-brand-red transition-colors"
+      className="block p-4 border border-gray-200 rounded-md hover:border-brand-blue transition-colors"
     >
       <div className="flex items-start justify-between gap-3 mb-2">
         <h3 className="font-semibold text-sm flex-1">{task.title}</h3>
@@ -283,7 +283,7 @@ function TaskCard({ task }: any) {
           {isOverdue ? 'Overdue' : task.status.replace('_', ' ')}
         </span>
         {task.deadline && (
-          <span className={`text-xs ${isOverdue ? 'text-brand-red font-bold' : 'text-gray-500'}`}>
+          <span className={`text-xs ${isOverdue ? 'text-brand-blue font-bold' : 'text-gray-500'}`}>
             <Clock size={11} className="inline mr-1" />
             Due {new Date(task.deadline).toLocaleDateString()}
           </span>

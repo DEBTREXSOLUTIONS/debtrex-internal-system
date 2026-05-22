@@ -24,7 +24,7 @@ const KINDS: { value: Script['kind']; label: string; color: string }[] = [
 const TAG_COLORS = ['gray', 'red', 'blue', 'green', 'yellow'];
 const TAG_COLOR_CLASSES: Record<string, string> = {
   gray:   'bg-gray-100 text-gray-700 border-gray-200',
-  red:    'bg-brand-red-pale text-brand-red border-brand-red/20',
+  red:    'bg-brand-blue-pale text-brand-blue border-brand-blue/20',
   blue:   'bg-blue-50 text-blue-700 border-blue-200',
   green:  'bg-green-50 text-green-700 border-green-200',
   yellow: 'bg-yellow-50 text-yellow-700 border-yellow-200',
@@ -148,17 +148,17 @@ export default function ScriptsView({
                   const count = scripts.filter(sc => sc.section_id === s.id).length;
                   const active = activeSectionId === s.id;
                   return (
-                    <li key={s.id} className={`group flex items-center gap-1 rounded-md ${active ? 'bg-brand-red-pale' : 'hover:bg-gray-50'}`}>
+                    <li key={s.id} className={`group flex items-center gap-1 rounded-md ${active ? 'bg-brand-blue-pale' : 'hover:bg-gray-50'}`}>
                       <button
                         onClick={() => setActiveSectionId(s.id)}
-                        className={`flex-1 text-left px-3 py-2 text-sm font-semibold flex items-center justify-between ${active ? 'text-brand-red' : 'text-gray-700'}`}
+                        className={`flex-1 text-left px-3 py-2 text-sm font-semibold flex items-center justify-between ${active ? 'text-brand-blue' : 'text-gray-700'}`}
                       >
                         <span className="truncate">{s.name}</span>
                         <span className="text-xs text-gray-400">{count}</span>
                       </button>
                       {canManage && (
                         <div className="opacity-0 group-hover:opacity-100 flex pr-2 gap-1">
-                          <button onClick={() => { setEditingSection(s); setShowSectionModal(true); }} className="text-gray-400 hover:text-brand-red"><Edit3 size={12} /></button>
+                          <button onClick={() => { setEditingSection(s); setShowSectionModal(true); }} className="text-gray-400 hover:text-brand-blue"><Edit3 size={12} /></button>
                           <button onClick={() => deleteSection(s)} className="text-gray-400 hover:text-red-700"><Trash2 size={12} /></button>
                         </div>
                       )}
@@ -173,7 +173,7 @@ export default function ScriptsView({
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-condensed text-sm font-black uppercase tracking-wider text-gray-600">Tags</h2>
               {tagFilter && (
-                <button onClick={() => setTagFilter(null)} className="text-xs text-brand-red hover:underline">clear</button>
+                <button onClick={() => setTagFilter(null)} className="text-xs text-brand-blue hover:underline">clear</button>
               )}
             </div>
             {tags.length === 0 ? (
@@ -186,13 +186,13 @@ export default function ScriptsView({
                     <li key={t.id} className="group inline-flex items-center">
                       <button
                         onClick={() => setTagFilter(active ? null : t.id)}
-                        className={`text-xs px-2 py-1 rounded-md border ${TAG_COLOR_CLASSES[t.color] || TAG_COLOR_CLASSES.gray} ${active ? 'ring-2 ring-brand-red' : ''}`}
+                        className={`text-xs px-2 py-1 rounded-md border ${TAG_COLOR_CLASSES[t.color] || TAG_COLOR_CLASSES.gray} ${active ? 'ring-2 ring-brand-blue' : ''}`}
                       >
                         {t.name}
                       </button>
                       {canManageTags && (
                         <div className="opacity-0 group-hover:opacity-100 flex ml-1 gap-1">
-                          <button onClick={() => { setEditingTag(t); setShowTagModal(true); }} className="text-gray-400 hover:text-brand-red"><Edit3 size={10} /></button>
+                          <button onClick={() => { setEditingTag(t); setShowTagModal(true); }} className="text-gray-400 hover:text-brand-blue"><Edit3 size={10} /></button>
                           <button onClick={() => deleteTag(t)} className="text-gray-400 hover:text-red-700"><Trash2 size={10} /></button>
                         </div>
                       )}
@@ -307,7 +307,7 @@ function KindBlock({ kind, scripts, canManage, onEdit, onDelete }: {
                   <h3 className="font-bold text-base">{s.title}</h3>
                   {canManage && (
                     <div className="flex gap-2">
-                      <button onClick={() => onEdit(s)} className="text-gray-400 hover:text-brand-red"><Edit3 size={14} /></button>
+                      <button onClick={() => onEdit(s)} className="text-gray-400 hover:text-brand-blue"><Edit3 size={14} /></button>
                       <button onClick={() => onDelete(s.id)} className="text-gray-400 hover:text-red-700"><Trash2 size={14} /></button>
                     </div>
                   )}
@@ -453,7 +453,7 @@ function ScriptModal({ existing, sections, tags, defaultSectionId, onClose, onSa
                     type="button"
                     key={t.id}
                     onClick={() => toggleTag(t.id)}
-                    className={`text-xs px-2 py-1 rounded-md border ${TAG_COLOR_CLASSES[t.color] || TAG_COLOR_CLASSES.gray} ${active ? 'ring-2 ring-brand-red' : 'opacity-60'}`}
+                    className={`text-xs px-2 py-1 rounded-md border ${TAG_COLOR_CLASSES[t.color] || TAG_COLOR_CLASSES.gray} ${active ? 'ring-2 ring-brand-blue' : 'opacity-60'}`}
                   >
                     {t.name}
                   </button>
@@ -512,7 +512,7 @@ function TagModal({ existing, onClose, onSaved }: {
                 type="button"
                 key={c}
                 onClick={() => setForm({...form, color: c})}
-                className={`text-xs px-3 py-1.5 rounded-md border ${TAG_COLOR_CLASSES[c]} ${form.color === c ? 'ring-2 ring-brand-red' : ''}`}
+                className={`text-xs px-3 py-1.5 rounded-md border ${TAG_COLOR_CLASSES[c]} ${form.color === c ? 'ring-2 ring-brand-blue' : ''}`}
               >
                 {c}
               </button>
@@ -531,7 +531,7 @@ function Modal({ title, onClose, children, wide = false }: { title: string; onCl
       <div className={`bg-white rounded-lg w-full p-6 ${wide ? 'max-w-2xl' : 'max-w-md'}`}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-condensed text-2xl font-black uppercase">{title}</h3>
-          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
+          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-blue" /></button>
         </div>
         {children}
       </div>
@@ -540,7 +540,7 @@ function Modal({ title, onClose, children, wide = false }: { title: string; onCl
 }
 
 function Err({ msg }: { msg: string }) {
-  return <div className="mb-3 p-2 bg-brand-red-pale text-brand-red text-sm rounded">{msg}</div>;
+  return <div className="mb-3 p-2 bg-brand-blue-pale text-brand-blue text-sm rounded">{msg}</div>;
 }
 
 function FormActions({ loading, onClose }: { loading: boolean; onClose: () => void }) {

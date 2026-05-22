@@ -127,7 +127,7 @@ export default function PerformanceView({ metrics, isLeadership, currentUserName
             <tbody>
               {sorted.map((m: any, i: number) => {
                 const initials = m.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
-                const onTimeColor = m.on_time_completion_rate >= 80 ? 'text-green-700' : m.on_time_completion_rate >= 60 ? 'text-yellow-700' : 'text-brand-red';
+                const onTimeColor = m.on_time_completion_rate >= 80 ? 'text-green-700' : m.on_time_completion_rate >= 60 ? 'text-yellow-700' : 'text-brand-blue';
                 return (
                   <tr key={m.user_id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-4 py-3">
@@ -137,7 +137,7 @@ export default function PerformanceView({ metrics, isLeadership, currentUserName
                             i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : 'text-orange-600'
                           } />
                         )}
-                        <div className="w-8 h-8 rounded-full bg-brand-red text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
                           {initials}
                         </div>
                         <div className="min-w-0">
@@ -149,7 +149,7 @@ export default function PerformanceView({ metrics, isLeadership, currentUserName
                     <td className="px-4 py-3"><span className="font-bold text-green-700">{m.completed_tasks}</span></td>
                     <td className="px-4 py-3 text-gray-700">{m.in_progress_tasks}</td>
                     <td className="px-4 py-3">
-                      <span className={`font-bold ${m.overdue_tasks > 0 ? 'text-brand-red' : 'text-gray-400'}`}>
+                      <span className={`font-bold ${m.overdue_tasks > 0 ? 'text-brand-blue' : 'text-gray-400'}`}>
                         {m.overdue_tasks}
                       </span>
                     </td>
@@ -161,7 +161,7 @@ export default function PerformanceView({ metrics, isLeadership, currentUserName
                           <div
                             className={`h-full ${
                               m.on_time_completion_rate >= 80 ? 'bg-green-500' :
-                              m.on_time_completion_rate >= 60 ? 'bg-yellow-500' : 'bg-brand-red'
+                              m.on_time_completion_rate >= 60 ? 'bg-yellow-500' : 'bg-brand-blue'
                             }`}
                             style={{ width: `${m.on_time_completion_rate}%` }}
                           />
@@ -202,7 +202,7 @@ export default function PerformanceView({ metrics, isLeadership, currentUserName
 
 function KPI({ label, value, icon: Icon, color = 'gray' }: any) {
   const colors: any = {
-    red: 'bg-brand-red-pale text-brand-red',
+    red: 'bg-brand-blue-pale text-brand-blue',
     green: 'bg-green-50 text-green-700',
     yellow: 'bg-yellow-50 text-yellow-700',
     blue: 'bg-blue-50 text-blue-700',
@@ -229,7 +229,7 @@ function SortHeader({ label, sortKey, current, dir, onClick }: any) {
     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-600">
       <button
         onClick={() => onClick(sortKey)}
-        className={`flex items-center gap-1 hover:text-brand-red transition-colors ${active ? 'text-brand-red' : ''}`}
+        className={`flex items-center gap-1 hover:text-brand-blue transition-colors ${active ? 'text-brand-blue' : ''}`}
       >
         {label}
         <ArrowUpDown size={11} className={active ? '' : 'opacity-40'} />

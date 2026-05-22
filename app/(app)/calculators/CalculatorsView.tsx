@@ -21,8 +21,8 @@ export default function CalculatorsView({ recentCalcs }: any) {
     <>
       <div className="card p-4 sm:p-6 mb-6">
         <div className="flex items-start gap-3">
-          <div className="p-2 bg-brand-red-pale rounded-md flex-shrink-0">
-            <Calculator size={20} className="text-brand-red" />
+          <div className="p-2 bg-brand-blue-pale rounded-md flex-shrink-0">
+            <Calculator size={20} className="text-brand-blue" />
           </div>
           <div>
             <h2 className="font-condensed text-xl sm:text-2xl font-black uppercase">Client Calculators</h2>
@@ -76,7 +76,7 @@ export default function CalculatorsView({ recentCalcs }: any) {
                           <span className={`font-bold ${
                             c.dti_ratio < 36 ? 'text-green-700' :
                             c.dti_ratio < 43 ? 'text-yellow-700' :
-                            'text-brand-red'
+                            'text-brand-blue'
                           }`}>{Number(c.dti_ratio).toFixed(1)}%</span>
                         ) : '—'}
                       </td>
@@ -98,7 +98,7 @@ export default function CalculatorsView({ recentCalcs }: any) {
                       <td className="px-4 py-3">
                         <button
                           onClick={() => deleteCalc(c.id)}
-                          className="p-1.5 hover:bg-red-50 text-brand-red rounded transition-colors"
+                          className="p-1.5 hover:bg-red-50 text-brand-blue rounded transition-colors"
                           title="Delete"
                         >
                           <Trash2 size={12} />
@@ -121,7 +121,7 @@ function TabButton({ active, onClick, icon: Icon, children }: any) {
     <button
       onClick={onClick}
       className={`flex items-center gap-2 px-4 py-3 text-sm font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
-        active ? 'border-brand-red text-brand-red' : 'border-transparent text-gray-500 hover:text-brand-ink'
+        active ? 'border-brand-blue text-brand-blue' : 'border-transparent text-gray-500 hover:text-brand-ink'
       }`}
     >
       <Icon size={14} /> {children}

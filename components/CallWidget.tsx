@@ -897,7 +897,7 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
             )}
             <div className="flex items-center gap-3">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-                state === 'ringing' ? 'bg-green-500 animate-pulse' : 'bg-brand-red'
+                state === 'ringing' ? 'bg-green-500 animate-pulse' : 'bg-brand-blue'
               }`}>
                 {state === 'ringing' ? <PhoneCall size={20} /> : (
                   (callInfo?.name || callInfo?.phone || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -931,7 +931,7 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
           </div>
 
           {permissionError && (
-            <div className="px-4 py-2 bg-brand-red-pale text-brand-red text-xs">{permissionError}</div>
+            <div className="px-4 py-2 bg-brand-blue-pale text-brand-blue text-xs">{permissionError}</div>
           )}
 
           {/* Keypad (toggle) */}
@@ -959,7 +959,7 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
                 <button
                   type="button"
                   onClick={reject}
-                  className="w-14 h-14 rounded-full bg-brand-red text-white flex items-center justify-center hover:bg-brand-red-dark transition-colors"
+                  className="w-14 h-14 rounded-full bg-brand-blue text-white flex items-center justify-center hover:bg-brand-blue-dark transition-colors"
                   title="Decline"
                 >
                   <PhoneOff size={18} />
@@ -981,7 +981,7 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
                   type="button"
                   onClick={toggleMute}
                   className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-                    muted ? 'bg-brand-red text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    muted ? 'bg-brand-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                   title={muted ? 'Unmute' : 'Mute'}
                 >
@@ -1022,7 +1022,7 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
                     <button
                       type="button"
                       onClick={hangup}
-                      className="w-12 h-12 rounded-full bg-brand-red text-white flex items-center justify-center hover:bg-brand-red-dark transition-colors"
+                      className="w-12 h-12 rounded-full bg-brand-blue text-white flex items-center justify-center hover:bg-brand-blue-dark transition-colors"
                       title="Hang up — drops you AND the consult; customer stays on hold until they hang up"
                     >
                       <PhoneOff size={18} />
@@ -1032,7 +1032,7 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
                   <button
                     type="button"
                     onClick={hangup}
-                    className="w-14 h-14 rounded-full bg-brand-red text-white flex items-center justify-center hover:bg-brand-red-dark transition-colors"
+                    className="w-14 h-14 rounded-full bg-brand-blue text-white flex items-center justify-center hover:bg-brand-blue-dark transition-colors"
                     title="Hang up"
                   >
                     <PhoneOff size={18} />
@@ -1045,7 +1045,7 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
               <button
                 type="button"
                 onClick={hangup}
-                className="w-14 h-14 rounded-full bg-brand-red text-white flex items-center justify-center hover:bg-brand-red-dark transition-colors"
+                className="w-14 h-14 rounded-full bg-brand-blue text-white flex items-center justify-center hover:bg-brand-blue-dark transition-colors"
                 title="Cancel"
               >
                 <PhoneOff size={18} />
@@ -1088,7 +1088,7 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
         <button
           type="button"
           onClick={() => setDialerOpen(true)}
-          className="fixed bottom-4 right-4 z-40 w-14 h-14 rounded-full bg-brand-red text-white flex items-center justify-center shadow-2xl hover:bg-brand-red-dark transition-all hover:scale-105"
+          className="fixed bottom-4 right-4 z-40 w-14 h-14 rounded-full bg-brand-blue text-white flex items-center justify-center shadow-2xl hover:bg-brand-blue-dark transition-all hover:scale-105"
           title="Open dialer"
           aria-label="Open dialer"
         >
@@ -1149,7 +1149,7 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
             </div>
           )}
           {permissionError && (
-            <div className="px-4 py-2 bg-brand-red-pale text-brand-red text-xs flex items-center justify-between gap-2">
+            <div className="px-4 py-2 bg-brand-blue-pale text-brand-blue text-xs flex items-center justify-between gap-2">
               <span>{permissionError}</span>
               <button
                 type="button"
@@ -1169,7 +1169,7 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
               type="button"
               onClick={resetDevice}
               disabled={resetting}
-              className="w-full text-[10px] uppercase tracking-widest text-gray-400 hover:text-brand-red font-bold py-1 disabled:opacity-50"
+              className="w-full text-[10px] uppercase tracking-widest text-gray-400 hover:text-brand-blue font-bold py-1 disabled:opacity-50"
               title="Rebuild the Voice SDK device — use if calls fail after a transfer"
             >
               {resetting ? 'Resetting…' : 'Reset phone (if calls fail after transfer)'}
@@ -1183,7 +1183,7 @@ export default function CallWidget({ user, canTransfer = false }: WidgetProps) {
               value={dialNumber}
               onChange={(e) => setDialNumber(e.target.value.replace(/[^+\d]/g, ''))}
               placeholder="+1 555 555 1234"
-              className="w-full text-center text-2xl font-condensed font-black tracking-wider border-b-2 border-gray-200 focus:border-brand-red focus:outline-none py-2 bg-transparent"
+              className="w-full text-center text-2xl font-condensed font-black tracking-wider border-b-2 border-gray-200 focus:border-brand-blue focus:outline-none py-2 bg-transparent"
               inputMode="tel"
             />
           </div>

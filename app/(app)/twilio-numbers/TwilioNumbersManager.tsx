@@ -55,8 +55,8 @@ export default function TwilioNumbersManager({ twilioConfigured, twilioNumbers, 
     <>
       <div className="card p-4 sm:p-6 mb-6">
         <div className="flex items-start gap-3">
-          <div className="p-2 bg-brand-red-pale rounded-md flex-shrink-0">
-            <Phone size={20} className="text-brand-red" />
+          <div className="p-2 bg-brand-blue-pale rounded-md flex-shrink-0">
+            <Phone size={20} className="text-brand-blue" />
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="font-condensed text-xl sm:text-2xl font-black uppercase">Twilio Number Configuration</h2>
@@ -80,7 +80,7 @@ export default function TwilioNumbersManager({ twilioConfigured, twilioNumbers, 
       )}
 
       {error && (
-        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-red-pale border border-brand-red/20 rounded-md text-brand-red text-sm">
+        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-blue-pale border border-brand-blue/20 rounded-md text-brand-blue text-sm">
           <AlertCircle size={16} /> {error}
         </div>
       )}
@@ -140,7 +140,7 @@ export default function TwilioNumbersManager({ twilioConfigured, twilioNumbers, 
                       <tr key={u.id} className="border-b border-gray-100">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-brand-red text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
                               {initials}
                             </div>
                             <div className="min-w-0">
@@ -178,7 +178,7 @@ export default function TwilioNumbersManager({ twilioConfigured, twilioNumbers, 
                         <td className="px-4 py-3">
                           {isEditing ? (
                             <div className="flex gap-1">
-                              <button type="button" onClick={() => assignNumber(u.id, editNumber || null, editLabel || null)} disabled={assigning === u.id} className="p-1.5 bg-brand-red text-white rounded hover:bg-brand-red-dark disabled:opacity-50">
+                              <button type="button" onClick={() => assignNumber(u.id, editNumber || null, editLabel || null)} disabled={assigning === u.id} className="p-1.5 bg-brand-blue text-white rounded hover:bg-brand-blue-dark disabled:opacity-50">
                                 <Save size={12} />
                               </button>
                               <button type="button" onClick={() => setEditingUser(null)} className="p-1.5 border border-gray-300 rounded hover:bg-gray-50">
@@ -186,7 +186,7 @@ export default function TwilioNumbersManager({ twilioConfigured, twilioNumbers, 
                               </button>
                             </div>
                           ) : (
-                            <button type="button" onClick={() => startEdit(u)} className="text-xs font-bold uppercase tracking-wider text-brand-red hover:underline">
+                            <button type="button" onClick={() => startEdit(u)} className="text-xs font-bold uppercase tracking-wider text-brand-blue hover:underline">
                               Edit
                             </button>
                           )}
@@ -293,7 +293,7 @@ function InboundRoutingTab({ twilioNumbers, users, routing, appUrl, onSaved }: a
       </div>
 
       {error && (
-        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-red-pale border border-brand-red/20 rounded-md text-brand-red text-sm">
+        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-blue-pale border border-brand-blue/20 rounded-md text-brand-blue text-sm">
           <AlertCircle size={16} /> {error}
         </div>
       )}
@@ -312,7 +312,7 @@ function InboundRoutingTab({ twilioNumbers, users, routing, appUrl, onSaved }: a
                   <div className="text-xs text-gray-500">{n.friendlyName}</div>
                 </div>
                 {!isEditing && (
-                  <button type="button" onClick={() => startEdit(n.phoneNumber)} className="text-xs font-bold uppercase tracking-wider text-brand-red hover:underline">
+                  <button type="button" onClick={() => startEdit(n.phoneNumber)} className="text-xs font-bold uppercase tracking-wider text-brand-blue hover:underline">
                     Configure
                   </button>
                 )}
@@ -393,7 +393,7 @@ function InboundRoutingTab({ twilioNumbers, users, routing, appUrl, onSaved }: a
 function TabBtn({ active, onClick, children }: any) {
   return (
     <button type="button" onClick={onClick} className={`px-4 py-3 text-sm font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
-      active ? 'border-brand-red text-brand-red' : 'border-transparent text-gray-500 hover:text-brand-ink'
+      active ? 'border-brand-blue text-brand-blue' : 'border-transparent text-gray-500 hover:text-brand-ink'
     }`}>
       {children}
     </button>
@@ -427,9 +427,9 @@ function ModeBtn({ label, value, current, onClick, desc }: any) {
   const active = current === value;
   return (
     <button type="button" onClick={onClick} className={`p-3 text-left border-2 rounded-md transition-colors ${
-      active ? 'border-brand-red bg-brand-red-pale' : 'border-gray-200 hover:border-gray-300'
+      active ? 'border-brand-blue bg-brand-blue-pale' : 'border-gray-200 hover:border-gray-300'
     }`}>
-      <div className={`font-bold text-sm ${active ? 'text-brand-red' : 'text-gray-800'}`}>{label}</div>
+      <div className={`font-bold text-sm ${active ? 'text-brand-blue' : 'text-gray-800'}`}>{label}</div>
       <div className="text-[11px] text-gray-500 mt-0.5">{desc}</div>
     </button>
   );

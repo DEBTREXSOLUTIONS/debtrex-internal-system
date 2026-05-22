@@ -82,7 +82,7 @@ export default function LeadEntryForm() {
       <div className="card p-4 sm:p-6 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="font-condensed text-xl sm:text-2xl font-black uppercase flex items-center gap-2">
-            <UserPlus size={22} className="text-brand-red" /> Add Leads
+            <UserPlus size={22} className="text-brand-blue" /> Add Leads
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Fast entry — the form clears and refocuses after every save.
@@ -104,8 +104,8 @@ export default function LeadEntryForm() {
               onClick={() => pickType('client')}
               className={`py-2.5 rounded-md font-bold uppercase tracking-wide text-sm border-2 transition-colors ${
                 leadType === 'client'
-                  ? 'bg-brand-red text-white border-brand-red'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-brand-red'
+                  ? 'bg-brand-blue text-white border-brand-blue'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-brand-blue'
               }`}
             >
               Client
@@ -126,7 +126,7 @@ export default function LeadEntryForm() {
 
         <form onSubmit={submit} className="space-y-3">
           {error && (
-            <div className="p-2 bg-brand-red-pale text-brand-red text-sm rounded flex items-center gap-2">
+            <div className="p-2 bg-brand-blue-pale text-brand-blue text-sm rounded flex items-center gap-2">
               <AlertCircle size={14} /> {error}
             </div>
           )}
@@ -256,7 +256,7 @@ export default function LeadEntryForm() {
                 <span className="font-semibold truncate flex-shrink-0 max-w-[40%]">{lead.name}</span>
                 <span
                   className={`badge flex-shrink-0 ${
-                    lead.lead_type === 'business' ? 'badge-gray' : 'badge-red'
+                    lead.lead_type === 'business' ? 'badge-gray' : 'badge-blue'
                   }`}
                 >
                   {lead.lead_type}

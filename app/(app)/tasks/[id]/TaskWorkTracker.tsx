@@ -160,7 +160,7 @@ export default function TaskWorkTracker({ task, initialUpdates, initialNotes, cu
           {canUpdate && task.status !== 'completed' && (
             <div className="card p-6">
               <h3 className="font-condensed text-lg font-black uppercase mb-3 flex items-center gap-2">
-                <Send size={14} className="text-brand-red" /> Post Work Update
+                <Send size={14} className="text-brand-blue" /> Post Work Update
               </h3>
               <textarea
                 value={updateText}
@@ -199,7 +199,7 @@ export default function TaskWorkTracker({ task, initialUpdates, initialNotes, cu
               <div className="space-y-4">
                 {initialUpdates.map((update: any) => (
                   <div key={update.id} className="flex gap-3 fade-in">
-                    <div className="w-8 h-8 rounded-full bg-brand-red text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
                       {update.user?.full_name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                     </div>
                     <div className="flex-1">
@@ -215,7 +215,7 @@ export default function TaskWorkTracker({ task, initialUpdates, initialNotes, cu
                         </div>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{update.update_text}</p>
                         {update.hours_worked && (
-                          <div className="mt-2 text-xs text-brand-red font-semibold">
+                          <div className="mt-2 text-xs text-brand-blue font-semibold">
                             <Clock size={10} className="inline mr-1" />
                             {update.hours_worked} hrs
                           </div>
@@ -233,7 +233,7 @@ export default function TaskWorkTracker({ task, initialUpdates, initialNotes, cu
         <div className="space-y-6">
           <div className="card p-6">
             <h3 className="font-condensed text-lg font-black uppercase mb-3 flex items-center gap-2">
-              <FileText size={14} className="text-brand-red" /> Notes
+              <FileText size={14} className="text-brand-blue" /> Notes
             </h3>
             <textarea
               value={noteText}
@@ -253,7 +253,7 @@ export default function TaskWorkTracker({ task, initialUpdates, initialNotes, cu
             {initialNotes.length > 0 && (
               <div className="mt-4 space-y-3">
                 {initialNotes.map((note: any) => (
-                  <div key={note.id} className="text-sm border-l-2 border-brand-red pl-3 py-1">
+                  <div key={note.id} className="text-sm border-l-2 border-brand-blue pl-3 py-1">
                     <div className="text-gray-700">{note.note}</div>
                     <div className="text-[11px] text-gray-400 mt-1">
                       {note.user?.full_name} • {new Date(note.created_at).toLocaleDateString()}
@@ -266,7 +266,7 @@ export default function TaskWorkTracker({ task, initialUpdates, initialNotes, cu
 
           {/* Total Hours */}
           {initialUpdates.length > 0 && (
-            <div className="card p-6 bg-brand-red text-white">
+            <div className="card p-6 bg-brand-blue text-white">
               <div className="text-xs uppercase tracking-widest font-semibold opacity-80">Total Hours Logged</div>
               <div className="font-condensed text-4xl font-black mt-1">
                 {initialUpdates.reduce((sum: number, u: any) => sum + (parseFloat(u.hours_worked) || 0), 0).toFixed(2)}
@@ -286,7 +286,7 @@ function Detail({ icon: Icon, label, value, highlight }: any) {
       <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1 flex items-center gap-1">
         <Icon size={11} /> {label}
       </div>
-      <div className={`text-sm font-semibold ${highlight ? 'text-brand-red' : 'text-brand-ink'}`}>
+      <div className={`text-sm font-semibold ${highlight ? 'text-brand-blue' : 'text-brand-ink'}`}>
         {value || '—'}
       </div>
     </div>

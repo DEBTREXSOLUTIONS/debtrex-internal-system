@@ -96,18 +96,18 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
           {canApprove && pendingReqCount > 0 && (
             <Link
               href="/tasks/requests"
-              className="mb-6 flex items-center justify-between gap-3 p-4 bg-brand-red-pale border border-brand-red/30 rounded-md hover:border-brand-red transition-colors"
+              className="mb-6 flex items-center justify-between gap-3 p-4 bg-brand-blue-pale border border-brand-blue/30 rounded-md hover:border-brand-blue transition-colors"
             >
               <div className="flex items-center gap-3">
-                <Inbox size={18} className="text-brand-red" />
+                <Inbox size={18} className="text-brand-blue" />
                 <div>
-                  <div className="font-semibold text-sm text-brand-red">
+                  <div className="font-semibold text-sm text-brand-blue">
                     {pendingReqCount} pending task request{pendingReqCount === 1 ? '' : 's'}
                   </div>
                   <div className="text-xs text-gray-600">Click to review and approve or deny.</div>
                 </div>
               </div>
-              <span className="text-xs font-bold uppercase tracking-wider text-brand-red">Open inbox →</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-brand-blue">Open inbox →</span>
             </Link>
           )}
 
@@ -144,7 +144,7 @@ function FilterTab({ href, active, children }: any) {
     <Link
       href={href}
       className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${
-        active ? 'bg-brand-red text-white' : 'text-gray-600 hover:bg-gray-100'
+        active ? 'bg-brand-blue text-white' : 'text-gray-600 hover:bg-gray-100'
       }`}
     >
       {children}
@@ -172,7 +172,7 @@ function TaskListCard({ task }: any) {
   return (
     <Link
       href={`/tasks/${task.id}`}
-      className="card p-5 hover:border-brand-red transition-all hover:shadow-md fade-in"
+      className="card p-5 hover:border-brand-blue transition-all hover:shadow-md fade-in"
     >
       <div className="flex items-start justify-between mb-3">
         <span className={`badge ${priorityColors[task.priority] || 'badge-gray'}`}>
@@ -188,7 +188,7 @@ function TaskListCard({ task }: any) {
       )}
       <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-brand-red text-white flex items-center justify-center text-[10px] font-bold">
+          <div className="w-6 h-6 rounded-full bg-brand-blue text-white flex items-center justify-center text-[10px] font-bold">
             {task.assigned_to_profile?.full_name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
           </div>
           <span className="text-gray-700 font-semibold truncate">
@@ -196,7 +196,7 @@ function TaskListCard({ task }: any) {
           </span>
         </div>
         {task.deadline && (
-          <span className={`flex items-center gap-1 ${isOverdue ? 'text-brand-red font-bold' : 'text-gray-500'}`}>
+          <span className={`flex items-center gap-1 ${isOverdue ? 'text-brand-blue font-bold' : 'text-gray-500'}`}>
             <Clock size={11} />
             {new Date(task.deadline).toLocaleDateString()}
           </span>

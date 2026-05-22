@@ -134,7 +134,7 @@ export default function BudgetCalculator({ onSaved }: any) {
       {/* Inputs */}
       <div className="lg:col-span-2 space-y-6">
         {error && (
-          <div className="flex items-center gap-2 p-3 bg-brand-red-pale border border-brand-red/20 rounded-md text-brand-red text-sm">
+          <div className="flex items-center gap-2 p-3 bg-brand-blue-pale border border-brand-blue/20 rounded-md text-brand-blue text-sm">
             <AlertCircle size={16} /> {error}
           </div>
         )}
@@ -192,7 +192,7 @@ export default function BudgetCalculator({ onSaved }: any) {
                     className="input pl-6"
                   />
                 </div>
-                <button onClick={() => removeExpense(e.id)} className="p-2 hover:bg-red-50 text-brand-red rounded transition-colors flex-shrink-0">
+                <button onClick={() => removeExpense(e.id)} className="p-2 hover:bg-red-50 text-brand-blue rounded transition-colors flex-shrink-0">
                   <X size={14} />
                 </button>
               </div>
@@ -231,7 +231,7 @@ export default function BudgetCalculator({ onSaved }: any) {
                     className="input pl-6"
                   />
                 </div>
-                <button onClick={() => removeDebt(d.id)} className="p-2 hover:bg-red-50 text-brand-red rounded transition-colors flex-shrink-0">
+                <button onClick={() => removeDebt(d.id)} className="p-2 hover:bg-red-50 text-brand-blue rounded transition-colors flex-shrink-0">
                   <X size={14} />
                 </button>
               </div>
@@ -239,7 +239,7 @@ export default function BudgetCalculator({ onSaved }: any) {
           </div>
           <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
             <span className="text-sm font-semibold text-gray-700">Total Debt Payments</span>
-            <span className="font-condensed text-xl font-black text-brand-red">{fmt(totals.debtTotal)}</span>
+            <span className="font-condensed text-xl font-black text-brand-blue">{fmt(totals.debtTotal)}</span>
           </div>
         </div>
 
@@ -276,7 +276,7 @@ export default function BudgetCalculator({ onSaved }: any) {
       <div className="space-y-4">
         <div className="bg-brand-ink text-white p-5 rounded-lg sticky top-20">
           <div className="text-xs uppercase tracking-widest opacity-70 mb-1">Disposable Income</div>
-          <div className={`font-condensed text-4xl font-black ${totals.disposable < 0 ? 'text-brand-red' : 'text-white'}`}>
+          <div className={`font-condensed text-4xl font-black ${totals.disposable < 0 ? 'text-brand-blue' : 'text-white'}`}>
             {fmt(totals.disposable)}
           </div>
           <div className="text-xs opacity-70 mt-1">per month after expenses & debt</div>
@@ -291,7 +291,7 @@ export default function BudgetCalculator({ onSaved }: any) {
             <div className="text-xs uppercase tracking-widest opacity-70 mb-2">Debt Ratio</div>
             <div className={`font-condensed text-2xl font-black ${
               totals.debtRatio < 36 ? 'text-green-400' :
-              totals.debtRatio < 43 ? 'text-yellow-400' : 'text-brand-red'
+              totals.debtRatio < 43 ? 'text-yellow-400' : 'text-brand-blue'
             }`}>
               {totals.debtRatio.toFixed(1)}%
             </div>
@@ -299,7 +299,7 @@ export default function BudgetCalculator({ onSaved }: any) {
 
           {totals.program && (
             <div className="mt-5 pt-5 border-t border-white/10">
-              <div className="text-xs uppercase tracking-widest text-brand-red font-bold mb-1">Recommended</div>
+              <div className="text-xs uppercase tracking-widest text-brand-blue font-bold mb-1">Recommended</div>
               <div className="font-bold text-base">{totals.program}</div>
               {totals.estPayment != null && totals.estPayment > 0 && (
                 <div className="text-sm opacity-80 mt-2">

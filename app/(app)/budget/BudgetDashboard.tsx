@@ -85,13 +85,13 @@ export default function BudgetDashboard({ user, stats, expenses, income, budgets
                   <div key={cat}>
                     <div className="flex justify-between text-sm mb-1">
                       <span className="font-semibold">{cat}</span>
-                      <span className={over ? 'text-brand-red font-bold' : 'text-gray-700'}>
+                      <span className={over ? 'text-brand-blue font-bold' : 'text-gray-700'}>
                         {fmt(amt)}{budget > 0 && ` / ${fmt(budget)}`}
                       </span>
                     </div>
                     <div className="h-2 bg-gray-100 rounded overflow-hidden">
                       <div
-                        className={`h-full ${over ? 'bg-brand-red' : 'bg-brand-ink'}`}
+                        className={`h-full ${over ? 'bg-brand-blue' : 'bg-brand-ink'}`}
                         style={{ width: `${Math.min(pct, 100)}%` }}
                       />
                     </div>
@@ -157,10 +157,10 @@ export default function BudgetDashboard({ user, stats, expenses, income, budgets
 
 function KPI({ icon: Icon, label, value, color, subtext }: any) {
   const colors: any = {
-    red: 'bg-brand-red text-white',
+    red: 'bg-brand-blue text-white',
     gray: 'bg-white border border-gray-200',
   };
-  const iconBg = color === 'red' ? 'bg-white/20 text-white' : 'bg-brand-red-pale text-brand-red';
+  const iconBg = color === 'red' ? 'bg-white/20 text-white' : 'bg-brand-blue-pale text-brand-blue';
   return (
     <div className={`p-5 rounded-lg ${colors[color]}`}>
       <div className={`inline-flex p-2 rounded-md ${iconBg} mb-3`}>
@@ -205,7 +205,7 @@ function PendingExpenseRow({ expense, onUpdate }: any) {
           <button onClick={() => decide('approved')} disabled={loading} className="px-2 py-1 bg-green-100 hover:bg-green-200 text-green-700 rounded text-xs font-bold disabled:opacity-50">
             <Check size={11} className="inline" /> Approve
           </button>
-          <button onClick={() => decide('rejected')} disabled={loading} className="px-2 py-1 bg-red-100 hover:bg-red-200 text-brand-red rounded text-xs font-bold disabled:opacity-50">
+          <button onClick={() => decide('rejected')} disabled={loading} className="px-2 py-1 bg-red-100 hover:bg-red-200 text-brand-blue rounded text-xs font-bold disabled:opacity-50">
             <Ban size={11} className="inline" /> Reject
           </button>
         </div>
@@ -241,9 +241,9 @@ function ExpenseModal({ onClose, onSaved }: any) {
       <div className="bg-white rounded-lg max-w-md w-full p-6 fade-in">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-condensed text-2xl font-black uppercase">Record Expense</h3>
-          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
+          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-blue" /></button>
         </div>
-        {error && <div className="mb-3 p-2 bg-brand-red-pale text-brand-red text-sm rounded flex items-center gap-2"><AlertCircle size={14}/>{error}</div>}
+        {error && <div className="mb-3 p-2 bg-brand-blue-pale text-brand-blue text-sm rounded flex items-center gap-2"><AlertCircle size={14}/>{error}</div>}
         <form onSubmit={submit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div><label className="label">Amount *</label>
@@ -298,7 +298,7 @@ function IncomeModal({ onClose, onSaved }: any) {
       <div className="bg-white rounded-lg max-w-md w-full p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-condensed text-2xl font-black uppercase">Record Income</h3>
-          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
+          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-blue" /></button>
         </div>
         <form onSubmit={submit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">

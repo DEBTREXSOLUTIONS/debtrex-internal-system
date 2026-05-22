@@ -5,10 +5,11 @@
 @tailwind utilities;
 
 :root {
-  --brand-red: #E02020;
-  --brand-red-dark: #B81414;
-  --brand-red-pale: #FFF0F0;
-  --ink: #111111;
+  --brand-blue: #1C75BC;
+  --brand-blue-dark: #14507F;
+  --brand-blue-light: #29ABE2;
+  --brand-blue-pale: #EAF4FB;
+  --ink: #0F1B3C;
 }
 
 * { box-sizing: border-box; }
@@ -31,64 +32,69 @@ body {
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: #f5f5f5; }
 ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 5px; }
-::-webkit-scrollbar-thumb:hover { background: var(--brand-red); }
+::-webkit-scrollbar-thumb:hover { background: var(--brand-blue); }
 
-/* Buttons — minimum 44px touch target on mobile (Apple/Google guidelines) */
-.btn-primary {
-  @apply inline-flex items-center justify-center gap-2 bg-brand-red text-white font-semibold px-4 sm:px-5 py-2.5 rounded-md hover:bg-brand-red-dark transition-all shadow-sm hover:shadow-red text-sm uppercase tracking-wide;
-  min-height: 42px;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.btn-outline {
-  @apply inline-flex items-center justify-center gap-2 border-2 border-brand-ink text-brand-ink font-semibold px-4 sm:px-5 py-2 rounded-md hover:border-brand-red hover:text-brand-red transition-all text-sm uppercase tracking-wide;
-  min-height: 42px;
-}
+/* Custom classes live in the components layer so utility classes
+   (e.g. `pl-9` for an input icon) always override @apply'd padding. */
+@layer components {
+  /* Buttons — minimum 44px touch target on mobile (Apple/Google guidelines) */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-brand-blue text-white font-semibold px-4 sm:px-5 py-2.5 rounded-md hover:bg-brand-blue-dark transition-all shadow-sm hover:shadow-blue text-sm uppercase tracking-wide;
+    min-height: 42px;
+  }
 
-.btn-ghost {
-  @apply inline-flex items-center gap-2 text-gray-600 hover:text-brand-red font-medium transition-colors text-sm;
-  min-height: 36px;
-}
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 border-2 border-brand-ink text-brand-ink font-semibold px-4 sm:px-5 py-2 rounded-md hover:border-brand-blue hover:text-brand-blue transition-all text-sm uppercase tracking-wide;
+    min-height: 42px;
+  }
 
-.card {
-  @apply bg-white rounded-lg border border-gray-200 shadow-sm;
-}
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 text-gray-600 hover:text-brand-blue font-medium transition-colors text-sm;
+    min-height: 36px;
+  }
 
-/* Inputs — 16px font on mobile prevents iOS zoom */
-.input {
-  @apply w-full px-3 py-2 border-2 border-gray-200 rounded-md focus:border-brand-red focus:outline-none transition-colors bg-white;
-  font-size: 16px;
-  min-height: 42px;
+  .card {
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm;
+  }
+
+  /* Inputs — 16px font on mobile prevents iOS zoom */
+  .input {
+    @apply w-full px-3 py-2 border-2 border-gray-200 rounded-md focus:border-brand-blue focus:outline-none transition-colors bg-white;
+    font-size: 16px;
+    min-height: 42px;
+  }
+
+  .label {
+    @apply block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5;
+  }
+
+  .badge { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] sm:text-xs font-bold uppercase tracking-wide; }
+  .badge-red { @apply bg-red-50 text-red-600 border border-red-200; }
+  .badge-gray { @apply bg-gray-100 text-gray-700 border border-gray-200; }
+  .badge-green { @apply bg-green-50 text-green-700 border border-green-200; }
+  .badge-yellow { @apply bg-yellow-50 text-yellow-700 border border-yellow-200; }
+  .badge-blue { @apply bg-brand-blue-pale text-brand-blue border border-brand-blue/20; }
+
+  .heading-condensed { @apply font-condensed font-black uppercase tracking-tight; }
+
+  /* Tables that need to scroll horizontally on mobile */
+  .table-scroll {
+    @apply overflow-x-auto -mx-4 sm:mx-0;
+  }
+  .table-scroll table {
+    @apply min-w-full;
+  }
 }
 
 @media (min-width: 640px) {
   .input { font-size: 14px; min-height: 38px; }
 }
 
-.label {
-  @apply block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5;
-}
-
-.badge { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] sm:text-xs font-bold uppercase tracking-wide; }
-.badge-red { @apply bg-brand-red-pale text-brand-red border border-brand-red/20; }
-.badge-gray { @apply bg-gray-100 text-gray-700 border border-gray-200; }
-.badge-green { @apply bg-green-50 text-green-700 border border-green-200; }
-.badge-yellow { @apply bg-yellow-50 text-yellow-700 border border-yellow-200; }
-.badge-blue { @apply bg-blue-50 text-blue-700 border border-blue-200; }
-
-.heading-condensed { @apply font-condensed font-black uppercase tracking-tight; }
-
-/* Tables that need to scroll horizontally on mobile */
-.table-scroll {
-  @apply overflow-x-auto -mx-4 sm:mx-0;
-}
-.table-scroll table {
-  @apply min-w-full;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 .fade-in { animation: fadeIn .3s ease-out; }
 
 /* Hide scrollbars on horizontal scrollers, keep accessibility */

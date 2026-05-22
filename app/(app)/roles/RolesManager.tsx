@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Plus, Trash2, Edit3, Save, X, AlertCircle, CheckCircle, Lock, Shield, UserCheck, Users } from 'lucide-react';
 
 const COLORS = [
-  { value: 'red', label: 'Red', class: 'bg-brand-red' },
+  { value: 'red', label: 'Red', class: 'bg-brand-blue' },
   { value: 'blue', label: 'Blue', class: 'bg-blue-500' },
   { value: 'green', label: 'Green', class: 'bg-green-500' },
   { value: 'yellow', label: 'Yellow', class: 'bg-yellow-500' },
@@ -104,7 +104,7 @@ export default function RolesManager({ roles, userCounts }: any) {
           <h2 className="font-condensed text-xl sm:text-2xl font-black uppercase">Roles</h2>
           <p className="text-sm text-gray-500 mt-1">
             Add custom roles for your team. Set their access on the{' '}
-            <Link href="/permissions" className="text-brand-red font-bold">Permissions page</Link>.
+            <Link href="/permissions" className="text-brand-blue font-bold">Permissions page</Link>.
           </p>
         </div>
         <button onClick={startAdd} className="btn-primary self-start sm:self-auto">
@@ -113,7 +113,7 @@ export default function RolesManager({ roles, userCounts }: any) {
       </div>
 
       {error && (
-        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-red-pale border border-brand-red/20 rounded-md text-brand-red text-sm">
+        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-blue-pale border border-brand-blue/20 rounded-md text-brand-blue text-sm">
           <AlertCircle size={16} /> {error}
         </div>
       )}
@@ -125,13 +125,13 @@ export default function RolesManager({ roles, userCounts }: any) {
 
       {/* Add/Edit form */}
       {(showAdd || editing) && (
-        <div className="card p-4 sm:p-6 mb-6 border-brand-red border-2">
+        <div className="card p-4 sm:p-6 mb-6 border-brand-blue border-2">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-condensed text-lg font-black uppercase">
               {editing ? `Edit ${form.label}` : 'New Custom Role'}
             </h3>
             <button onClick={() => { setShowAdd(false); setEditing(null); }}>
-              <X size={18} className="text-gray-400 hover:text-brand-red" />
+              <X size={18} className="text-gray-400 hover:text-brand-blue" />
             </button>
           </div>
 
@@ -219,7 +219,7 @@ export default function RolesManager({ roles, userCounts }: any) {
             <tbody>
               {roles.map((r: any) => {
                 const colorMap: any = {
-                  red: 'bg-brand-red', blue: 'bg-blue-500', green: 'bg-green-500',
+                  red: 'bg-brand-blue', blue: 'bg-blue-500', green: 'bg-green-500',
                   yellow: 'bg-yellow-500', purple: 'bg-purple-500', gray: 'bg-gray-500',
                 };
                 const count = userCounts[r.role_key] || 0;
@@ -257,7 +257,7 @@ export default function RolesManager({ roles, userCounts }: any) {
                             <button
                               onClick={() => deleteRole(r)}
                               disabled={count > 0}
-                              className="p-1.5 hover:bg-red-50 text-brand-red rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                              className="p-1.5 hover:bg-red-50 text-brand-blue rounded disabled:opacity-30 disabled:cursor-not-allowed"
                               title={count > 0 ? 'Cannot delete — users still assigned' : 'Delete'}
                             >
                               <Trash2 size={12} />

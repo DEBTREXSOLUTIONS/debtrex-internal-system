@@ -63,7 +63,7 @@ export default function ExtensionsTab() {
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-      {error && <div className="px-4 py-2 bg-brand-red-pale text-brand-red text-xs">{error}</div>}
+      {error && <div className="px-4 py-2 bg-brand-blue-pale text-brand-blue text-xs">{error}</div>}
       <table className="w-full text-sm">
         <thead className="bg-gray-50 text-[10px] uppercase tracking-widest text-gray-500">
           <tr>
@@ -96,7 +96,7 @@ export default function ExtensionsTab() {
                     onChange={e => setEdits(prev => ({ ...prev, [a.id]: e.target.value.replace(/[^0-9*#]/g, '') }))}
                     placeholder="—"
                     maxLength={8}
-                    className="w-24 px-2 py-1 font-mono text-sm border border-gray-200 rounded focus:outline-none focus:border-brand-red"
+                    className="w-24 px-2 py-1 font-mono text-sm border border-gray-200 rounded focus:outline-none focus:border-brand-blue"
                   />
                 </td>
                 <td className="px-3 py-2.5 text-right">
@@ -107,7 +107,7 @@ export default function ExtensionsTab() {
                       type="button"
                       onClick={() => save(a.id)}
                       disabled={!dirty || saving === a.id}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded bg-brand-red text-white text-[10px] uppercase tracking-wider font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brand-red-dark"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded bg-brand-blue text-white text-[10px] uppercase tracking-wider font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brand-blue-dark"
                     >
                       {saving === a.id ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
                       Save

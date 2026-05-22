@@ -37,7 +37,7 @@ export default function TransferProtocolClient() {
               onClick={() => setTab(t.key)}
               className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 -mb-px flex-shrink-0 ${
                 active
-                  ? 'border-brand-red text-brand-red'
+                  ? 'border-brand-blue text-brand-blue'
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
               title={t.desc}

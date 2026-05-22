@@ -102,13 +102,13 @@ export default function ContactsTab() {
         <button
           type="button"
           onClick={() => setForm({ ...EMPTY })}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-brand-red text-white text-xs font-bold uppercase tracking-wider hover:bg-brand-red-dark"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-brand-blue text-white text-xs font-bold uppercase tracking-wider hover:bg-brand-blue-dark"
         >
           <Plus size={13} /> Add Contact
         </button>
       </div>
 
-      {error && <div className="mb-3 px-3 py-2 bg-brand-red-pale text-brand-red text-xs rounded">{error}</div>}
+      {error && <div className="mb-3 px-3 py-2 bg-brand-blue-pale text-brand-blue text-xs rounded">{error}</div>}
 
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <table className="w-full text-sm">
@@ -158,7 +158,7 @@ export default function ContactsTab() {
                   <button
                     type="button"
                     onClick={() => remove(c.id)}
-                    className="text-gray-500 hover:text-brand-red p-1 ml-1"
+                    className="text-gray-500 hover:text-brand-blue p-1 ml-1"
                     title="Delete"
                   >
                     <Trash2 size={14} />
@@ -183,30 +183,30 @@ export default function ContactsTab() {
               <Field label="Name" required>
                 <input type="text" value={form.name}
                   onChange={e => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded focus:outline-none focus:border-brand-red" />
+                  className="w-full px-3 py-2 border border-gray-200 rounded focus:outline-none focus:border-brand-blue" />
               </Field>
               <Field label="Department">
                 <input type="text" value={form.department}
                   onChange={e => setForm({ ...form, department: e.target.value })}
                   placeholder="e.g. Underwriting, Legal"
-                  className="w-full px-3 py-2 border border-gray-200 rounded focus:outline-none focus:border-brand-red" />
+                  className="w-full px-3 py-2 border border-gray-200 rounded focus:outline-none focus:border-brand-blue" />
               </Field>
               <Field label="Phone (E.164)">
                 <input type="tel" value={form.phone}
                   onChange={e => setForm({ ...form, phone: e.target.value })}
                   placeholder="+15551234567"
-                  className="w-full px-3 py-2 font-mono text-sm border border-gray-200 rounded focus:outline-none focus:border-brand-red" />
+                  className="w-full px-3 py-2 font-mono text-sm border border-gray-200 rounded focus:outline-none focus:border-brand-blue" />
               </Field>
               <Field label="Extension (optional)">
                 <input type="text" value={form.extension}
                   onChange={e => setForm({ ...form, extension: e.target.value.replace(/[^0-9*#]/g, '') })}
                   maxLength={8}
-                  className="w-full px-3 py-2 font-mono text-sm border border-gray-200 rounded focus:outline-none focus:border-brand-red" />
+                  className="w-full px-3 py-2 font-mono text-sm border border-gray-200 rounded focus:outline-none focus:border-brand-blue" />
               </Field>
               <Field label="Linked agent (optional)">
                 <select value={form.profile_id}
                   onChange={e => setForm({ ...form, profile_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded focus:outline-none focus:border-brand-red">
+                  className="w-full px-3 py-2 border border-gray-200 rounded focus:outline-none focus:border-brand-blue">
                   <option value="">— External contact —</option>
                   {agents.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
                 </select>
@@ -215,7 +215,7 @@ export default function ContactsTab() {
                 <textarea value={form.notes}
                   onChange={e => setForm({ ...form, notes: e.target.value })}
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-200 rounded focus:outline-none focus:border-brand-red text-sm" />
+                  className="w-full px-3 py-2 border border-gray-200 rounded focus:outline-none focus:border-brand-blue text-sm" />
               </Field>
             </div>
             <div className="p-3 bg-gray-50 border-t border-gray-200 flex justify-end gap-2">
@@ -224,7 +224,7 @@ export default function ContactsTab() {
                 Cancel
               </button>
               <button type="button" onClick={save} disabled={saving || !form.name.trim()}
-                className="px-4 py-1.5 rounded bg-brand-red text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50 hover:bg-brand-red-dark inline-flex items-center gap-1.5">
+                className="px-4 py-1.5 rounded bg-brand-blue text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50 hover:bg-brand-blue-dark inline-flex items-center gap-1.5">
                 {saving && <Loader2 size={12} className="animate-spin" />}
                 {form.id ? 'Save' : 'Create'}
               </button>
@@ -240,7 +240,7 @@ function Field({ label, required, children }: { label: string; required?: boolea
   return (
     <label className="block">
       <span className="block text-[10px] uppercase tracking-widest font-bold text-gray-500 mb-1">
-        {label}{required && <span className="text-brand-red ml-0.5">*</span>}
+        {label}{required && <span className="text-brand-blue ml-0.5">*</span>}
       </span>
       {children}
     </label>

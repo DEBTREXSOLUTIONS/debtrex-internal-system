@@ -109,13 +109,13 @@ export default function CalendarView({ events, users, currentUser }: any) {
           <div className="bg-white rounded-lg max-w-lg w-full p-6 fade-in">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-condensed text-2xl font-black uppercase">New Event</h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-brand-red">
+              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-brand-blue">
                 <X size={20} />
               </button>
             </div>
 
             {error && (
-              <div className="mb-3 p-2 bg-brand-red-pale border border-brand-red/20 rounded text-brand-red text-sm flex items-center gap-2">
+              <div className="mb-3 p-2 bg-brand-blue-pale border border-brand-blue/20 rounded text-brand-blue text-sm flex items-center gap-2">
                 <AlertCircle size={14} /> {error}
               </div>
             )}

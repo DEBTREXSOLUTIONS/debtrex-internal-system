@@ -91,7 +91,7 @@ export default function CallPopupClient() {
     <div className="min-h-screen bg-brand-ink text-white flex flex-col p-5 select-none">
       <div className="flex items-center justify-between mb-3 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <PhoneCall size={14} className="text-brand-red" />
+          <PhoneCall size={14} className="text-brand-blue" />
           <span className="text-[10px] uppercase tracking-widest font-bold opacity-60">Call Widget</span>
         </div>
         <button
@@ -135,7 +135,7 @@ export default function CallPopupClient() {
           </div>
 
           {call!.permissionError && (
-            <div className="mb-3 px-3 py-2 bg-brand-red-pale text-brand-red text-xs rounded">{call!.permissionError}</div>
+            <div className="mb-3 px-3 py-2 bg-brand-blue-pale text-brand-blue text-xs rounded">{call!.permissionError}</div>
           )}
 
           {showKeypad && s === 'in-call' && (
@@ -159,7 +159,7 @@ export default function CallPopupClient() {
                 <button
                   type="button"
                   onClick={() => send('reject')}
-                  className="w-14 h-14 rounded-full bg-brand-red text-white flex items-center justify-center hover:bg-brand-red-dark"
+                  className="w-14 h-14 rounded-full bg-brand-blue text-white flex items-center justify-center hover:bg-brand-blue-dark"
                   title="Decline"
                 >
                   <PhoneOff size={18} />
@@ -181,7 +181,7 @@ export default function CallPopupClient() {
                   type="button"
                   onClick={() => send('toggle-mute')}
                   className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                    call!.muted ? 'bg-brand-red text-white' : 'bg-white/10 text-white hover:bg-white/20'
+                    call!.muted ? 'bg-brand-blue text-white' : 'bg-white/10 text-white hover:bg-white/20'
                   }`}
                   title={call!.muted ? 'Unmute' : 'Mute'}
                 >
@@ -222,7 +222,7 @@ export default function CallPopupClient() {
                     <button
                       type="button"
                       onClick={() => send('hangup')}
-                      className="w-12 h-12 rounded-full bg-brand-red text-white flex items-center justify-center hover:bg-brand-red-dark"
+                      className="w-12 h-12 rounded-full bg-brand-blue text-white flex items-center justify-center hover:bg-brand-blue-dark"
                       title="Hang up"
                     >
                       <PhoneOff size={18} />
@@ -232,7 +232,7 @@ export default function CallPopupClient() {
                   <button
                     type="button"
                     onClick={() => send('hangup')}
-                    className="w-14 h-14 rounded-full bg-brand-red text-white flex items-center justify-center hover:bg-brand-red-dark"
+                    className="w-14 h-14 rounded-full bg-brand-blue text-white flex items-center justify-center hover:bg-brand-blue-dark"
                     title="Hang up"
                   >
                     <PhoneOff size={18} />
@@ -245,7 +245,7 @@ export default function CallPopupClient() {
               <button
                 type="button"
                 onClick={() => send('hangup')}
-                className="w-14 h-14 rounded-full bg-brand-red text-white flex items-center justify-center hover:bg-brand-red-dark"
+                className="w-14 h-14 rounded-full bg-brand-blue text-white flex items-center justify-center hover:bg-brand-blue-dark"
                 title="Cancel"
               >
                 <PhoneOff size={18} />

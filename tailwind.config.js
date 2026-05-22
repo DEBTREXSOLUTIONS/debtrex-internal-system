@@ -8,12 +8,12 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          red: '#E02020',
-          'red-dark': '#B81414',
-          'red-light': '#FF3B3B',
-          'red-pale': '#FFF0F0',
-          ink: '#111111',
-          'ink-2': '#333333',
+          blue: '#1C75BC',
+          'blue-dark': '#14507F',
+          'blue-light': '#29ABE2',
+          'blue-pale': '#EAF4FB',
+          ink: '#0F1B3C',
+          'ink-2': '#2A3556',
         },
       },
       fontFamily: {
@@ -21,7 +21,7 @@ module.exports = {
         condensed: ['Barlow Condensed', 'sans-serif'],
       },
       boxShadow: {
-        'red': '0 8px 32px rgba(224,32,32,0.22)',
+        'blue': '0 8px 32px rgba(28,117,188,0.28)',
       },
     },
   },

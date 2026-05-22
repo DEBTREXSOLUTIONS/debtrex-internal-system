@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { supabaseAdmin } from '@/lib/supabase';
 import LeadsClient from './LeadsClient';
+import DebtrexBanner from '@/components/DebtrexBanner';
 
 export default async function LeadsPage() {
   const user = await getCurrentUser();
@@ -26,6 +27,7 @@ export default async function LeadsPage() {
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+      <DebtrexBanner subtitle="Leads CRM" />
       <LeadsClient
         initialLeads={leads || []}
         initialTotal={count || 0}

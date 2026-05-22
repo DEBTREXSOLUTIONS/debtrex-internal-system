@@ -70,8 +70,8 @@ export default function PermissionsManager({ matrix: initialMatrix, groups, labe
       {/* Header */}
       <div className="card p-4 sm:p-6 mb-6">
         <div className="flex items-start gap-3">
-          <div className="p-2 bg-brand-red-pale rounded-md flex-shrink-0">
-            <Shield size={20} className="text-brand-red" />
+          <div className="p-2 bg-brand-blue-pale rounded-md flex-shrink-0">
+            <Shield size={20} className="text-brand-blue" />
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="font-condensed text-xl sm:text-2xl font-black uppercase">Role Permissions</h2>
@@ -98,7 +98,7 @@ export default function PermissionsManager({ matrix: initialMatrix, groups, labe
 
       {/* Status messages */}
       {error && (
-        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-red-pale border border-brand-red/20 rounded-md text-brand-red text-sm">
+        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-blue-pale border border-brand-blue/20 rounded-md text-brand-blue text-sm">
           <AlertCircle size={16} /> {error}
         </div>
       )}
@@ -168,7 +168,7 @@ export default function PermissionsManager({ matrix: initialMatrix, groups, labe
                             <button
                               onClick={() => toggleGroup(r.value, group.keys, false)}
                               disabled={allOff}
-                              className="text-[9px] uppercase font-bold tracking-wider text-brand-red hover:bg-red-50 disabled:opacity-30 px-1 rounded"
+                              className="text-[9px] uppercase font-bold tracking-wider text-brand-blue hover:bg-red-50 disabled:opacity-30 px-1 rounded"
                               title="All off"
                             >
                               all off
@@ -194,7 +194,7 @@ export default function PermissionsManager({ matrix: initialMatrix, groups, labe
                               onClick={() => !isLocked && toggle(r.value, key)}
                               disabled={isLocked}
                               className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                                enabled ? 'bg-brand-red' : 'bg-gray-300'
+                                enabled ? 'bg-brand-blue' : 'bg-gray-300'
                               }`}
                               title={isLocked ? 'Cannot disable for top roles' : enabled ? 'On' : 'Off'}
                             >

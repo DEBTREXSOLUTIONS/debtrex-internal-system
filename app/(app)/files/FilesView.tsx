@@ -12,8 +12,8 @@ export default function FilesView({ user, isConnected, files, folderId, fetchErr
   if (!isConnected) {
     return (
       <div className="card p-12 text-center">
-        <div className="inline-flex p-4 bg-brand-red-pale rounded-full mb-4">
-          <Cloud size={32} className="text-brand-red" />
+        <div className="inline-flex p-4 bg-brand-blue-pale rounded-full mb-4">
+          <Cloud size={32} className="text-brand-blue" />
         </div>
         <h2 className="font-condensed text-3xl font-black uppercase mb-2">Connect Google Drive</h2>
         <p className="text-gray-500 max-w-md mx-auto mb-6">
@@ -33,7 +33,7 @@ export default function FilesView({ user, isConnected, files, folderId, fetchErr
   if (fetchError) {
     return (
       <div className="card p-8">
-        <div className="flex items-center gap-2 text-brand-red mb-3">
+        <div className="flex items-center gap-2 text-brand-blue mb-3">
           <AlertCircle size={20} />
           <h3 className="font-condensed text-xl font-black uppercase">Connection Issue</h3>
         </div>
@@ -96,7 +96,7 @@ export default function FilesView({ user, isConnected, files, folderId, fetchErr
       <div className="card p-6 mb-6 flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="font-condensed text-2xl font-black uppercase flex items-center gap-2">
-            <FolderOpen size={20} className="text-brand-red" />
+            <FolderOpen size={20} className="text-brand-blue" />
             {user.full_name}'s Folder
           </h2>
           <p className="text-sm text-gray-500">{files.length} file{files.length !== 1 ? 's' : ''} · synced with Google Drive</p>
@@ -134,7 +134,7 @@ export default function FilesView({ user, isConnected, files, folderId, fetchErr
           {files.map((file: any) => {
             const Icon = getFileIcon(file.mimeType);
             return (
-              <div key={file.id} className="card p-4 hover:border-brand-red transition-colors group">
+              <div key={file.id} className="card p-4 hover:border-brand-blue transition-colors group">
                 <div className="aspect-square bg-gray-50 rounded mb-3 flex items-center justify-center overflow-hidden">
                   {file.thumbnailLink ? (
                     <img src={file.thumbnailLink} alt={file.name} className="w-full h-full object-cover" />
@@ -149,7 +149,7 @@ export default function FilesView({ user, isConnected, files, folderId, fetchErr
                 <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => setViewing(file)}
-                    className="flex-1 px-2 py-1 text-xs font-bold uppercase tracking-wider hover:bg-brand-red hover:text-white rounded transition-colors flex items-center justify-center gap-1"
+                    className="flex-1 px-2 py-1 text-xs font-bold uppercase tracking-wider hover:bg-brand-blue hover:text-white rounded transition-colors flex items-center justify-center gap-1"
                   >
                     <Eye size={11} /> View
                   </button>
@@ -163,7 +163,7 @@ export default function FilesView({ user, isConnected, files, folderId, fetchErr
                   </a>
                   <button
                     onClick={() => handleDelete(file.id)}
-                    className="px-2 py-1 text-xs hover:bg-red-50 text-brand-red rounded transition-colors"
+                    className="px-2 py-1 text-xs hover:bg-red-50 text-brand-blue rounded transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={11} />
@@ -197,7 +197,7 @@ export default function FilesView({ user, isConnected, files, folderId, fetchErr
                 <h3 className="font-bold truncate">{viewing.name}</h3>
                 <p className="text-xs text-gray-500">{fmtSize(viewing.size)}</p>
               </div>
-              <button onClick={() => setViewing(null)} className="text-gray-400 hover:text-brand-red">
+              <button onClick={() => setViewing(null)} className="text-gray-400 hover:text-brand-blue">
                 <X size={20} />
               </button>
             </div>

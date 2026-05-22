@@ -129,7 +129,7 @@ export default function TaskRequestsView({
       </div>
 
       {error && (
-        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-red-pale border border-brand-red/20 rounded-md text-brand-red text-sm">
+        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-blue-pale border border-brand-blue/20 rounded-md text-brand-blue text-sm">
           <AlertCircle size={16} /> {error}
         </div>
       )}
@@ -203,7 +203,7 @@ function FilterTab({ active, onClick, children }: any) {
   return (
     <button type="button" onClick={onClick}
       className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${
-        active ? 'bg-brand-red text-white' : 'text-gray-600 hover:bg-gray-100'
+        active ? 'bg-brand-blue text-white' : 'text-gray-600 hover:bg-gray-100'
       }`}>
       {children}
     </button>
@@ -250,14 +250,14 @@ function RequestCard({ row, currentUserId, canApprove, busy, onApprove, onAskDen
 
       {/* Resolution details */}
       {row.status === 'denied' && row.denial_reason && (
-        <div className="mt-3 p-3 bg-brand-red-pale border border-brand-red/20 rounded-md text-sm">
-          <span className="font-semibold uppercase text-[10px] tracking-wider text-brand-red">Denied: </span>
+        <div className="mt-3 p-3 bg-brand-blue-pale border border-brand-blue/20 rounded-md text-sm">
+          <span className="font-semibold uppercase text-[10px] tracking-wider text-brand-blue">Denied: </span>
           <span className="text-gray-700">{row.denial_reason}</span>
         </div>
       )}
       {row.status === 'approved' && row.created_task_id && (
         <Link href={`/tasks/${row.created_task_id}`}
-          className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-red hover:underline">
+          className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-blue hover:underline">
           View created task <ArrowRight size={11} />
         </Link>
       )}
@@ -334,7 +334,7 @@ function NewRequestModal({ currentUser, people, approvers, onClose, onSubmitted 
         <p className="text-sm text-gray-600">An admin will need to approve before the task is created.</p>
 
         {err && (
-          <div className="flex items-center gap-2 p-3 bg-brand-red-pale border border-brand-red/20 rounded-md text-brand-red text-sm">
+          <div className="flex items-center gap-2 p-3 bg-brand-blue-pale border border-brand-blue/20 rounded-md text-brand-blue text-sm">
             <AlertCircle size={16} /> {err}
           </div>
         )}

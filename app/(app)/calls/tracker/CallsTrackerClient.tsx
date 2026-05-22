@@ -141,12 +141,12 @@ export default function CallsTrackerClient({ canManageStatus }: { canManageStatu
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         <StatCard icon={PhoneOutgoing} label="Outbound" value={totals.ob} color="text-green-600" />
         <StatCard icon={PhoneIncoming} label="Inbound" value={totals.in} color="text-blue-600" />
-        <StatCard icon={Clock} label="Time on phone" value={fmtDuration(totals.sec)} color="text-brand-red" />
+        <StatCard icon={Clock} label="Time on phone" value={fmtDuration(totals.sec)} color="text-brand-blue" />
         <StatCard icon={Clock} label="Agents" value={rows.length} color="text-gray-700" />
       </div>
 
       {error && (
-        <div className="mb-4 px-3 py-2 bg-brand-red-pale text-brand-red text-sm rounded">{error}</div>
+        <div className="mb-4 px-3 py-2 bg-brand-blue-pale text-brand-blue text-sm rounded">{error}</div>
       )}
 
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
@@ -189,7 +189,7 @@ export default function CallsTrackerClient({ canManageStatus }: { canManageStatu
                       <span className={`w-2 h-2 rounded-full ${statusColor(r.status)} ${r.status_locked ? 'animate-pulse' : ''}`} />
                       <span className="text-xs uppercase tracking-wider">{r.status || '—'}</span>
                       {r.status_locked && (
-                        <span className="text-[9px] uppercase tracking-widest text-brand-red font-bold">Locked</span>
+                        <span className="text-[9px] uppercase tracking-widest text-brand-blue font-bold">Locked</span>
                       )}
                     </div>
                   </td>
@@ -200,7 +200,7 @@ export default function CallsTrackerClient({ canManageStatus }: { canManageStatu
                           type="button"
                           onClick={() => unlockAgent(r.user_id)}
                           disabled={overriding === r.user_id}
-                          className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-brand-red hover:text-brand-red-dark disabled:opacity-50"
+                          className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-brand-blue hover:text-brand-blue-dark disabled:opacity-50"
                           title="Force-unlock this agent (e.g. their browser crashed mid-call)"
                         >
                           {overriding === r.user_id ? <Loader2 size={11} className="animate-spin" /> : <Unlock size={11} />}

@@ -97,7 +97,7 @@ export default function TeamManager({ members, currentUser, roles = [], canDelet
                   <tr key={m.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-brand-red text-white flex items-center justify-center font-bold text-xs">{initials}</div>
+                        <div className="w-8 h-8 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-xs">{initials}</div>
                         <div>
                           <div className="font-semibold">{m.full_name} {isMe && <span className="text-xs text-gray-500 font-normal">(you)</span>}</div>
                           {m.phone && <div className="text-xs text-gray-500">{m.phone}</div>}
@@ -133,7 +133,7 @@ export default function TeamManager({ members, currentUser, roles = [], canDelet
                           <button
                             onClick={() => toggleActive(m.id, m.is_active)}
                             disabled={updating === m.id}
-                            className="text-xs font-bold uppercase tracking-wider text-gray-600 hover:text-brand-red disabled:opacity-50 flex items-center gap-1"
+                            className="text-xs font-bold uppercase tracking-wider text-gray-600 hover:text-brand-blue disabled:opacity-50 flex items-center gap-1"
                           >
                             {m.is_active ? <PowerOff size={12} /> : <Power size={12} />}
                             {m.is_active ? 'Deactivate' : 'Activate'}
@@ -170,11 +170,11 @@ export default function TeamManager({ members, currentUser, roles = [], canDelet
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg max-w-md w-full p-6">
             <div className="flex items-center gap-2 mb-3">
-              <Shield className="text-brand-red" size={20} />
+              <Shield className="text-brand-blue" size={20} />
               <h3 className="font-condensed text-2xl font-black uppercase">Account Created</h3>
             </div>
             <p className="text-sm text-gray-600 mb-4">The user can now log in with:</p>
-            <div className="bg-brand-red-pale border border-brand-red/20 rounded p-3 text-center mb-4">
+            <div className="bg-brand-blue-pale border border-brand-blue/20 rounded p-3 text-center mb-4">
               <div className="text-xs text-gray-500 mb-1">Login</div>
               <div className="font-mono text-lg font-bold break-all">{createResult.login}</div>
             </div>
@@ -188,11 +188,11 @@ export default function TeamManager({ members, currentUser, roles = [], canDelet
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg max-w-md w-full p-6">
             <div className="flex items-center gap-2 mb-3">
-              <Shield className="text-brand-red" size={20} />
+              <Shield className="text-brand-blue" size={20} />
               <h3 className="font-condensed text-2xl font-black uppercase">User Invited</h3>
             </div>
             <p className="text-sm text-gray-600 mb-4">An email has been sent with login credentials. Save this temp password as a backup:</p>
-            <div className="bg-brand-red-pale border border-brand-red/20 rounded p-3 text-center mb-4">
+            <div className="bg-brand-blue-pale border border-brand-blue/20 rounded p-3 text-center mb-4">
               <div className="text-xs text-gray-500 mb-1">Temporary Password</div>
               <div className="font-mono text-lg font-bold">{inviteResult.password}</div>
             </div>
@@ -230,9 +230,9 @@ function InviteModal({ roles, onClose, onInvited }: any) {
       <div className="bg-white rounded-lg max-w-md w-full p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-condensed text-2xl font-black uppercase">Invite Team Member</h3>
-          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
+          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-blue" /></button>
         </div>
-        {error && <div className="mb-3 p-2 bg-brand-red-pale text-brand-red text-sm rounded flex items-center gap-2"><AlertCircle size={14}/>{error}</div>}
+        {error && <div className="mb-3 p-2 bg-brand-blue-pale text-brand-blue text-sm rounded flex items-center gap-2"><AlertCircle size={14}/>{error}</div>}
         <form onSubmit={submit} className="space-y-3">
           <div><label className="label">Full Name *</label>
             <input required type="text" value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})} className="input" /></div>
@@ -292,27 +292,27 @@ function CreateAccountModal({ roles, onClose, onCreated }: any) {
       <div className="bg-white rounded-lg max-w-md w-full p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-condensed text-2xl font-black uppercase">Create Account</h3>
-          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-red" /></button>
+          <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-brand-blue" /></button>
         </div>
 
         <div className="flex gap-1 mb-4 p-1 bg-gray-100 rounded">
           <button
             type="button"
             onClick={() => setMode('username')}
-            className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded ${mode === 'username' ? 'bg-white text-brand-red shadow-sm' : 'text-gray-500'}`}
+            className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded ${mode === 'username' ? 'bg-white text-brand-blue shadow-sm' : 'text-gray-500'}`}
           >
             Username
           </button>
           <button
             type="button"
             onClick={() => setMode('email')}
-            className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded ${mode === 'email' ? 'bg-white text-brand-red shadow-sm' : 'text-gray-500'}`}
+            className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded ${mode === 'email' ? 'bg-white text-brand-blue shadow-sm' : 'text-gray-500'}`}
           >
             Email
           </button>
         </div>
 
-        {error && <div className="mb-3 p-2 bg-brand-red-pale text-brand-red text-sm rounded flex items-center gap-2"><AlertCircle size={14}/>{error}</div>}
+        {error && <div className="mb-3 p-2 bg-brand-blue-pale text-brand-blue text-sm rounded flex items-center gap-2"><AlertCircle size={14}/>{error}</div>}
 
         <form onSubmit={submit} className="space-y-3">
           {mode === 'username' ? (

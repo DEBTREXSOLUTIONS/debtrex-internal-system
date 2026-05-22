@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none" role="img" aria-label="DEBTREX">
+  <defs>
+    <linearGradient id="dxBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2CABE2"/>
+      <stop offset="0.55" stop-color="#1C75BC"/>
+      <stop offset="1" stop-color="#15315F"/>
+    </linearGradient>
+    <linearGradient id="dxBar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#D7ECFA"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="224" height="224" rx="58" fill="url(#dxBg)"/>
+  <rect x="74" y="104" width="28" height="92" rx="7" fill="url(#dxBar)"/>
+  <rect x="114" y="72" width="28" height="124" rx="7" fill="url(#dxBar)"/>
+  <rect x="154" y="120" width="28" height="76" rx="7" fill="url(#dxBar)"/>
+  <path d="M150 96 L186 60" stroke="#FFFFFF" stroke-width="15" stroke-linecap="round"/>
+  <path d="M165 58 L190 56 L188 81" stroke="#FFFFFF" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

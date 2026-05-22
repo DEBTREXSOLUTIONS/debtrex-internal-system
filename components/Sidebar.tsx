@@ -183,12 +183,16 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
   const sidebarContent = (
     <>
       <div className="p-4 border-b border-white/10 flex items-center justify-between flex-shrink-0">
-        <Link href="/" prefetch={false} className="block">
-          <div className="font-condensed text-2xl font-black text-white tracking-tight leading-none">
-            DEBT<span className="text-brand-red">REX</span>
-          </div>
-          <div className="text-[9px] font-bold tracking-[0.25em] uppercase text-white/40 mt-1">
-            Internal System
+        <Link href="/" prefetch={false} className="flex items-center gap-2.5 min-w-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/debtrex-icon.svg" alt="" className="w-9 h-9 flex-shrink-0" />
+          <div className="min-w-0">
+            <div className="font-condensed text-2xl font-black text-white tracking-tight leading-none">
+              DEBT<span className="text-brand-blue-light">REX</span>
+            </div>
+            <div className="text-[9px] font-bold tracking-[0.25em] uppercase text-white/40 mt-1">
+              Internal System
+            </div>
           </div>
         </Link>
         <button type="button" onClick={() => setMobileOpen(false)} className="lg:hidden text-white/60 hover:text-white p-1">
@@ -232,7 +236,7 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
                         href={item.href}
                         className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                           active
-                            ? 'bg-brand-red text-white shadow-red'
+                            ? 'bg-brand-blue text-white shadow-blue'
                             : 'text-white/70 hover:text-white hover:bg-white/5'
                         }`}
                       >
@@ -267,18 +271,18 @@ function Sidebar({ user, permissions: initialPermissions }: { user: User; permis
 
       <div className="p-3 border-t border-white/10 bg-black/20 flex-shrink-0">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-9 h-9 rounded-full bg-brand-red text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+          <div className="w-9 h-9 rounded-full bg-brand-blue text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
             {initials}
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold text-white truncate">{user.full_name}</div>
-            <div className="text-[10px] uppercase tracking-wider text-brand-red font-bold">{user.role}</div>
+            <div className="text-[10px] uppercase tracking-wider text-brand-blue-light font-bold">{user.role}</div>
           </div>
         </div>
         <button type="button"
           onClick={handleLogout}
           disabled={loggingOut}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider text-white/60 hover:text-brand-red transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider text-white/60 hover:text-brand-blue transition-colors"
         >
           <LogOut size={13} />
           {loggingOut ? 'Logging out...' : 'Sign Out'}

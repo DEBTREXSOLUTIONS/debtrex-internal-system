@@ -35,14 +35,16 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left brand panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-brand-red relative overflow-hidden items-center justify-center p-12">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-brand-ink via-brand-blue-dark to-brand-blue relative overflow-hidden items-center justify-center p-12">
         <div className="absolute inset-0 opacity-10" style={{
           backgroundImage: 'radial-gradient(circle at 20% 80%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)',
           backgroundSize: '40px 40px',
         }}/>
         <div className="relative z-10 text-white max-w-md">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/debtrex-icon.svg" alt="" className="w-20 h-20 mb-5 drop-shadow-lg" />
           <div className="font-condensed text-5xl font-black leading-none mb-2">
-            DEBT<span className="opacity-60">REX</span>
+            DEBT<span className="text-brand-blue-light">REX</span>
           </div>
           <div className="text-xs font-bold tracking-[0.3em] uppercase opacity-70 mb-12">
             Internal Operations Platform
@@ -69,9 +71,11 @@ export default function LoginPage() {
       {/* Right login form */}
       <div className="flex-1 flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-sm">
-          <div className="lg:hidden mb-8 text-center">
+          <div className="lg:hidden mb-8 flex flex-col items-center text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/debtrex-icon.svg" alt="" className="w-16 h-16 mb-3" />
             <div className="font-condensed text-3xl font-black text-brand-ink">
-              DEBT<span className="text-brand-red">REX</span>
+              DEBT<span className="text-brand-blue">REX</span>
             </div>
             <div className="text-xs font-bold tracking-widest text-gray-500 uppercase">Solutions</div>
           </div>
@@ -80,7 +84,7 @@ export default function LoginPage() {
           <p className="text-gray-500 mb-8">Sign in to continue to your dashboard.</p>
 
           {error && (
-            <div className="mb-4 flex items-center gap-2 p-3 bg-brand-red-pale border border-brand-red/20 rounded-md text-brand-red text-sm">
+            <div className="mb-4 flex items-center gap-2 p-3 bg-brand-blue-pale border border-brand-blue/20 rounded-md text-brand-blue text-sm">
               <AlertCircle size={16} /> {error}
             </div>
           )}
@@ -89,14 +93,14 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => { setMode('email'); setIdentifier(''); }}
-              className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded ${mode === 'email' ? 'bg-white text-brand-red shadow-sm' : 'text-gray-500'}`}
+              className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded ${mode === 'email' ? 'bg-white text-brand-blue shadow-sm' : 'text-gray-500'}`}
             >
               Email
             </button>
             <button
               type="button"
               onClick={() => { setMode('username'); setIdentifier(''); }}
-              className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded ${mode === 'username' ? 'bg-white text-brand-red shadow-sm' : 'text-gray-500'}`}
+              className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded ${mode === 'username' ? 'bg-white text-brand-blue shadow-sm' : 'text-gray-500'}`}
             >
               Username
             </button>

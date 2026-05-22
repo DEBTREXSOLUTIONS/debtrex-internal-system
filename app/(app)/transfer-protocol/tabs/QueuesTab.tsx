@@ -134,19 +134,19 @@ export default function QueuesTab() {
           value={newName}
           onChange={e => setNewName(e.target.value)}
           placeholder="New queue name (e.g. Sales, Support)"
-          className="flex-1 min-w-[200px] px-3 py-1.5 border border-gray-200 rounded focus:outline-none focus:border-brand-red text-sm"
+          className="flex-1 min-w-[200px] px-3 py-1.5 border border-gray-200 rounded focus:outline-none focus:border-brand-blue text-sm"
         />
         <button
           type="button"
           onClick={createQueue}
           disabled={!newName.trim() || creating}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-brand-red text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50 hover:bg-brand-red-dark"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-brand-blue text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50 hover:bg-brand-blue-dark"
         >
           {creating ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />} Create
         </button>
       </div>
 
-      {error && <div className="mb-3 px-3 py-2 bg-brand-red-pale text-brand-red text-xs rounded">{error}</div>}
+      {error && <div className="mb-3 px-3 py-2 bg-brand-blue-pale text-brand-blue text-xs rounded">{error}</div>}
 
       <div className="space-y-2">
         {loading && queues.length === 0 && (
@@ -179,7 +179,7 @@ export default function QueuesTab() {
                   <button
                     type="button"
                     onClick={e => { e.stopPropagation(); removeQueue(q.id); }}
-                    className="text-gray-400 hover:text-brand-red p-1"
+                    className="text-gray-400 hover:text-brand-blue p-1"
                     title="Delete"
                   >
                     <Trash2 size={14} />
@@ -192,23 +192,23 @@ export default function QueuesTab() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Field label="Name">
                       <input value={q.name} onChange={e => updateLocal(q.id, { name: e.target.value })}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-brand-red" />
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-brand-blue" />
                     </Field>
                     <Field label="Strategy">
                       <select value={q.strategy} onChange={e => updateLocal(q.id, { strategy: e.target.value as any })}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-brand-red">
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-brand-blue">
                         {Object.entries(STRATEGY_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                       </select>
                     </Field>
                     <Field label="Ring timeout (sec)">
                       <input type="number" min={5} max={120} value={q.ring_timeout_seconds}
                         onChange={e => updateLocal(q.id, { ring_timeout_seconds: parseInt(e.target.value) || 20 })}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-brand-red" />
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-brand-blue" />
                     </Field>
                     <Field label="Max wait (sec)">
                       <input type="number" min={30} max={1800} value={q.max_wait_seconds}
                         onChange={e => updateLocal(q.id, { max_wait_seconds: parseInt(e.target.value) || 300 })}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-brand-red" />
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:border-brand-blue" />
                     </Field>
                   </div>
 
@@ -239,7 +239,7 @@ export default function QueuesTab() {
                       type="button"
                       onClick={() => saveQueue(q)}
                       disabled={savingId === q.id}
-                      className="px-3 py-1.5 rounded bg-brand-red text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50 hover:bg-brand-red-dark inline-flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded bg-brand-blue text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50 hover:bg-brand-blue-dark inline-flex items-center gap-1.5"
                     >
                       {savingId === q.id && <Loader2 size={12} className="animate-spin" />}
                       Save changes

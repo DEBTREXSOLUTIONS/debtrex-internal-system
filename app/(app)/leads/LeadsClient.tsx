@@ -143,7 +143,7 @@ export default function LeadsClient({
       <div className="card p-4 sm:p-6 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="font-condensed text-xl sm:text-2xl font-black uppercase flex items-center gap-2">
-            <Users size={22} className="text-brand-red" /> Leads
+            <Users size={22} className="text-brand-blue" /> Leads
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             {total.toLocaleString()} total lead{total === 1 ? '' : 's'}
@@ -197,7 +197,7 @@ export default function LeadsClient({
         <div className="overflow-x-auto relative">
           {loading && (
             <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-10">
-              <Loader2 size={22} className="animate-spin text-brand-red" />
+              <Loader2 size={22} className="animate-spin text-brand-blue" />
             </div>
           )}
           <table className="w-full text-sm">
@@ -233,20 +233,20 @@ export default function LeadsClient({
                   <tr key={lead.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-3 py-2 font-semibold whitespace-nowrap">{lead.name}</td>
                     <td className="px-3 py-2">
-                      <span className={`badge ${lead.lead_type === 'business' ? 'badge-gray' : 'badge-red'}`}>
+                      <span className={`badge ${lead.lead_type === 'business' ? 'badge-gray' : 'badge-blue'}`}>
                         {lead.lead_type}
                       </span>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       {lead.phone ? (
-                        <a href={`tel:${lead.phone}`} className="flex items-center gap-1.5 text-gray-700 hover:text-brand-red">
+                        <a href={`tel:${lead.phone}`} className="flex items-center gap-1.5 text-gray-700 hover:text-brand-blue">
                           <Phone size={12} className="text-gray-400" /> {lead.phone}
                         </a>
                       ) : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       {lead.email ? (
-                        <a href={`mailto:${lead.email}`} className="flex items-center gap-1.5 text-gray-700 hover:text-brand-red">
+                        <a href={`mailto:${lead.email}`} className="flex items-center gap-1.5 text-gray-700 hover:text-brand-blue">
                           <Mail size={12} className="text-gray-400" /> {lead.email}
                         </a>
                       ) : <span className="text-gray-300">—</span>}
@@ -257,7 +257,7 @@ export default function LeadsClient({
                           href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 text-gray-700 hover:text-brand-red"
+                          className="flex items-center gap-1.5 text-gray-700 hover:text-brand-blue"
                         >
                           <Globe size={12} className="text-gray-400" /> {lead.website}
                         </a>
@@ -294,7 +294,7 @@ export default function LeadsClient({
                         <button
                           type="button"
                           onClick={() => deleteLead(lead.id)}
-                          className="text-gray-300 hover:text-brand-red transition-colors"
+                          className="text-gray-300 hover:text-brand-blue transition-colors"
                           aria-label="Delete lead"
                         >
                           <Trash2 size={15} />
@@ -318,7 +318,7 @@ export default function LeadsClient({
               type="button"
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page <= 1 || loading}
-              className="p-1.5 rounded border border-gray-200 disabled:opacity-40 hover:border-brand-red disabled:hover:border-gray-200"
+              className="p-1.5 rounded border border-gray-200 disabled:opacity-40 hover:border-brand-blue disabled:hover:border-gray-200"
               aria-label="Previous page"
             >
               <ChevronLeft size={16} />
@@ -327,7 +327,7 @@ export default function LeadsClient({
               type="button"
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages || loading}
-              className="p-1.5 rounded border border-gray-200 disabled:opacity-40 hover:border-brand-red disabled:hover:border-gray-200"
+              className="p-1.5 rounded border border-gray-200 disabled:opacity-40 hover:border-brand-blue disabled:hover:border-gray-200"
               aria-label="Next page"
             >
               <ChevronRight size={16} />
@@ -349,7 +349,7 @@ function FilterPill({ label, active, onClick }: { label: string; active: boolean
       type="button"
       onClick={onClick}
       className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md whitespace-nowrap transition-colors ${
-        active ? 'bg-brand-red text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+        active ? 'bg-brand-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
       }`}
     >
       {label}

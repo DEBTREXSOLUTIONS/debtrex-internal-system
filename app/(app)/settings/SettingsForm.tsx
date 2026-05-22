@@ -101,7 +101,7 @@ export default function SettingsForm({ profile }: any) {
               key={t.id}
               onClick={() => { setTab(t.id as any); setSuccess(''); setError(''); }}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap ${
-                tab === t.id ? 'border-brand-red text-brand-red' : 'border-transparent text-gray-500 hover:text-brand-ink'
+                tab === t.id ? 'border-brand-blue text-brand-blue' : 'border-transparent text-gray-500 hover:text-brand-ink'
               }`}
             >
               <Icon size={14} /> {t.label}
@@ -117,7 +117,7 @@ export default function SettingsForm({ profile }: any) {
         </div>
       )}
       {error && (
-        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-red-pale border border-brand-red/20 rounded-md text-brand-red text-sm">
+        <div className="mb-4 flex items-center gap-2 p-3 bg-brand-blue-pale border border-brand-blue/20 rounded-md text-brand-blue text-sm">
           <AlertCircle size={16} /> {error}
         </div>
       )}
@@ -219,13 +219,13 @@ export default function SettingsForm({ profile }: any) {
               { key: 'expense_status', label: 'Expense approved or rejected' },
               { key: 'weekly_digest', label: 'Weekly digest of my work' },
             ].map(opt => (
-              <label key={opt.key} className="flex items-center justify-between p-3 border border-gray-200 rounded-md cursor-pointer hover:border-brand-red transition-colors">
+              <label key={opt.key} className="flex items-center justify-between p-3 border border-gray-200 rounded-md cursor-pointer hover:border-brand-blue transition-colors">
                 <span className="text-sm font-medium">{opt.label}</span>
                 <input
                   type="checkbox"
                   checked={notif[opt.key] !== false}
                   onChange={e => setNotif({ ...notif, [opt.key]: e.target.checked })}
-                  className="w-4 h-4 accent-brand-red"
+                  className="w-4 h-4 accent-brand-blue"
                 />
               </label>
             ))}
@@ -243,8 +243,8 @@ export default function SettingsForm({ profile }: any) {
           <div className="border border-gray-200 rounded-md p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-brand-red-pale rounded">
-                  <Cloud size={20} className="text-brand-red" />
+                <div className="p-2 bg-brand-blue-pale rounded">
+                  <Cloud size={20} className="text-brand-blue" />
                 </div>
                 <div>
                   <div className="font-bold">Google Drive</div>

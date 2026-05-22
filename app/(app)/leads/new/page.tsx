@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import LeadEntryForm from './LeadEntryForm';
+import DebtrexBanner from '@/components/DebtrexBanner';
 
 export default async function NewLeadPage() {
   const user = await getCurrentUser();
@@ -12,6 +13,7 @@ export default async function NewLeadPage() {
 
   return (
     <div className="p-4 sm:p-6 max-w-3xl mx-auto">
+      <DebtrexBanner subtitle="Add Leads" />
       <LeadEntryForm />
     </div>
   );

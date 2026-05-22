@@ -149,7 +149,7 @@ debtrex-system/
 │
 ├── middleware.ts          ← the door — runs before every request, gates by cookie
 ├── next.config.js         ← Next.js build settings
-├── tailwind.config.js     ← Tailwind palette (brand-red, brand-ink, etc.)
+├── tailwind.config.js     ← Tailwind palette (brand-blue, brand-ink, etc.)
 ├── package.json           ← dependencies + npm scripts
 └── docs/                  ← you are here
 ```
